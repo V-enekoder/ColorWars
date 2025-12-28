@@ -34,9 +34,11 @@ El sistema sigue un patrón de **Microservicios** orquestados, separando la lóg
 
 ```mermaid
 graph TD
-    User((Usuario)) -->|HTTP/JS| Web[Web Service\nDeno Fresh]
+    User((Usuario)) -->|HTTP/JS| Web[Web Service
+Deno Fresh]
     Web -->|Valida Reglas| Web
-    Web -->|POST /predict| AI[AI Service\nPython + Rust]
+    Web -->|POST /predict| AI[AI Service
+      Python + Rust]
     AI -->|Inferencia| Models[(Modelos ONNX/PPO)]
 ```
 
