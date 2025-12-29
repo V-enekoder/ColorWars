@@ -3,90 +3,148 @@ export interface CellData {
   player: number;
 }
 
-export type Board = CellData[];
+interface Player {
+  id: number;
+  active: boolean;
+}
 
 export class GameEngine {
   rows: number;
   cols: number;
   critical_points: number;
-  players_points: number[] = [0, 0];
-  constructor(rows: number, cols: number, critical_points: number) {
+
+  board: CellData[];
+  players: Player[];
+  currentPlayerIndex: number = 0;
+  roundNumber: number = 1;
+  winner: number = 0;
+
+  constructor(
+    rows: number,
+    cols: number,
+    critical_points: number,
+    num_players: number,
+  ) {
     this.rows = rows;
     this.cols = cols;
     this.critical_points = critical_points;
+
+    this.players = Array.from({ length: num_players }, (_, i) => ({
+      id: i + 1,
+      active: true,
+    }));
+
+    this.board = Array.from({ length: rows * cols }, () => ({
+      points: 0,
+      player: 0,
+    }));
+  }
+
+  getBoard(): CellData[] {
+    return [...this.board];
+  }
+
+  getCurrentPlayerId(): number {
+    return this.players[this.currentPlayerIndex].id;
   }
 
   getIndex(r: number, c: number): number {
     return r * this.cols + c;
   }
+
   isValidCoord(r: number, c: number): boolean {
     return r >= 0 && r < this.rows && c >= 0 && c < this.cols;
   }
 
-  canPlay(
-    board: Board,
-    r: number,
-    c: number,
-    playerTurn: number,
-    turn: number,
-  ): boolean {
+  play(r: number, c: number): boolean {
+    if (this.winner !== 0) return false;
+
+    const currentPlayer = this.getCurrentPlayerId();
+
     const idx = this.getIndex(r, c);
-    const cell = board[idx];
+    const cell = this.board[idx];
 
-    return (cell.player === 0 && turn === 1) || cell.player === playerTurn;
+    const isValid =
+      (cell.player === 0 && this.roundNumber === 1) ||
+      cell.player === currentPlayer;
+    if (!isValid) return false;
+
+    this.addOrb(r, c, currentPlayer);
+
+    if (this.roundNumber > 1) {
+      this.checkEliminations();
+    }
+
+    this.nextTurn();
+
+    return true;
   }
 
-  applyMove(
-    currentBoard: Board,
-    r: number,
-    c: number,
-    player: number,
-    isFirstMove: boolean,
-  ): Board {
-    const newBoard = JSON.parse(JSON.stringify(currentBoard));
-    this.addOrb(newBoard, r, c, player, isFirstMove);
+  private nextTurn() {
+    if (this.winner !== 0) return;
 
-    return newBoard;
+    let attempts = 0;
+    do {
+      this.currentPlayerIndex++;
+
+      if (this.currentPlayerIndex >= this.players.length) {
+        this.currentPlayerIndex = 0;
+        this.roundNumber++;
+      }
+      attempts++;
+    } while (
+      !this.players[this.currentPlayerIndex].active &&
+      attempts < this.players.length * 2
+    );
   }
 
-  private addOrb(
-    board: Board,
-    r: number,
-    c: number,
-    player: number,
-    isFirstMove: boolean,
-  ): void {
+  private checkEliminations() {
+    const counts = new Map<number, number>();
+    this.players.forEach((p) => counts.set(p.id, 0));
+
+    for (const cell of this.board) {
+      if (cell.player !== 0) {
+        counts.set(cell.player, (counts.get(cell.player) || 0) + 1);
+      }
+    }
+
+    let activeCount = 0;
+    let lastActiveId = 0;
+
+    for (const p of this.players) {
+      const cellCount = counts.get(p.id) || 0;
+      if (cellCount === 0 && p.active) {
+        p.active = false;
+      }
+      if (p.active) {
+        activeCount++;
+        lastActiveId = p.id;
+      }
+    }
+
+    if (activeCount === 1) {
+      this.winner = lastActiveId;
+    }
+  }
+
+  private addOrb(r: number, c: number, player: number) {
     if (!this.isValidCoord(r, c)) return;
 
     const idx = this.getIndex(r, c);
-    const cell = board[idx];
+    const cell = this.board[idx];
 
-    if (isFirstMove) {
-      cell.points = this.critical_points - 1;
-      this.players_points[player - 1] += this.critical_points - 1;
-      isFirstMove = false;
-    } else {
-      cell.points += 1;
-      this.players_points[player - 1] += this.critical_points - 1;
-    }
     cell.player = player;
+    const sum = this.roundNumber != 1 ? 1 : this.critical_points - 1;
+    cell.points += sum;
 
     if (cell.points >= this.critical_points) {
       cell.points -= this.critical_points;
-      this.players_points[player - 1] += this.critical_points;
-
       if (cell.points === 0) cell.player = 0;
 
-      this.addOrb(board, r - 1, c, player, false);
-      this.addOrb(board, r + 1, c, player, false);
-      this.addOrb(board, r, c - 1, player, false);
-      this.addOrb(board, r, c + 1, player, false);
+      this.addOrb(r - 1, c, player);
+      this.addOrb(r + 1, c, player);
+      this.addOrb(r, c - 1, player);
+      this.addOrb(r, c + 1, player);
     }
-  }
-  checkWinner(_board: Board, turn: number): number {
-    if (turn <= 2) return 0;
-    if (this.players_points[0] == 0) return 2;
-    if (this.players_points[1] == 0) return 1;
-    return 0;
   }
 }
