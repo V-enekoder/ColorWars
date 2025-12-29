@@ -1,4 +1,4 @@
-import { useSignal } from "@preact/signals";
+import { useSignal, useComputed } from "@preact/signals";
 import { Cell } from "../components/Cell.tsx";
 import { GameEngine, CellData } from "../utils/GameLogic.ts";
 
@@ -25,20 +25,26 @@ export default function GameBoard({
   const move_turn = useSignal(1);
   const winner = useSignal(0);
   const playersWhoPlayed = useSignal(new Set<number>());
-  const handleCellClick = (r: number, c: number) => {
+  const handleCellClick = (row: number, col: number) => {
     const currentPlayer: number = turn.value;
 
     const isFirstMove = !playersWhoPlayed.value.has(currentPlayer);
     if (
-      !engine.canPlay(boardState.value, r, c, currentPlayer, move_turn.value)
+      !engine.canPlay(
+        boardState.value,
+        row,
+        col,
+        currentPlayer,
+        move_turn.value,
+      )
     ) {
       console.warn("Movimiento inválido");
       return;
     }
     const nextBoard = engine.applyMove(
       boardState.value,
-      r,
-      c,
+      row,
+      col,
       currentPlayer,
       isFirstMove,
     );
@@ -54,9 +60,15 @@ export default function GameBoard({
     turn.value = turn.value === 1 ? 2 : 1;
   };
 
-  const board = (
+  const message = useComputed(() => {
+    return winner.value !== 0
+      ? `Ganó el jugador ${winner.value}`
+      : `Turno: Jugador ${turn.value}`;
+  });
+
+  return (
     <div class="flex flex-col items-center gap-4 p-4">
-      <h2 class="text-2xl">Turno: Jugador {turn}</h2>
+      <h2 class="text-2xl">{message}</h2>
       <div
         style={{
           display: "grid",
@@ -84,38 +96,4 @@ export default function GameBoard({
       </div>
     </div>
   );
-
-  const winMessage = (
-    <div class="flex flex-col items-center gap-4 p-4">
-      <h2 class="text-2xl">Ganó el jugador {winner.value}</h2>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${columns}, min-content)`,
-          gap: "0.5rem",
-        }}
-      >
-        {Array.from({ length: rows }).map((_, rowIndex) =>
-          Array.from({ length: columns }).map((_, colIndex) => {
-            const index = rowIndex * columns + colIndex;
-            const cellData = boardState.value[index];
-
-            return (
-              <Cell
-                key={`${rowIndex}-${colIndex}`}
-                row={rowIndex}
-                column={colIndex}
-                points={cellData.points}
-                player={cellData.player}
-                onClick={handleCellClick}
-              />
-            );
-          }),
-        )}
-      </div>
-    </div>
-  );
-
-  if (winner.value != 0) return winMessage;
-  else return board;
 }
