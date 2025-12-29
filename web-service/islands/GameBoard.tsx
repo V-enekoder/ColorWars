@@ -1,6 +1,6 @@
 import { useSignal, useComputed } from "@preact/signals";
 import { Cell } from "../components/Cell.tsx";
-import { GameEngine, CellData } from "../utils/GameLogic.ts";
+import { GameEngine, CellData } from "../core/GameLogic.ts";
 
 interface GameConfig {
   rows: number;
@@ -61,7 +61,7 @@ export default function GameBoard({
   };
 
   const message = useComputed(() => {
-    return winner.value !== 0
+    return winner.value != 0
       ? `Ganó el jugador ${winner.value}`
       : `Turno: Jugador ${turn.value}`;
   });

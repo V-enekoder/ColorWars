@@ -9,7 +9,7 @@ export class GameEngine {
   rows: number;
   cols: number;
   critical_points: number;
-
+  players_points: number[] = [0, 0];
   constructor(rows: number, cols: number, critical_points: number) {
     this.rows = rows;
     this.cols = cols;
@@ -55,7 +55,7 @@ export class GameEngine {
     c: number,
     player: number,
     isFirstMove: boolean,
-  ) {
+  ): void {
     if (!this.isValidCoord(r, c)) return;
 
     const idx = this.getIndex(r, c);
@@ -63,13 +63,18 @@ export class GameEngine {
 
     if (isFirstMove) {
       cell.points = this.critical_points - 1;
+      this.players_points[player - 1] += this.critical_points - 1;
       isFirstMove = false;
-    } else cell.points += 1;
-
+    } else {
+      cell.points += 1;
+      this.players_points[player - 1] += this.critical_points - 1;
+    }
     cell.player = player;
 
     if (cell.points >= this.critical_points) {
       cell.points -= this.critical_points;
+      this.players_points[player - 1] += this.critical_points;
+
       if (cell.points === 0) cell.player = 0;
 
       this.addOrb(board, r - 1, c, player, false);
@@ -78,23 +83,10 @@ export class GameEngine {
       this.addOrb(board, r, c + 1, player, false);
     }
   }
-  checkWinner(board: Board, turn: number): number {
+  checkWinner(_board: Board, turn: number): number {
     if (turn <= 2) return 0;
-
-    let p1Count = 0;
-    let p2Count = 0;
-
-    for (const cell of board) {
-      if (cell.player === 1) {
-        p1Count++;
-      } else if (cell.player === 2) {
-        p2Count++;
-      }
-    }
-    if (p1Count === 0) return 2;
-
-    if (p2Count === 0) return 1;
-
+    if (this.players_points[0] == 0) return 2;
+    if (this.players_points[1] == 0) return 1;
     return 0;
   }
 }
