@@ -71,11 +71,11 @@ El repositorio opera como un **Monorepo**:
 │
 ├── /ai-service              # [MICROSERVICIO PYTHON]
 │   ├── /src
+│   │   ├── /agents          # Estrategias (Minimax, PPO, Random)
 │   │   ├── /core            # Interfaces (Ports) y Lógica de Negocio
 │   │   ├── /engines         # Implementaciones (Naive Python, Rust Bindings)
-│   │   └── /agents          # Estrategias (Minimax, PPO, Random)
+│   │   ├---main.py          # Entrypoint FastAPI
 │   ├── /models              # Archivos binarios (.zip, .onnx) trackeados por DVC
-│   ├── main.py              # Entrypoint FastAPI
 │   └── Dockerfile
 │
 └── /web-service             # [MICROSERVICIO DENO]

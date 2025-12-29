@@ -1,0 +1,17 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mi-app-python:3.14
+    container_name: python_dev_env
+    command: sleep infinity
+    volumes:
+      - .:/app:z
+      - venv_data:/app/.venv
+    environment:
+      - UV_LINK_MODE=copy
+    userns_mode: keep-id
+
+volumes:
+  venv_data:

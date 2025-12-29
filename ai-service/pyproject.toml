@@ -1,0 +1,18 @@
+[project]
+name = "Color Wars"
+version = "1.0"
+description = "Implementación de agentes de IA para jugar ColorWars"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]"
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff",
+    "pre-commit",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
