@@ -154,7 +154,7 @@ export class GameEngine {
       if (cell.points === 0) {
         this.setCellOwner(cell, 0);
       }
-      q.push([r, c]);
+      q.push([r, c]); //Cambiar cola por indices para aplanar
     }
 
     yield this.getBoard();
@@ -165,6 +165,7 @@ export class GameEngine {
       const [cx, cy] = item;
 
       for (const [dx, dy] of DIRECTIONS) {
+        //Precalcular vecinos
         const nx = cx + dx;
         const ny = cy + dy;
 

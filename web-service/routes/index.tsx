@@ -18,7 +18,7 @@ export default define.page(function Home(ctx) {
         />
 
         <h1 class="text-4xl font-bold mb-8">Color Wars</h1>
-        <GameBoard rows={6} columns={6} critical_points={4} />
+        <GameBoard rows={5} columns={5} critical_points={4} />
       </div>
     </div>
   );
