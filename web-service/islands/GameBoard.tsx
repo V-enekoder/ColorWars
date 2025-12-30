@@ -46,7 +46,9 @@ export default function GameBoard({
     isAnimating.value = true;
 
     try {
+      let steps = 0;
       while (!next.done) {
+        steps++;
         const rawBoard = next.value;
         boardSignals.forEach((sig, index) => {
           sig.value = { ...rawBoard[index] };
@@ -54,7 +56,8 @@ export default function GameBoard({
 
         playerCounts.value = engine.getCellsByPlayer();
 
-        await delay(150);
+        const dynamicDelay = Math.max(30, 150 - steps * 5);
+        await delay(dynamicDelay);
 
         next = generator.next();
       }
