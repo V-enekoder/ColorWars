@@ -28,12 +28,11 @@ export default function GameBoard({
 
     if (!success) {
       console.warn("Movimiento inválido o juego terminado");
-    } //else {
+    }
     boardState.value = engine.getBoard();
     currentPlayerId.value = engine.getCurrentPlayerId();
     winner.value = engine.winner;
     playerCounts.value = engine.getCellsByPlayer();
-    //}
   };
 
   const message = useComputed(() => {
