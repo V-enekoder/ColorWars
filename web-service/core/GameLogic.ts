@@ -25,6 +25,7 @@ export class GameEngine {
   currentPlayerIndex: number = 0;
   roundNumber: number = 1;
   winner: number = 0;
+  cellsByPlayer: Map<number, number> = new Map<number, number>();
 
   constructor(
     rows: number,
@@ -45,10 +46,18 @@ export class GameEngine {
       points: 0,
       player: 0,
     }));
+
+    this.players.forEach((p) => this.cellsByPlayer.set(p.id, 0));
   }
 
   getBoard(): CellData[] {
     return [...this.board];
+  }
+
+  getCellsByPlayer() {
+    return [...this.cellsByPlayer]
+      .filter(([id]) => id !== 0)
+      .sort((a, b) => a[0] - b[0]);
   }
 
   getCurrentPlayerId(): number {
@@ -106,21 +115,13 @@ export class GameEngine {
   }
 
   private checkEliminations() {
-    const counts = new Map<number, number>();
-    this.players.forEach((p) => counts.set(p.id, 0));
-
-    for (const cell of this.board) {
-      if (cell.player !== 0) {
-        counts.set(cell.player, (counts.get(cell.player) || 0) + 1);
-      }
-    }
-
     let activeCount = 0;
     let lastActiveId = 0;
 
     for (const p of this.players) {
-      const cellCount = counts.get(p.id) || 0;
-      if (cellCount === 0 && p.active) {
+      const cellCount = this.cellsByPlayer.get(p.id) || 0;
+
+      if (cellCount === 0 && p.active && this.roundNumber > 2) {
         p.active = false;
       }
       if (p.active) {
@@ -140,16 +141,25 @@ export class GameEngine {
     const idx = this.getIndex(r, c);
     const cell = this.board[idx];
 
-    const pointsToAdd = this.roundNumber === 1 ? this.critical_points - 1 : 1;
+    if (cell.player !== player) {
+      this.updateCellCount(player, 1);
+      if (cell.player !== 0) {
+        this.updateCellCount(cell.player, -1);
+      }
+      cell.player = player;
+    }
 
-    cell.player = player;
+    const pointsToAdd = this.roundNumber === 1 ? this.critical_points - 1 : 1;
     cell.points += pointsToAdd;
 
     const q: number[][] = [];
 
     if (cell.points >= this.critical_points) {
       cell.points -= this.critical_points;
-      cell.player = 0;
+      if (cell.points === 0) {
+        cell.player = 0;
+        this.updateCellCount(player, -1);
+      }
       q.push([r, c]);
     }
 
@@ -166,16 +176,35 @@ export class GameEngine {
 
         const nIdx = this.getIndex(nx, ny);
         const neighbor = this.board[nIdx];
+        const oldPlayer = neighbor.player;
 
-        neighbor.player = player;
+        if (oldPlayer !== player) {
+          neighbor.player = player;
+          this.updateCellCount(player, 1);
+
+          if (oldPlayer !== 0) {
+            this.updateCellCount(oldPlayer, -1);
+          }
+        }
+
         neighbor.points += 1;
 
         if (neighbor.points >= this.critical_points) {
           neighbor.points -= this.critical_points;
-          if (neighbor.points === 0) neighbor.player = 0;
+
+          if (neighbor.points === 0) {
+            neighbor.player = 0;
+            this.updateCellCount(player, -1);
+          }
+
           q.push([nx, ny]);
         }
       }
     }
+  }
+
+  private updateCellCount(playerId: number, change: number) {
+    const current = this.cellsByPlayer.get(playerId) || 0;
+    this.cellsByPlayer.set(playerId, current + change);
   }
 }
