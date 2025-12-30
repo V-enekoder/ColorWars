@@ -72,28 +72,27 @@ export class GameEngine {
     return r >= 0 && r < this.rows && c >= 0 && c < this.cols;
   }
 
-  play(r: number, c: number): boolean {
-    if (this.winner !== 0) return false;
+  *playGenerator(r: number, c: number): Generator<CellData[]> {
+    if (this.winner !== 0) return;
 
     const currentPlayer = this.getCurrentPlayerId();
-
     const idx = this.getIndex(r, c);
     const cell = this.board[idx];
 
     const isValid =
       (cell.player === 0 && this.roundNumber === 1) ||
       cell.player === currentPlayer;
-    if (!isValid) return false;
 
-    this.addOrb(r, c, currentPlayer);
+    if (!isValid) return;
+
+    yield* this.addOrb(r, c, currentPlayer);
 
     if (this.roundNumber > 1) {
       this.checkEliminations();
     }
 
     this.nextTurn();
-
-    return true;
+    yield this.getBoard();
   }
 
   private nextTurn() {
@@ -135,7 +134,7 @@ export class GameEngine {
     }
   }
 
-  private addOrb(r: number, c: number, player: number) {
+  private *addOrb(r: number, c: number, player: number): Generator<CellData[]> {
     if (!this.isValidCoord(r, c)) return;
 
     const idx = this.getIndex(r, c);
@@ -162,6 +161,8 @@ export class GameEngine {
       }
       q.push([r, c]);
     }
+
+    yield this.getBoard();
 
     while (q.length > 0) {
       const item = q.shift();
@@ -200,6 +201,7 @@ export class GameEngine {
           q.push([nx, ny]);
         }
       }
+      yield this.getBoard();
     }
   }
 

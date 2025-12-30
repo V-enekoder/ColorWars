@@ -9,6 +9,8 @@ interface GameConfig {
   critical_points: number;
 }
 
+const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
 export default function GameBoard({
   rows,
   columns,
@@ -27,24 +29,40 @@ export default function GameBoard({
   const currentPlayerId = useSignal(engine.getCurrentPlayerId());
   const winner = useSignal(0);
   const playerCounts = useSignal<[number, number][]>(engine.getCellsByPlayer());
+  const isAnimating = useSignal(false);
 
-  const handleCellClick = (row: number, col: number) => {
-    const success = engine.play(row, col);
+  const handleCellClick = async (row: number, col: number) => {
+    if (isAnimating.value || engine.winner !== 0) return;
 
-    if (!success) {
-      console.warn("Movimiento inválido o juego terminado");
+    const generator = engine.playGenerator(row, col);
+
+    let next = generator.next();
+
+    if (next.done) {
+      console.warn("Movimiento inválido");
       return;
     }
 
-    const rawBoard = engine.getBoard();
+    isAnimating.value = true;
 
-    boardSignals.forEach((sig, index) => {
-      sig.value = { ...rawBoard[index] };
-    });
+    try {
+      while (!next.done) {
+        const rawBoard = next.value;
+        boardSignals.forEach((sig, index) => {
+          sig.value = { ...rawBoard[index] };
+        });
 
-    currentPlayerId.value = engine.getCurrentPlayerId();
-    winner.value = engine.winner;
-    playerCounts.value = engine.getCellsByPlayer();
+        playerCounts.value = engine.getCellsByPlayer();
+
+        await delay(150);
+
+        next = generator.next();
+      }
+    } finally {
+      currentPlayerId.value = engine.getCurrentPlayerId();
+      winner.value = engine.winner;
+      isAnimating.value = false;
+    }
   };
 
   const message = useComputed(() => {
