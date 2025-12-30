@@ -1,4 +1,4 @@
-import { useSignal, useComputed } from "@preact/signals";
+import { useSignal, useComputed, signal, Signal } from "@preact/signals";
 import { useMemo } from "preact/hooks";
 import { Cell } from "../components/Cell.tsx";
 import { GameEngine, CellData } from "../core/GameLogic.ts";
@@ -19,17 +19,29 @@ export default function GameBoard({
     [rows, columns, critical_points],
   );
 
-  const boardState = useSignal<CellData[]>(engine.getBoard());
+  const boardSignals: Signal<CellData>[] = useMemo(() => {
+    const initialBoard = engine.getBoard();
+    return initialBoard.map((cellData) => signal(cellData));
+  }, [engine]);
+
   const currentPlayerId = useSignal(engine.getCurrentPlayerId());
   const winner = useSignal(0);
   const playerCounts = useSignal<[number, number][]>(engine.getCellsByPlayer());
+
   const handleCellClick = (row: number, col: number) => {
     const success = engine.play(row, col);
 
     if (!success) {
       console.warn("Movimiento inválido o juego terminado");
+      return;
     }
-    boardState.value = engine.getBoard();
+
+    const rawBoard = engine.getBoard();
+
+    boardSignals.forEach((sig, index) => {
+      sig.value = { ...rawBoard[index] };
+    });
+
     currentPlayerId.value = engine.getCurrentPlayerId();
     winner.value = engine.winner;
     playerCounts.value = engine.getCellsByPlayer();
@@ -44,33 +56,35 @@ export default function GameBoard({
   return (
     <div class="flex flex-col items-center gap-4 p-4">
       <h2 class="text-2xl font-bold">{message}</h2>
+
       <div class="flex gap-4 mb-4">
-        {playerCounts.value.map(([playerId, count]) => {
-          const isP1 = playerId === 1;
-          const colorClass = isP1
-            ? "bg-red-100 border-red-300 text-red-800"
-            : "bg-blue-100 border-blue-300 text-blue-800";
+        {playerCounts.value
+          .filter(([id]) => id !== 0)
+          .sort((a, b) => a[0] - b[0])
+          .map(([playerId, count]) => {
+            const isP1 = playerId === 1;
+            const colorClass = isP1
+              ? "bg-red-100 border-red-300 text-red-800"
+              : "bg-blue-100 border-blue-300 text-blue-800";
+            const dotColor = isP1 ? "bg-red-500" : "bg-blue-500";
 
-          const dotColor = isP1 ? "bg-red-500" : "bg-blue-500";
-
-          return (
-            <div
-              key={playerId}
-              class={`
-                  flex items-center gap-3 px-6 py-2
-                  rounded-xl border-2 font-bold shadow-sm
-                  transition-all transform hover:scale-105
-                  ${colorClass}
-                `}
-            >
-              <div class={`w-3 h-3 rounded-full ${dotColor}`} />
-
-              <span class="text-lg">
-                Jugador {playerId}: <span class="text-xl">{count}</span>
-              </span>
-            </div>
-          );
-        })}
+            return (
+              <div
+                key={playerId}
+                class={`
+                        flex items-center gap-3 px-6 py-2
+                        rounded-xl border-2 font-bold shadow-sm
+                        transition-all transform hover:scale-105
+                        ${colorClass}
+                      `}
+              >
+                <div class={`w-3 h-3 rounded-full ${dotColor}`} />
+                <span class="text-lg">
+                  Jugador {playerId}: <span class="text-xl">{count}</span>
+                </span>
+              </div>
+            );
+          })}
       </div>
 
       <div
@@ -80,23 +94,23 @@ export default function GameBoard({
           gap: "0.5rem",
         }}
       >
-        {Array.from({ length: rows }).map((_, rowIndex) =>
-          Array.from({ length: columns }).map((_, colIndex) => {
-            const index = rowIndex * columns + colIndex;
-            const cellData = boardState.value[index];
+        {boardSignals.map((cellSignal, index) => {
+          const rowIndex = Math.floor(index / columns);
+          const colIndex = index % columns;
 
-            return (
-              <Cell
-                key={`${rowIndex}-${colIndex}`}
-                row={rowIndex}
-                column={colIndex}
-                points={cellData.points}
-                player={cellData.player}
-                onClick={handleCellClick}
-              />
-            );
-          }),
-        )}
+          const cellData = cellSignal.value;
+
+          return (
+            <Cell
+              key={`${rowIndex}-${colIndex}`}
+              row={rowIndex}
+              column={colIndex}
+              points={cellData.points}
+              player={cellData.player}
+              onClick={handleCellClick}
+            />
+          );
+        })}
       </div>
     </div>
   );
