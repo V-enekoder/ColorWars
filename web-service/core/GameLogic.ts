@@ -8,6 +8,13 @@ interface Player {
   active: boolean;
 }
 
+const DIRECTIONS = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+] as const;
+
 export class GameEngine {
   rows: number;
   cols: number;
@@ -133,18 +140,42 @@ export class GameEngine {
     const idx = this.getIndex(r, c);
     const cell = this.board[idx];
 
+    const pointsToAdd = this.roundNumber === 1 ? this.critical_points - 1 : 1;
+
     cell.player = player;
-    const sum = this.roundNumber != 1 ? 1 : this.critical_points - 1;
-    cell.points += sum;
+    cell.points += pointsToAdd;
+
+    const q: number[][] = [];
 
     if (cell.points >= this.critical_points) {
       cell.points -= this.critical_points;
-      if (cell.points === 0) cell.player = 0;
+      cell.player = 0;
+      q.push([r, c]);
+    }
 
-      this.addOrb(r - 1, c, player);
-      this.addOrb(r + 1, c, player);
-      this.addOrb(r, c - 1, player);
-      this.addOrb(r, c + 1, player);
+    while (q.length > 0) {
+      const item = q.shift();
+      if (!item) continue;
+      const [cx, cy] = item;
+
+      for (const [dx, dy] of DIRECTIONS) {
+        const nx = cx + dx;
+        const ny = cy + dy;
+
+        if (!this.isValidCoord(nx, ny)) continue;
+
+        const nIdx = this.getIndex(nx, ny);
+        const neighbor = this.board[nIdx];
+
+        neighbor.player = player;
+        neighbor.points += 1;
+
+        if (neighbor.points >= this.critical_points) {
+          neighbor.points -= this.critical_points;
+          if (neighbor.points === 0) neighbor.player = 0;
+          q.push([nx, ny]);
+        }
+      }
     }
   }
 }
