@@ -1,25 +1,14 @@
-import { Head } from "fresh/runtime";
-import { define } from "../utils.ts";
-import GameBoard from "../islands/GameBoard.tsx";
-
-export default define.page(function Home(ctx) {
+export default function Home() {
   return (
-    <div class="px-4 py-8 mx-auto fresh-gradient min-h-screen">
-      <Head>
-        <title>Color Wars</title>
-      </Head>
-      <div class="max-w-screen-md mx-auto flex flex-col items-center justify-center">
-        <img
-          class="my-6"
-          src="/logo.svg"
-          width="128"
-          height="128"
-          alt="the Fresh logo"
-        />
-
-        <h1 class="text-4xl font-bold mb-8">Color Wars</h1>
-        <GameBoard rows={5} columns={5} critical_points={4} />
-      </div>
+    <div class="p-8">
+      <h1 class="text-4xl font-bold">Bienvenido a Color Wars</h1>
+      <p class="my-4">Haz clic abajo para navegar:</p>
+      <a
+        href="/game"
+        class="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      >
+        Jugar
+      </a>
     </div>
   );
-});
+}

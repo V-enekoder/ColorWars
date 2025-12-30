@@ -19,8 +19,6 @@ export const Cell = memo(function Cell({
   if (player === 1) colorClass = "bg-red-200";
   if (player === 2) colorClass = "bg-blue-200";
 
-  console.log(`Renderizando Celda: [${row}, ${column}]`);
-
   return (
     <button
       onClick={() => onClick(row, column)}
