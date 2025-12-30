@@ -2,6 +2,7 @@ import { useSignal, useComputed, signal, Signal } from "@preact/signals";
 import { useMemo } from "preact/hooks";
 import { Cell } from "../components/Cell.tsx";
 import { GameEngine, CellData } from "../core/GameLogic.ts";
+import { useCallback } from "preact/hooks";
 
 interface GameConfig {
   rows: number;
@@ -31,49 +32,52 @@ export default function GameBoard({
   const playerCounts = useSignal<[number, number][]>(engine.getCellsByPlayer());
   const isAnimating = useSignal(false);
 
-  const handleCellClick = async (row: number, col: number) => {
-    if (isAnimating.value || engine.winner !== 0) return;
+  const handleCellClick = useCallback(
+    async (row: number, col: number) => {
+      if (isAnimating.value || engine.winner !== 0) return;
 
-    const generator = engine.playGenerator(row, col);
+      const generator = engine.playGenerator(row, col);
 
-    let next = generator.next();
+      let next = generator.next();
 
-    if (next.done) {
-      console.warn("Movimiento inválido");
-      return;
-    }
-
-    isAnimating.value = true;
-
-    try {
-      let steps = 0;
-      while (!next.done) {
-        steps++;
-        const rawBoard = next.value;
-        boardSignals.forEach((sig, index) => {
-          const newCell = rawBoard[index];
-          const currentVal = sig.value;
-          if (
-            currentVal.points !== newCell.points ||
-            currentVal.player !== newCell.player
-          ) {
-            sig.value = { ...newCell };
-          }
-        });
-
-        playerCounts.value = engine.getCellsByPlayer();
-
-        const dynamicDelay = Math.max(30, 150 - steps * 5);
-        await delay(dynamicDelay);
-
-        next = generator.next();
+      if (next.done) {
+        console.warn("Movimiento inválido");
+        return;
       }
-    } finally {
-      currentPlayerId.value = engine.getCurrentPlayerId();
-      winner.value = engine.winner;
-      isAnimating.value = false;
-    }
-  };
+
+      isAnimating.value = true;
+
+      try {
+        let steps = 0;
+        while (!next.done) {
+          steps++;
+          const rawBoard = next.value;
+          boardSignals.forEach((sig, index) => {
+            const newCell = rawBoard[index];
+            const currentVal = sig.value;
+            if (
+              currentVal.points !== newCell.points ||
+              currentVal.player !== newCell.player
+            ) {
+              sig.value = { ...newCell };
+            }
+          });
+
+          playerCounts.value = engine.getCellsByPlayer();
+
+          const dynamicDelay = Math.max(30, 150 - steps * 5);
+          await delay(dynamicDelay);
+
+          next = generator.next();
+        }
+      } finally {
+        currentPlayerId.value = engine.getCurrentPlayerId();
+        winner.value = engine.winner;
+        isAnimating.value = false;
+      }
+    },
+    [engine],
+  );
 
   const message = useComputed(() => {
     return winner.value !== 0
