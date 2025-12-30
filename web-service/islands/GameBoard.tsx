@@ -51,7 +51,14 @@ export default function GameBoard({
         steps++;
         const rawBoard = next.value;
         boardSignals.forEach((sig, index) => {
-          sig.value = { ...rawBoard[index] };
+          const newCell = rawBoard[index];
+          const currentVal = sig.value;
+          if (
+            currentVal.points !== newCell.points ||
+            currentVal.player !== newCell.player
+          ) {
+            sig.value = { ...newCell };
+          }
         });
 
         playerCounts.value = engine.getCellsByPlayer();

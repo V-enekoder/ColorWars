@@ -141,11 +141,7 @@ export class GameEngine {
     const cell = this.board[idx];
 
     if (cell.player !== player) {
-      this.updateCellCount(player, 1);
-      if (cell.player !== 0) {
-        this.updateCellCount(cell.player, -1);
-      }
-      cell.player = player;
+      this.setCellOwner(cell, player);
     }
 
     const pointsToAdd = this.roundNumber === 1 ? this.critical_points - 1 : 1;
@@ -156,8 +152,7 @@ export class GameEngine {
     if (cell.points >= this.critical_points) {
       cell.points -= this.critical_points;
       if (cell.points === 0) {
-        cell.player = 0;
-        this.updateCellCount(player, -1);
+        this.setCellOwner(cell, 0);
       }
       q.push([r, c]);
     }
@@ -177,15 +172,9 @@ export class GameEngine {
 
         const nIdx = this.getIndex(nx, ny);
         const neighbor = this.board[nIdx];
-        const oldPlayer = neighbor.player;
 
-        if (oldPlayer !== player) {
-          neighbor.player = player;
-          this.updateCellCount(player, 1);
-
-          if (oldPlayer !== 0) {
-            this.updateCellCount(oldPlayer, -1);
-          }
+        if (neighbor.player !== player) {
+          this.setCellOwner(neighbor, player);
         }
 
         neighbor.points += 1;
@@ -194,8 +183,7 @@ export class GameEngine {
           neighbor.points -= this.critical_points;
 
           if (neighbor.points === 0) {
-            neighbor.player = 0;
-            this.updateCellCount(player, -1);
+            this.setCellOwner(neighbor, 0);
           }
 
           q.push([nx, ny]);
@@ -208,5 +196,20 @@ export class GameEngine {
   private updateCellCount(playerId: number, change: number) {
     const current = this.cellsByPlayer.get(playerId) || 0;
     this.cellsByPlayer.set(playerId, current + change);
+  }
+
+  private setCellOwner(cell: CellData, newPlayer: number) {
+    const oldPlayer = cell.player;
+
+    if (oldPlayer === newPlayer) return;
+
+    cell.player = newPlayer;
+
+    if (oldPlayer !== 0) {
+      this.updateCellCount(oldPlayer, -1);
+    }
+    if (newPlayer !== 0) {
+      this.updateCellCount(newPlayer, 1);
+    }
   }
 }
