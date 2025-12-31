@@ -3,7 +3,7 @@ import { useMemo } from "preact/hooks";
 import { Cell } from "../components/Cell.tsx";
 import { GameEngine, CellData } from "../core/GameLogic.ts";
 import { RandomBot } from "../core/AI.ts";
-import { useCallback, useEffect } from "preact/hooks";
+import { useCallback, useEffect, useRef } from "preact/hooks";
 import {
   GameConfig,
   GameMode,
@@ -29,6 +29,24 @@ export default function GameBoard({ config }: { config: GameConfig }) {
   const winner = useSignal(0);
   const playerCounts = useSignal<[number, number][]>(engine.getCellsByPlayer());
   const isAnimating = useSignal(false);
+  const isMounted = useRef(true);
+
+  const updateUI = useCallback(
+    (rawBoard: CellData[]) => {
+      boardSignals.forEach((sig, index) => {
+        const newCell = rawBoard[index];
+        const currentVal = sig.value;
+        if (
+          currentVal.points !== newCell.points ||
+          currentVal.player !== newCell.player
+        ) {
+          sig.value = { ...newCell };
+        }
+      });
+      playerCounts.value = engine.getCellsByPlayer();
+    },
+    [engine, boardSignals, playerCounts],
+  );
 
   const handleCellClick = useCallback(
     async (row: number, col: number) => {
@@ -49,47 +67,64 @@ export default function GameBoard({ config }: { config: GameConfig }) {
         let steps = 0;
         while (!next.done) {
           steps++;
-          const rawBoard = next.value;
-          boardSignals.forEach((sig, index) => {
-            const newCell = rawBoard[index];
-            const currentVal = sig.value;
-            if (
-              currentVal.points !== newCell.points ||
-              currentVal.player !== newCell.player
-            ) {
-              sig.value = { ...newCell };
-            }
-          });
+          const rawBoard: CellData[] = next.value;
+          updateUI(rawBoard);
 
-          playerCounts.value = engine.getCellsByPlayer();
+          if (engine.winner !== 0) break;
 
           const dynamicDelay = Math.max(30, 150 - steps * 5);
           await delay(dynamicDelay);
-
+          if (!isMounted.current) return;
           next = generator.next();
         }
       } finally {
-        currentPlayerId.value = engine.getCurrentPlayerId();
-        winner.value = engine.winner;
-        isAnimating.value = false;
+        if (isMounted.current) {
+          currentPlayerId.value = engine.getCurrentPlayerId();
+          winner.value = engine.winner;
+          isAnimating.value = false;
+        }
       }
     },
-    [engine],
+    [engine, updateUI],
   );
 
   useEffect(() => {
-    const typePlayer = players[engine.getCurrentPlayerId() - 1].type;
-    if (
-      typePlayer === AgentType.RandomAI &&
-      !isAnimating.value &&
-      mode != GameMode.HumanVsHuman
-    ) {
-      const move = RandomBot.getMove(engine);
-      if (move) handleCellClick(move.r, move.c);
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
-      if (GameMode.IAvsIA) delay(100);
-    }
-  }, [currentPlayerId.value, isAnimating.value]);
+  useEffect(() => {
+    if (winner.value !== 0 || isAnimating.value) return;
+
+    const currentPlayerIdx = engine.getCurrentPlayerId() - 1;
+    const playerConfig = players[currentPlayerIdx];
+
+    const runAI = async () => {
+      if (playerConfig?.type === AgentType.RandomAI) {
+        if (mode === GameMode.IAvsIA || mode === GameMode.HumanVsIA) {
+          await delay(600);
+        }
+
+        if (!isMounted.current) return;
+
+        const move = RandomBot.getMove(engine);
+        if (move) {
+          await handleCellClick(move.r, move.c);
+        }
+      }
+    };
+
+    runAI();
+  }, [
+    currentPlayerId.value,
+    isAnimating.value,
+    engine,
+    mode,
+    players,
+    handleCellClick,
+  ]);
 
   const message = useComputed(() => {
     return winner.value !== 0
