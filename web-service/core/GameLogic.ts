@@ -68,6 +68,10 @@ export class GameEngine {
     return r * this.cols + c;
   }
 
+  getRoundNumber(): number {
+    return this.roundNumber;
+  }
+
   isValidCoord(r: number, c: number): boolean {
     return r >= 0 && r < this.rows && c >= 0 && c < this.cols;
   }

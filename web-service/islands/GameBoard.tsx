@@ -2,25 +2,24 @@ import { useSignal, useComputed, signal, Signal } from "@preact/signals";
 import { useMemo } from "preact/hooks";
 import { Cell } from "../components/Cell.tsx";
 import { GameEngine, CellData } from "../core/GameLogic.ts";
-import { useCallback } from "preact/hooks";
+import { RandomBot } from "../core/AI.ts";
+import { useCallback, useEffect } from "preact/hooks";
+import { GameConfig } from "../utils/types.ts";
 
-interface GameConfig {
+/*interface GameConfig {
   rows: number;
   columns: number;
   critical_points: number;
-}
+}*/
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-export default function GameBoard({
-  rows,
-  columns,
-  critical_points,
-}: GameConfig) {
-  const engine = useMemo(
-    () => new GameEngine(rows, columns, critical_points, 2),
-    [rows, columns, critical_points],
-  );
+export default function GameBoard({ config }: { config: GameConfig }) {
+  const { mode, rows, cols, criticalPoints, num_players } = config;
+
+  const engine = useMemo(() => {
+    return new GameEngine(rows, cols, criticalPoints, num_players);
+  }, [rows, cols, criticalPoints, num_players]);
 
   const boardSignals: Signal<CellData>[] = useMemo(() => {
     const initialBoard = engine.getBoard();
@@ -79,6 +78,17 @@ export default function GameBoard({
     [engine],
   );
 
+  useEffect(() => {
+    if (
+      engine.getCurrentPlayerId() === 2 &&
+      !isAnimating.value &&
+      mode === "JvsIA"
+    ) {
+      const move = RandomBot.getMove(engine);
+      if (move) handleCellClick(move.r, move.c);
+    }
+  }, [currentPlayerId.value, isAnimating.value]);
+
   const message = useComputed(() => {
     return winner.value !== 0
       ? `¡Ganó el jugador ${winner.value}!`
@@ -122,13 +132,13 @@ export default function GameBoard({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${columns}, min-content)`,
+          gridTemplateColumns: `repeat(${cols}, min-content)`,
           gap: "0.5rem",
         }}
       >
         {boardSignals.map((cellSignal, index) => {
-          const rowIndex = Math.floor(index / columns);
-          const colIndex = index % columns;
+          const rowIndex = Math.floor(index / cols);
+          const colIndex = index % cols;
 
           const cellData = cellSignal.value;
 
