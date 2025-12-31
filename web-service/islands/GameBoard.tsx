@@ -5,6 +5,7 @@ import { GameEngine, CellData } from "../core/GameLogic.ts";
 import { RandomBot } from "../core/AI.ts";
 import { useCallback, useEffect } from "preact/hooks";
 import { GameConfig } from "../utils/types.ts";
+import { GameMode } from "../utils/types.ts";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -76,7 +77,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
     if (
       engine.getCurrentPlayerId() === 2 &&
       !isAnimating.value &&
-      mode === "JvsIA"
+      mode === GameMode.HumanVsIA
     ) {
       const move = RandomBot.getMove(engine);
       if (move) handleCellClick(move.r, move.c);

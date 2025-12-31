@@ -28,7 +28,6 @@ export default function Home() {
   return (
     <div class="min-h-screen bg-slate-50 text-slate-900 font-sans">
       <div class="max-w-4xl mx-auto px-6 py-20 flex flex-col items-center">
-        {/* Logo y Título */}
         <div class="mb-16 text-center">
           <div class="inline-block p-4 bg-white rounded-3xl shadow-sm border border-slate-200 mb-6">
             <img src="/logo.svg" width="80" height="80" alt="Color Wars Logo" />
@@ -41,7 +40,6 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Rejilla de Modos de Juego */}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
           {gameOptions.map((option) => (
             <a
@@ -66,7 +64,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Footer simple */}
         <footer class="mt-20 text-slate-400 text-xs font-medium uppercase tracking-[0.2em]">
           Deno Fresh × Color Wars Engine
         </footer>
