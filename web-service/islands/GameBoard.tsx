@@ -109,13 +109,11 @@ export default function GameBoard({ config }: { config: GameConfig }) {
   });
 
   return (
-    /* Eliminado bg-slate-50, ahora es blanco puro */
     <div class="flex flex-col items-center gap-4 p-4 min-h-screen bg-white">
       <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">
         {message}
       </h2>
 
-      {/* Marcador con ranking dinámico */}
       <div class="flex flex-wrap justify-center gap-6 mb-8">
         {[...playerCounts.value]
           .filter(([id]) => id !== 0)
@@ -163,12 +161,11 @@ export default function GameBoard({ config }: { config: GameConfig }) {
           })}
       </div>
 
-      {/* TABLERO: Eliminado el fondo gris/verde interno */}
       <div
         style={{
           display: "grid",
           gridTemplateColumns: `repeat(${cols}, min-content)`,
-          gap: "0.4rem", // Espacio entre celdas
+          gap: "0.4rem",
         }}
       >
         {boardSignals.map((cellSignal, index) => {
