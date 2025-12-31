@@ -139,12 +139,6 @@ export default function GameBoard({ config }: { config: GameConfig }) {
                   <span class="truncate max-w-[100px]">{playerName}</span>
                 </span>
                 <div class="text-3xl ml-2 font-black">{count}</div>
-                {isActive && (
-                  <div
-                    class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px]"
-                    style={{ borderTopColor: color }}
-                  />
-                )}
               </div>
             );
           })}
