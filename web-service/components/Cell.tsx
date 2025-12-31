@@ -32,6 +32,9 @@ export const Cell = memo(function Cell({
 }: CellProps) {
   const color = PLAYER_COLOR_MAP[player] || "#94a3b8";
 
+  const intensity = points / 4;
+  isCritical = points === 4 - 1;
+
   const renderAtoms = () => {
     if (points === 0) return null;
 
@@ -79,29 +82,22 @@ export const Cell = memo(function Cell({
   return (
     <button
       onClick={() => onClick(row, column)}
-      class={`
-          w-14 h-14 border-2 rounded-xl
-          flex items-center justify-center transition-all duration-300
-          hover:scale-110 active:scale-95
-          ${
-            isCritical
-              ? "animate-pulse border-white z-10"
-              : "border-gray-700/20 shadow-sm"
-          }
-        `}
+      class="w-14 h-14 rounded-xl border-2 flex items-center justify-center transition-colors duration-200 relative"
       style={{
         backgroundColor: color,
-        boxShadow: isCritical
-          ? `0 0 20px ${color}, inset 0 0 10px rgba(255,255,255,0.5)`
-          : points > 0
-            ? `inset 0 0 12px rgba(0,0,0,0.1)`
+
+        filter: points > 0 ? `brightness(${0.9 + intensity * 0.4})` : "none",
+
+        boxShadow:
+          points > 0
+            ? `inset 0 2px 4px rgba(255,255,255,0.4),
+               inset 0 -2px 4px rgba(0,0,0,0.2)
+               ${isCritical ? `, 0 0 12px ${color}` : ""}`
             : "none",
-        transform: isCritical ? "scale(1.1)" : "scale(1)",
+        borderColor: `rgba(0,0,0,${0.1 + intensity * 0.3})`,
       }}
     >
-      <div class="relative w-full h-full flex items-center justify-center">
-        {renderAtoms()}
-      </div>
+      {renderAtoms()}
     </button>
   );
 });
