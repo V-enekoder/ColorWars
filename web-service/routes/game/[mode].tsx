@@ -1,12 +1,14 @@
-import { Head } from "@fresh/core";
-import { define } from "../utils.ts";
-import GameBoard from "../islands/GameBoard.tsx";
+import { Head } from "fresh/runtime";
+import { define } from "../../utils.ts";
+import GameBoard from "../../islands/GameBoard.tsx";
 
 export default define.page(function Game(ctx) {
+  const { mode } = ctx.params;
+
   return (
     <div class="px-4 py-8 mx-auto fresh-gradient min-h-screen">
       <Head>
-        <title>Color Wars</title>
+        <title>Color Wars en modo {mode}</title>
       </Head>
       <div class="max-w-screen-md mx-auto flex flex-col items-center justify-center">
         <img
