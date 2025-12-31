@@ -7,6 +7,7 @@ export interface CellProps {
   points: number;
   player: number;
   onClick: (r: number, c: number) => void;
+  isCritical: boolean;
 }
 
 const PLAYER_COLOR_MAP: string[] = [
@@ -27,6 +28,7 @@ export const Cell = memo(function Cell({
   onClick,
   row,
   column,
+  isCritical,
 }: CellProps) {
   const color = PLAYER_COLOR_MAP[player] || "#94a3b8";
 
@@ -78,13 +80,19 @@ export const Cell = memo(function Cell({
     <button
       onClick={() => onClick(row, column)}
       class={`
-        w-14 h-14 border-2 border-gray-700/20 rounded-lg
-        flex items-center justify-center transition-all duration-200
-        hover:scale-105 active:scale-95
-      `}
+          w-14 h-14 border-2 rounded-lg
+          flex items-center justify-center transition-all duration-300
+          hover:scale-110 active:scale-95
+          ${isCritical ? "animate-pulse border-white" : "border-gray-700/20"}
+        `}
       style={{
         backgroundColor: color,
-        boxShadow: points > 0 ? `inset 0 0 12px rgba(0,0,0,0.15)` : "none",
+        boxShadow: isCritical
+          ? `0 0 15px white, inset 0 0 10px rgba(0,0,0,0.2)`
+          : points > 0
+            ? `inset 0 0 12px rgba(0,0,0,0.1)`
+            : "none",
+        transform: isCritical ? "scale(1.05)" : "scale(1)",
       }}
     >
       {renderAtoms()}

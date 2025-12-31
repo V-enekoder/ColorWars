@@ -107,56 +107,54 @@ export default function GameBoard({ config }: { config: GameConfig }) {
       ? `¡Ganó el jugador ${winner.value}!`
       : `Turno: Jugador ${currentPlayerId.value}`;
   });
-  return (
-    <div class="flex flex-col items-center gap-4 p-4">
-      <h2 class="text-2xl font-bold">{message}</h2>
 
-      <div class="flex flex-wrap justify-center gap-6 mb-6">
-        {playerCounts.value
+  return (
+    /* Eliminado bg-slate-50, ahora es blanco puro */
+    <div class="flex flex-col items-center gap-4 p-4 min-h-screen bg-white">
+      <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">
+        {message}
+      </h2>
+
+      {/* Marcador con ranking dinámico */}
+      <div class="flex flex-wrap justify-center gap-6 mb-8">
+        {[...playerCounts.value]
           .filter(([id]) => id !== 0)
-          .sort((a, b) => a[0] - b[0])
+          .sort((a, b) => b[1] - a[1])
           .map(([playerId, count]) => {
             const playerInfo = players.find((p) => p.id === playerId);
             const playerName = playerInfo
               ? playerInfo.name
               : `Jugador ${playerId}`;
-            const color = PLAYER_COLOR_MAP[playerId] || PlayerColor.Gray;
-
+            const color = PLAYER_COLOR_MAP[playerId] || "#cbd5e1";
             const isActive = playerId === currentPlayerId.value;
 
             return (
               <div
                 key={playerId}
                 class={`
-                  relative flex items-center gap-3 px-6 py-2 rounded-xl border-2
+                  relative flex items-center gap-4 px-6 py-3 rounded-2xl border-2
                   font-bold transition-all duration-500 transform
-                  ${isActive ? "scale-110 z-10" : "scale-100 opacity-60"}
+                  ${isActive ? "scale-110 z-10 shadow-lg" : "scale-100 opacity-40"}
                 `}
                 style={{
                   borderColor: color,
-                  backgroundColor: `${color}${isActive ? "30" : "05"}`,
+                  backgroundColor: `${color}${isActive ? "20" : "05"}`,
                   color: color,
-                  boxShadow: isActive ? `0 0 20px ${color}60` : "none",
                 }}
               >
-                <div
-                  class={`w-3 h-3 rounded-full ${isActive ? "animate-ping" : ""}`}
-                  style={{ backgroundColor: color }}
-                />
-
+                <div class="text-xl">
+                  {playerInfo?.type === "bot" ? "🤖" : "👤"}
+                </div>
                 <span class="text-lg flex flex-col leading-tight">
-                  <span class="text-xs uppercase tracking-widest opacity-70">
-                    {playerInfo?.type === "bot" ? "🤖 Bot" : "👤 Humano"}
+                  <span class="text-[10px] uppercase tracking-widest opacity-60">
+                    {playerInfo?.type === "bot" ? "Sistema IA" : "Humano"}
                   </span>
-                  {playerName}: <span class="text-xl">{count}</span>
+                  <span class="truncate max-w-[100px]">{playerName}</span>
                 </span>
-
+                <div class="text-3xl ml-2 font-black">{count}</div>
                 {isActive && (
                   <div
-                    class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0
-                        border-l-[8px] border-l-transparent
-                        border-r-[8px] border-r-transparent
-                        border-t-[8px]"
+                    class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px]"
                     style={{ borderTopColor: color }}
                   />
                 )}
@@ -165,17 +163,20 @@ export default function GameBoard({ config }: { config: GameConfig }) {
           })}
       </div>
 
+      {/* TABLERO: Eliminado el fondo gris/verde interno */}
       <div
         style={{
           display: "grid",
           gridTemplateColumns: `repeat(${cols}, min-content)`,
-          gap: "0.5rem",
+          gap: "0.4rem", // Espacio entre celdas
         }}
       >
         {boardSignals.map((cellSignal, index) => {
           const rowIndex = Math.floor(index / cols);
           const colIndex = index % cols;
           const cellData = cellSignal.value;
+          const limit = criticalPoints[index];
+          const isCritical = cellData.points === limit - 1;
 
           return (
             <Cell
@@ -184,6 +185,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
               column={colIndex}
               points={cellData.points}
               player={cellData.player}
+              isCritical={isCritical}
               onClick={handleCellClick}
             />
           );
