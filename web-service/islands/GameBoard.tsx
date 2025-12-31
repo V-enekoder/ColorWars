@@ -190,7 +190,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
           const rowIndex = Math.floor(index / cols);
           const colIndex = index % cols;
           const cellData = cellSignal.value;
-          const limit = criticalPoints[index];
+          const limit = engine.critical_points;
           const isCritical = cellData.points === limit - 1;
 
           return (

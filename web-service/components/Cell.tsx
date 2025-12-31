@@ -80,22 +80,28 @@ export const Cell = memo(function Cell({
     <button
       onClick={() => onClick(row, column)}
       class={`
-          w-14 h-14 border-2 rounded-lg
+          w-14 h-14 border-2 rounded-xl
           flex items-center justify-center transition-all duration-300
           hover:scale-110 active:scale-95
-          ${isCritical ? "animate-pulse border-white" : "border-gray-700/20"}
+          ${
+            isCritical
+              ? "animate-pulse border-white z-10"
+              : "border-gray-700/20 shadow-sm"
+          }
         `}
       style={{
         backgroundColor: color,
         boxShadow: isCritical
-          ? `0 0 15px white, inset 0 0 10px rgba(0,0,0,0.2)`
+          ? `0 0 20px ${color}, inset 0 0 10px rgba(255,255,255,0.5)`
           : points > 0
             ? `inset 0 0 12px rgba(0,0,0,0.1)`
             : "none",
-        transform: isCritical ? "scale(1.05)" : "scale(1)",
+        transform: isCritical ? "scale(1.1)" : "scale(1)",
       }}
     >
-      {renderAtoms()}
+      <div class="relative w-full h-full flex items-center justify-center">
+        {renderAtoms()}
+      </div>
     </button>
   );
 });
