@@ -26,6 +26,7 @@ export class GameEngine {
   roundNumber: number = 1;
   winner: number = 0;
   cellsByPlayer: Map<number, number> = new Map<number, number>();
+  private neighbors: number[][];
 
   constructor(
     rows: number,
@@ -48,6 +49,22 @@ export class GameEngine {
     }));
 
     this.players.forEach((p) => this.cellsByPlayer.set(p.id, 0));
+
+    this.neighbors = new Array(rows * cols);
+
+    for (let i = 0; i < rows * cols; i++) {
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      const valid: number[] = [];
+      for (const [dx, dy] of DIRECTIONS) {
+        const nx = row + dx;
+        const ny = col + dy;
+        if (nx >= 0 && nx < rows && ny >= 0 && ny < cols) {
+          valid.push(nx * cols + ny);
+        }
+      }
+      this.neighbors[i] = valid;
+    }
   }
 
   getBoard(): CellData[] {
@@ -151,47 +168,35 @@ export class GameEngine {
     const pointsToAdd = this.roundNumber === 1 ? this.critical_points - 1 : 1;
     cell.points += pointsToAdd;
 
-    const q: number[][] = [];
+    const q: number[] = [];
 
     if (cell.points >= this.critical_points) {
       cell.points -= this.critical_points;
       if (cell.points === 0) {
         this.setCellOwner(cell, 0);
       }
-      q.push([r, c]); //Cambiar cola por indices para aplanar
+      q.push(idx);
     }
 
     yield this.getBoard();
 
     while (q.length > 0) {
-      const item = q.shift();
-      if (!item) continue;
-      const [cx, cy] = item;
+      const currIdx = q.shift();
+      if (currIdx === undefined) continue;
 
-      for (const [dx, dy] of DIRECTIONS) {
-        //Precalcular vecinos
-        const nx = cx + dx;
-        const ny = cy + dy;
+      const currentNeighbors = this.neighbors[currIdx];
 
-        if (!this.isValidCoord(nx, ny)) continue;
-
-        const nIdx = this.getIndex(nx, ny);
+      for (const nIdx of currentNeighbors) {
         const neighbor = this.board[nIdx];
 
-        if (neighbor.player !== player) {
-          this.setCellOwner(neighbor, player);
-        }
+        if (neighbor.player !== player) this.setCellOwner(neighbor, player);
 
         neighbor.points += 1;
 
         if (neighbor.points >= this.critical_points) {
           neighbor.points -= this.critical_points;
-
-          if (neighbor.points === 0) {
-            this.setCellOwner(neighbor, 0);
-          }
-
-          q.push([nx, ny]);
+          if (neighbor.points === 0) this.setCellOwner(neighbor, 0);
+          q.push(nIdx);
         }
       }
       yield this.getBoard();
