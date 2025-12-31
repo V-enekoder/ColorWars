@@ -82,23 +82,12 @@ export default function GameBoard({ config }: { config: GameConfig }) {
     if (
       typePlayer === AgentType.RandomAI &&
       !isAnimating.value &&
-      mode === GameMode.HumanVsIA
+      mode != GameMode.HumanVsHuman
     ) {
       const move = RandomBot.getMove(engine);
       if (move) handleCellClick(move.r, move.c);
-    }
-  }, [currentPlayerId.value, isAnimating.value]);
 
-  useEffect(() => {
-    const typePlayer = players[engine.getCurrentPlayerId() - 1].type;
-    if (
-      typePlayer === AgentType.RandomAI &&
-      !isAnimating.value &&
-      mode === GameMode.IAvsIA
-    ) {
-      const move = RandomBot.getMove(engine);
-      if (move) handleCellClick(move.r, move.c);
-      delay(100);
+      if (GameMode.IAvsIA) delay(100);
     }
   }, [currentPlayerId.value, isAnimating.value]);
 

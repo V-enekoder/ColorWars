@@ -15,7 +15,7 @@ export default define.page(function Game(ctx) {
       cols: Number(searchParams.get("cols")) || 10,
       criticalPoints: Number(searchParams.get("cp")) || 4,
       players: [
-        { id: 1, name: "Victor", type: AgentType.HeuristicAI },
+        { id: 1, name: "Victor", type: AgentType.RandomAI },
         { id: 2, name: "Random Bot", type: AgentType.RandomAI },
         { id: 3, name: "Random Bot", type: AgentType.RandomAI },
       ],
