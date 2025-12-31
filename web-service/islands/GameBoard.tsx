@@ -202,6 +202,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
               player={cellData.player}
               isCritical={isCritical}
               onClick={handleCellClick}
+              limit={engine.critical_points}
             />
           );
         })}

@@ -8,6 +8,7 @@ export interface CellProps {
   player: number;
   onClick: (r: number, c: number) => void;
   isCritical: boolean;
+  limit: number;
 }
 
 const PLAYER_COLOR_MAP: string[] = [
@@ -29,11 +30,12 @@ export const Cell = memo(function Cell({
   row,
   column,
   isCritical,
+  limit,
 }: CellProps) {
   const color = PLAYER_COLOR_MAP[player] || "#94a3b8";
 
-  const intensity = points / 4;
-  isCritical = points === 4 - 1;
+  const intensity = points / limit;
+  isCritical = points === limit - 1;
 
   const renderAtoms = () => {
     if (points === 0) return null;
