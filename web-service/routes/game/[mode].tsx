@@ -25,7 +25,6 @@ export default define.page(function Game(ctx) {
         <title>Color Wars | {config.mode}</title>
       </Head>
 
-      {/* Fondo sutil con un degradado muy suave */}
       <div class="fixed inset-0 bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/50 pointer-events-none"></div>
 
       <div class="relative z-10 max-w-5xl mx-auto px-6 py-10 flex flex-col min-h-screen">

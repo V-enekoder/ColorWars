@@ -84,6 +84,14 @@ export default function GameBoard({ config }: { config: GameConfig }) {
     }
   }, [currentPlayerId.value, isAnimating.value]);
 
+  useEffect(() => {
+    if (!isAnimating.value && mode === GameMode.IAvsIA) {
+      const move = RandomBot.getMove(engine);
+      if (move) handleCellClick(move.r, move.c);
+      delay(100);
+    }
+  }, [currentPlayerId.value, isAnimating.value]);
+
   const message = useComputed(() => {
     return winner.value !== 0
       ? `¡Ganó el jugador ${winner.value}!`
