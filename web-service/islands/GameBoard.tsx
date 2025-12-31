@@ -4,17 +4,21 @@ import { Cell } from "../components/Cell.tsx";
 import { GameEngine, CellData } from "../core/GameLogic.ts";
 import { RandomBot } from "../core/AI.ts";
 import { useCallback, useEffect } from "preact/hooks";
-import { GameConfig } from "../utils/types.ts";
-import { GameMode } from "../utils/types.ts";
+import {
+  GameConfig,
+  GameMode,
+  AgentType,
+  PLAYER_COLOR_MAP,
+} from "../utils/types.ts";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export default function GameBoard({ config }: { config: GameConfig }) {
-  const { mode, rows, cols, criticalPoints, num_players } = config;
+  const { mode, rows, cols, criticalPoints, players } = config;
 
   const engine = useMemo(() => {
-    return new GameEngine(rows, cols, criticalPoints, num_players);
-  }, [rows, cols, criticalPoints, num_players]);
+    return new GameEngine(rows, cols, criticalPoints, players.length);
+  }, [rows, cols, criticalPoints, players.length]);
 
   const boardSignals: Signal<CellData>[] = useMemo(() => {
     const initialBoard = engine.getBoard();
@@ -74,8 +78,9 @@ export default function GameBoard({ config }: { config: GameConfig }) {
   );
 
   useEffect(() => {
+    const typePlayer = players[engine.getCurrentPlayerId() - 1].type;
     if (
-      engine.getCurrentPlayerId() === 2 &&
+      typePlayer === AgentType.RandomAI &&
       !isAnimating.value &&
       mode === GameMode.HumanVsIA
     ) {
@@ -85,7 +90,12 @@ export default function GameBoard({ config }: { config: GameConfig }) {
   }, [currentPlayerId.value, isAnimating.value]);
 
   useEffect(() => {
-    if (!isAnimating.value && mode === GameMode.IAvsIA) {
+    const typePlayer = players[engine.getCurrentPlayerId() - 1].type;
+    if (
+      typePlayer === AgentType.RandomAI &&
+      !isAnimating.value &&
+      mode === GameMode.IAvsIA
+    ) {
       const move = RandomBot.getMove(engine);
       if (move) handleCellClick(move.r, move.c);
       delay(100);
@@ -97,36 +107,59 @@ export default function GameBoard({ config }: { config: GameConfig }) {
       ? `¡Ganó el jugador ${winner.value}!`
       : `Turno: Jugador ${currentPlayerId.value}`;
   });
-
   return (
     <div class="flex flex-col items-center gap-4 p-4">
       <h2 class="text-2xl font-bold">{message}</h2>
 
-      <div class="flex gap-4 mb-4">
+      <div class="flex flex-wrap justify-center gap-6 mb-6">
         {playerCounts.value
           .filter(([id]) => id !== 0)
           .sort((a, b) => a[0] - b[0])
           .map(([playerId, count]) => {
-            const isP1 = playerId === 1;
-            const colorClass = isP1
-              ? "bg-red-100 border-red-300 text-red-800"
-              : "bg-blue-100 border-blue-300 text-blue-800";
-            const dotColor = isP1 ? "bg-red-500" : "bg-blue-500";
+            const playerInfo = players.find((p) => p.id === playerId);
+            const playerName = playerInfo
+              ? playerInfo.name
+              : `Jugador ${playerId}`;
+            const color = PLAYER_COLOR_MAP[playerId] || PlayerColor.Gray;
+
+            const isActive = playerId === currentPlayerId.value;
 
             return (
               <div
                 key={playerId}
                 class={`
-                        flex items-center gap-3 px-6 py-2
-                        rounded-xl border-2 font-bold shadow-sm
-                        transition-all transform hover:scale-105
-                        ${colorClass}
-                      `}
+                  relative flex items-center gap-3 px-6 py-2 rounded-xl border-2
+                  font-bold transition-all duration-500 transform
+                  ${isActive ? "scale-110 z-10" : "scale-100 opacity-60"}
+                `}
+                style={{
+                  borderColor: color,
+                  backgroundColor: `${color}${isActive ? "30" : "05"}`,
+                  color: color,
+                  boxShadow: isActive ? `0 0 20px ${color}60` : "none",
+                }}
               >
-                <div class={`w-3 h-3 rounded-full ${dotColor}`} />
-                <span class="text-lg">
-                  Jugador {playerId}: <span class="text-xl">{count}</span>
+                <div
+                  class={`w-3 h-3 rounded-full ${isActive ? "animate-ping" : ""}`}
+                  style={{ backgroundColor: color }}
+                />
+
+                <span class="text-lg flex flex-col leading-tight">
+                  <span class="text-xs uppercase tracking-widest opacity-70">
+                    {playerInfo?.type === "bot" ? "🤖 Bot" : "👤 Humano"}
+                  </span>
+                  {playerName}: <span class="text-xl">{count}</span>
                 </span>
+
+                {isActive && (
+                  <div
+                    class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0
+                        border-l-[8px] border-l-transparent
+                        border-r-[8px] border-r-transparent
+                        border-t-[8px]"
+                    style={{ borderTopColor: color }}
+                  />
+                )}
               </div>
             );
           })}
@@ -142,7 +175,6 @@ export default function GameBoard({ config }: { config: GameConfig }) {
         {boardSignals.map((cellSignal, index) => {
           const rowIndex = Math.floor(index / cols);
           const colIndex = index % cols;
-
           const cellData = cellSignal.value;
 
           return (

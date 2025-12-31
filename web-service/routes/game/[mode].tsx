@@ -1,7 +1,8 @@
 import { Head } from "fresh/runtime";
 import { define } from "../../utils.ts";
-import { GameConfig } from "../../utils/types.ts";
+import { AgentType, GameConfig } from "../../utils/types.ts";
 import GameBoard from "../../islands/GameBoard.tsx";
+import { Agent } from "http";
 
 export default define.page(function Game(ctx) {
   const { mode } = ctx.params;
@@ -10,10 +11,14 @@ export default define.page(function Game(ctx) {
   const getConfig = (): GameConfig => {
     return {
       mode: mode,
-      rows: Number(searchParams.get("rows")) || 6,
-      cols: Number(searchParams.get("cols")) || 6,
+      rows: Number(searchParams.get("rows")) || 10,
+      cols: Number(searchParams.get("cols")) || 10,
       criticalPoints: Number(searchParams.get("cp")) || 4,
-      num_players: Number(searchParams.get("num_players")) || 2,
+      players: [
+        { id: 1, name: "Victor", type: AgentType.HeuristicAI },
+        { id: 2, name: "Random Bot", type: AgentType.RandomAI },
+        { id: 3, name: "Random Bot", type: AgentType.RandomAI },
+      ],
     };
   };
 
@@ -32,7 +37,7 @@ export default define.page(function Game(ctx) {
           <div class="flex items-center gap-5">
             <a
               href="/"
-              class="group p-2.5 rounded-xl bg-white hover:bg-slate-100 transition-all border border-slate-200 shadow-sm"
+              class="group p-2.5 rounded-xl bg-white hover:bg-slate-10 transition-all border border-slate-200 shadow-sm"
               title="Volver al menú"
             >
               <svg
@@ -66,7 +71,7 @@ export default define.page(function Game(ctx) {
         </header>
 
         <main class="flex-grow flex items-center justify-center">
-          <div class="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-xl shadow-slate-200/60 transition-transform hover:scale-[1.01]">
+          <div class="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-xl shadow-slate-200/60 transition-transform">
             <GameBoard config={config} />
           </div>
         </main>
