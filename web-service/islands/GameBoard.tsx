@@ -6,12 +6,6 @@ import { RandomBot } from "../core/AI.ts";
 import { useCallback, useEffect } from "preact/hooks";
 import { GameConfig } from "../utils/types.ts";
 
-/*interface GameConfig {
-  rows: number;
-  columns: number;
-  critical_points: number;
-}*/
-
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export default function GameBoard({ config }: { config: GameConfig }) {

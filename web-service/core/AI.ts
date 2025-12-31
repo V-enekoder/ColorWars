@@ -1,4 +1,4 @@
-import { GameEngine } from "GameLogic.ts";
+import { GameEngine } from "./GameLogic.ts";
 
 export class RandomBot {
   static getMove(engine: GameEngine): { r: number; c: number } | null {
