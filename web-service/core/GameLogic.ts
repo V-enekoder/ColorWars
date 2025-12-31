@@ -106,6 +106,19 @@ export class GameEngine {
 
     if (!isValid) return;
 
+    if (this.roundNumber === 1 && cell.player === 0) {
+      const neighborIndices = this.neighbors[idx];
+
+      for (const nIdx of neighborIndices) {
+        const neighbor = this.board[nIdx];
+        if (neighbor.player !== 0 && neighbor.player !== currentPlayer) {
+          console.warn(
+            "Movimiento inválido: No puedes jugar adyacente a un enemigo en el primer turno.",
+          );
+          return;
+        }
+      }
+    }
     yield* this.addOrb(r, c, currentPlayer);
 
     if (this.roundNumber > 1) {
