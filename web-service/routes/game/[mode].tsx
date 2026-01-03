@@ -1,6 +1,6 @@
 import { Head } from "fresh/runtime";
 import { define } from "../../utils.ts";
-import { AgentType, GameConfig } from "../../utils/types.ts";
+import { AgentType, GameConfig, RulesOptions } from "../../utils/types.ts";
 import GameBoard from "../../islands/GameBoard.tsx";
 
 export default define.page(function Game(ctx) {
@@ -15,8 +15,9 @@ export default define.page(function Game(ctx) {
       criticalPoints: Number(searchParams.get("cp")) || 4,
       players: [
         { id: 1, name: "Victor", type: AgentType.Human },
-        { id: 2, name: "Random Bot", type: AgentType.Human },
+        { id: 2, name: "Random Bot", type: AgentType.RandomAI },
       ],
+      rule: RulesOptions.OnlyOwnOrbs,
     };
   };
 

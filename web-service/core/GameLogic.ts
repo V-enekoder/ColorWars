@@ -1,3 +1,5 @@
+import { RulesOptions } from "../utils/types";
+
 export interface CellData {
   points: number;
   player: number;
@@ -41,16 +43,19 @@ export class GameEngine {
   cellsByPlayer: Map<number, number> = new Map<number, number>();
   private neighbors: number[][];
   private fullAdjacencies: number[][];
+  private playRule: RulesOptions;
 
   constructor(
     rows: number,
     cols: number,
     critical_points: number,
     num_players: number,
+    playRule: RulesOptions,
   ) {
     this.rows = rows;
     this.cols = cols;
     this.critical_points = critical_points;
+    this.playRule = playRule;
 
     this.players = Array.from({ length: num_players }, (_, i) => ({
       id: i + 1,
@@ -79,7 +84,7 @@ export class GameEngine {
         const nx = row + dx;
         const ny = col + dy;
         if (this.isValidCoord(nx, ny)) {
-          valid.push(nx * this.cols + ny);
+          valid.push(this.getIndex(nx, ny));
         }
       }
       neighbors[i] = valid;
@@ -91,33 +96,19 @@ export class GameEngine {
     return r >= 0 && r < this.rows && c >= 0 && c < this.cols;
   }
 
+  getIndex(r: number, c: number): number {
+    return r * this.cols + c;
+  }
+
   *playGenerator(r: number, c: number): Generator<CellData[]> {
     if (this.winner !== 0) return;
 
     const currentPlayer = this.getCurrentPlayerId();
     const idx = this.getIndex(r, c);
-    const cell = this.board[idx];
 
-    const isValid =
-      (cell.player === 0 && this.roundNumber === 1) ||
-      cell.player === currentPlayer;
+    if (!this.isLegalMove(idx, currentPlayer)) return;
 
-    if (!isValid) return;
-
-    if (this.roundNumber === 1 && cell.player === 0) {
-      const neighborIndices = this.fullAdjacencies[idx];
-
-      for (const nIdx of neighborIndices) {
-        const neighbor = this.board[nIdx];
-        if (neighbor.player !== 0 && neighbor.player !== currentPlayer) {
-          console.warn(
-            "Movimiento inválido: No puedes jugar adyacente a un enemigo en el primer turno.",
-          );
-          return;
-        }
-      }
-    }
-    yield* this.addOrb(r, c, currentPlayer);
+    yield* this.addOrb(idx, currentPlayer);
 
     if (this.roundNumber > 1) {
       this.checkEliminations();
@@ -127,18 +118,53 @@ export class GameEngine {
     yield this.getBoard();
   }
 
-  private *addOrb(r: number, c: number, player: number): Generator<CellData[]> {
-    if (!this.isValidCoord(r, c)) return;
+  getCurrentPlayerId(): number {
+    return this.players[this.currentPlayerIndex].id;
+  }
 
-    const idx = this.getIndex(r, c);
+  private isLegalMove(idx: number, currentPlayerId: number): boolean {
     const cell = this.board[idx];
+    let passRule = false;
 
-    if (cell.player !== player) {
-      this.setCellOwner(cell, player);
+    switch (this.playRule) {
+      case RulesOptions.OnlyOwnOrbs:
+        passRule =
+          (cell.player === 0 && this.roundNumber === 1) ||
+          cell.player === currentPlayerId;
+        break;
+
+      case RulesOptions.EmptyAndOwnOrbs:
+        passRule = cell.player === 0 || cell.player === currentPlayerId;
+        break;
+
+      default:
+        passRule = false;
     }
 
-    const pointsToAdd = this.roundNumber === 1 ? this.critical_points - 1 : 1;
-    cell.points += pointsToAdd;
+    if (passRule && this.roundNumber === 1 && cell.player === 0) {
+      const neighborIndices = this.fullAdjacencies[idx];
+
+      for (const nIdx of neighborIndices) {
+        const neighbor = this.board[nIdx];
+        if (neighbor.player !== 0 && neighbor.player !== currentPlayerId) {
+          console.warn(
+            "No puedes jugar adyacente a un enemigo en el primer turno.",
+          );
+          passRule = false;
+          break;
+        }
+      }
+    }
+
+    return passRule;
+  }
+
+  private *addOrb(idx: number, player: number): Generator<CellData[]> {
+    const cell = this.board[idx];
+
+    this.setCellOwner(cell, player);
+
+    cell.points += this.getPointsToAdd();
 
     const q: number[] = [];
 
@@ -172,6 +198,17 @@ export class GameEngine {
         }
       }
       yield this.getBoard();
+    }
+  }
+
+  private getPointsToAdd(): number {
+    const isFirstRound = this.roundNumber === 1;
+
+    switch (this.playRule) {
+      case RulesOptions.OnlyOwnOrbs:
+        return isFirstRound ? this.critical_points - 1 : 1;
+      default:
+        return 1;
     }
   }
 
@@ -227,14 +264,6 @@ export class GameEngine {
       !this.players[this.currentPlayerIndex].active &&
       attempts < this.players.length * 2
     );
-  }
-
-  getCurrentPlayerId(): number {
-    return this.players[this.currentPlayerIndex].id;
-  }
-
-  getIndex(r: number, c: number): number {
-    return r * this.cols + c;
   }
 
   getBoard(): CellData[] {

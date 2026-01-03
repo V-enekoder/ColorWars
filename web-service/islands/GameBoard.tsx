@@ -14,10 +14,10 @@ import {
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export default function GameBoard({ config }: { config: GameConfig }) {
-  const { mode, rows, cols, criticalPoints, players } = config;
+  const { mode, rows, cols, criticalPoints, players, rule } = config;
 
   const engine = useMemo(() => {
-    return new GameEngine(rows, cols, criticalPoints, players.length);
+    return new GameEngine(rows, cols, criticalPoints, players.length, rule);
   }, [rows, cols, criticalPoints, players.length]);
 
   const boardSignals: Signal<CellData>[] = useMemo(() => {
