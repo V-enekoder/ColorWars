@@ -197,6 +197,8 @@ export class GameEngine {
           q.push(nIdx);
         }
       }
+      this.checkEliminations();
+      if (this.winner !== 0) break;
       yield this.getBoard();
     }
   }
