@@ -78,7 +78,7 @@ export class GameEngine {
       for (const [dx, dy] of list) {
         const nx = row + dx;
         const ny = col + dy;
-        if (nx >= 0 && nx < this.rows && ny >= 0 && ny < this.cols) {
+        if (this.isValidCoord(nx, ny)) {
           valid.push(nx * this.cols + ny);
         }
       }
@@ -87,29 +87,7 @@ export class GameEngine {
     return neighbors;
   }
 
-  getBoard(): CellData[] {
-    return [...this.board];
-  }
-
-  getCellsByPlayer() {
-    return [...this.cellsByPlayer]
-      .filter(([id]) => id !== 0)
-      .sort((a, b) => a[0] - b[0]);
-  }
-
-  getCurrentPlayerId(): number {
-    return this.players[this.currentPlayerIndex].id;
-  }
-
-  getIndex(r: number, c: number): number {
-    return r * this.cols + c;
-  }
-
-  getRoundNumber(): number {
-    return this.roundNumber;
-  }
-
-  isValidCoord(r: number, c: number): boolean {
+  private isValidCoord(r: number, c: number): boolean {
     return r >= 0 && r < this.rows && c >= 0 && c < this.cols;
   }
 
@@ -147,45 +125,6 @@ export class GameEngine {
 
     this.nextTurn();
     yield this.getBoard();
-  }
-
-  private nextTurn() {
-    if (this.winner !== 0) return;
-
-    let attempts = 0;
-    do {
-      this.currentPlayerIndex++;
-
-      if (this.currentPlayerIndex >= this.players.length) {
-        this.currentPlayerIndex = 0;
-        this.roundNumber++;
-      }
-      attempts++;
-    } while (
-      !this.players[this.currentPlayerIndex].active &&
-      attempts < this.players.length * 2
-    );
-  }
-
-  private checkEliminations() {
-    let activeCount = 0;
-    let lastActiveId = 0;
-
-    for (const p of this.players) {
-      const cellCount = this.cellsByPlayer.get(p.id) || 0;
-
-      if (cellCount === 0 && p.active && this.roundNumber > 2) {
-        p.active = false;
-      }
-      if (p.active) {
-        activeCount++;
-        lastActiveId = p.id;
-      }
-    }
-
-    if (activeCount === 1) {
-      this.winner = lastActiveId;
-    }
   }
 
   private *addOrb(r: number, c: number, player: number): Generator<CellData[]> {
@@ -236,11 +175,6 @@ export class GameEngine {
     }
   }
 
-  private updateCellCount(playerId: number, change: number) {
-    const current = this.cellsByPlayer.get(playerId) || 0;
-    this.cellsByPlayer.set(playerId, current + change);
-  }
-
   private setCellOwner(cell: CellData, newPlayer: number) {
     const oldPlayer = cell.player;
 
@@ -254,5 +188,71 @@ export class GameEngine {
     if (newPlayer !== 0) {
       this.updateCellCount(newPlayer, 1);
     }
+  }
+
+  private checkEliminations() {
+    let activeCount = 0;
+    let lastActiveId = 0;
+
+    for (const p of this.players) {
+      const cellCount = this.cellsByPlayer.get(p.id) || 0;
+
+      if (cellCount === 0 && p.active && this.roundNumber > 2) {
+        p.active = false;
+      }
+      if (p.active) {
+        activeCount++;
+        lastActiveId = p.id;
+      }
+    }
+
+    if (activeCount === 1) {
+      this.winner = lastActiveId;
+    }
+  }
+
+  private nextTurn() {
+    if (this.winner !== 0) return;
+
+    let attempts = 0;
+    do {
+      this.currentPlayerIndex++;
+
+      if (this.currentPlayerIndex >= this.players.length) {
+        this.currentPlayerIndex = 0;
+        this.roundNumber++;
+      }
+      attempts++;
+    } while (
+      !this.players[this.currentPlayerIndex].active &&
+      attempts < this.players.length * 2
+    );
+  }
+
+  getCurrentPlayerId(): number {
+    return this.players[this.currentPlayerIndex].id;
+  }
+
+  getIndex(r: number, c: number): number {
+    return r * this.cols + c;
+  }
+
+  getBoard(): CellData[] {
+    return [...this.board];
+  }
+
+  getCellsByPlayer() {
+    return [...this.cellsByPlayer]
+      .filter(([id]) => id !== 0)
+      .sort((a, b) => a[0] - b[0]);
+  }
+
+  getRoundNumber(): number {
+    return this.roundNumber;
+  }
+
+  private updateCellCount(playerId: number, change: number) {
+    const current = this.cellsByPlayer.get(playerId) || 0;
+    this.cellsByPlayer.set(playerId, current + change);
   }
 }
