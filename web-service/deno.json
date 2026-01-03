@@ -44,6 +44,6 @@
       "noscript",
       "template"
     ],
-    "types": ["vite/client"]
+    "types": ["vite/client", "preact"]
   }
 }
