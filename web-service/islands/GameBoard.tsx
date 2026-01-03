@@ -104,7 +104,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
     const runAI = async () => {
       if (playerConfig?.type === AgentType.RandomAI) {
         if (mode === GameMode.IAvsIA || mode === GameMode.HumanVsIA) {
-          await delay(600);
+          await delay(600 * 0);
         }
 
         if (!isMounted.current) return;

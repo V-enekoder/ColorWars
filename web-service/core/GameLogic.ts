@@ -8,12 +8,25 @@ interface Player {
   active: boolean;
 }
 
-const DIRECTIONS = [
+type Direction = readonly [number, number];
+
+type DirectionList = readonly Direction[];
+
+const CARDINALS: DirectionList = [
   [1, 0],
   [-1, 0],
   [0, 1],
   [0, -1],
 ] as const;
+
+const DIAGONALS: DirectionList = [
+  [-1, -1],
+  [1, -1],
+  [-1, 1],
+  [1, 1],
+] as const;
+
+const ALL_DIRECTIONS: DirectionList = [...CARDINALS, ...DIAGONALS];
 
 export class GameEngine {
   rows: number;
@@ -27,6 +40,7 @@ export class GameEngine {
   winner: number = 0;
   cellsByPlayer: Map<number, number> = new Map<number, number>();
   private neighbors: number[][];
+  private fullAdjacencies: number[][];
 
   constructor(
     rows: number,
@@ -50,21 +64,27 @@ export class GameEngine {
 
     this.players.forEach((p) => this.cellsByPlayer.set(p.id, 0));
 
-    this.neighbors = new Array(rows * cols);
+    this.neighbors = this.calculateNeighbors(CARDINALS);
+    this.fullAdjacencies = this.calculateNeighbors(ALL_DIRECTIONS);
+  }
 
-    for (let i = 0; i < rows * cols; i++) {
-      const row = Math.floor(i / cols);
-      const col = i % cols;
+  private calculateNeighbors(list: DirectionList): number[][] {
+    const neighbors: number[][] = new Array(this.rows * this.cols);
+
+    for (let i = 0; i < this.rows * this.cols; i++) {
+      const row = Math.floor(i / this.cols);
+      const col = i % this.cols;
       const valid: number[] = [];
-      for (const [dx, dy] of DIRECTIONS) {
+      for (const [dx, dy] of list) {
         const nx = row + dx;
         const ny = col + dy;
-        if (nx >= 0 && nx < rows && ny >= 0 && ny < cols) {
-          valid.push(nx * cols + ny);
+        if (nx >= 0 && nx < this.rows && ny >= 0 && ny < this.cols) {
+          valid.push(nx * this.cols + ny);
         }
       }
-      this.neighbors[i] = valid;
+      neighbors[i] = valid;
     }
+    return neighbors;
   }
 
   getBoard(): CellData[] {
@@ -107,7 +127,7 @@ export class GameEngine {
     if (!isValid) return;
 
     if (this.roundNumber === 1 && cell.player === 0) {
-      const neighborIndices = this.neighbors[idx];
+      const neighborIndices = this.fullAdjacencies[idx];
 
       for (const nIdx of neighborIndices) {
         const neighbor = this.board[nIdx];

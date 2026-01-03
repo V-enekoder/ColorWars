@@ -12,7 +12,7 @@ export default function Home() {
     {
       id: GameMode.HumanVsIA,
       title: "Humano vs IA",
-      description: "Ponte a prueba contra la máquina.",
+
       icon: "🤖",
       color: "bg-indigo-600",
     },
