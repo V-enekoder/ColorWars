@@ -1,6 +1,6 @@
 import { define } from "../utils.ts";
 
-import GameSetup from "../islands/GameSetUp.tsx";
+import GameSetup from "../islands/GameSetup.tsx";
 
 export default define.page(function Configuration(_ctx) {
   return (
