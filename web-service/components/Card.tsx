@@ -1,4 +1,4 @@
-import { CardColor } from "../utils/navigation.ts";
+import { CardColor } from "../utils/types.ts";
 
 export interface CardProps {
   name: string;

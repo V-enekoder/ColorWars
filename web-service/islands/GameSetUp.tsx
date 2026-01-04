@@ -1,7 +1,7 @@
 import { useSignal } from "@preact/signals";
 import { Stepper } from "../components/Stepper.tsx";
-import { AGENT_DESCRIPTIONS } from "../utils/config.ts";
 import { AgentType, Player, RulesOptions } from "../utils/types.ts";
+import { AGENT_DESCRIPTIONS } from "../utils/constans.ts";
 
 export default function GameSetup() {
   const rows = useSignal(8);

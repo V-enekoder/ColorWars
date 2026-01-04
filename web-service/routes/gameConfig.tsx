@@ -2,10 +2,10 @@ import { define } from "../utils.ts";
 
 import GameSetup from "../islands/GameSetUp.tsx";
 
-export default define.page(function Configuration(ctx) {
+export default define.page(function Configuration(_ctx) {
   return (
     <div class="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      <div class="fixed inset-0 bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/50 pointer-events-none">
+      <div class="fixed inset-0 bg-linear-to-br from-blue-50/50 via-white to-indigo-50/50 pointer-events-none">
       </div>
 
       <div class="relative z-10 max-w-5xl mx-auto px-6 py-10 flex flex-col min-h-screen">

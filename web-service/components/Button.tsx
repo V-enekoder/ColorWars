@@ -8,7 +8,7 @@ export interface ButtonProps {
   type?: "button" | "submit" | "reset";
 }
 
-export function Button({ type = "button", ...props }: ButtonProps) { // Valor por defecto: "button"
+export function Button({ type = "button", ...props }: ButtonProps) {
   return (
     <button
       type={type}

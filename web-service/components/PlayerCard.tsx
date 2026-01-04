@@ -1,5 +1,5 @@
 import { AgentType } from "../utils/types.ts";
-import { CardColor } from "../utils/navigation.ts";
+import { CardColor } from "../utils/types.ts";
 
 export interface PlayerCardProps {
   id: number;

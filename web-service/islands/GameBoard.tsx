@@ -4,12 +4,8 @@ import { Cell } from "../components/Cell.tsx";
 import { CellData, GameEngine } from "../core/GameLogic.ts";
 import { RandomBot } from "../core/AI.ts";
 import { useCallback, useEffect, useRef } from "preact/hooks";
-import {
-  AgentType,
-  GameConfig,
-  GameMode,
-  PLAYER_COLOR_MAP,
-} from "../utils/types.ts";
+import { AgentType, GameConfig, GameMode } from "../utils/types.ts";
+import { PLAYER_COLOR_MAP } from "../utils/constans.ts";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
