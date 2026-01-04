@@ -74,15 +74,14 @@ export const Cell = memo(function Cell({
 
     return (
       <div class="grid grid-cols-2 gap-1">
-        {[...Array(points)].map((_, i) => (
-          <Atom key={i} />
-        ))}
+        {[...Array(points)].map((_, i) => <Atom key={i} />)}
       </div>
     );
   };
 
   return (
     <button
+      type="button"
       onClick={() => onClick(row, column)}
       class="w-14 h-14 rounded-xl border-2 flex items-center justify-center transition-colors duration-200 relative"
       style={{
@@ -90,12 +89,11 @@ export const Cell = memo(function Cell({
 
         filter: points > 0 ? `brightness(${0.9 + intensity * 0.4})` : "none",
 
-        boxShadow:
-          points > 0
-            ? `inset 0 2px 4px rgba(255,255,255,0.4),
+        boxShadow: points > 0
+          ? `inset 0 2px 4px rgba(255,255,255,0.4),
                inset 0 -2px 4px rgba(0,0,0,0.2)
                ${isCritical ? `, 0 0 12px ${color}` : ""}`
-            : "none",
+          : "none",
         borderColor: `rgba(0,0,0,${0.1 + intensity * 0.3})`,
       }}
     >

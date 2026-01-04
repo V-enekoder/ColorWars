@@ -1,4 +1,4 @@
-import { RulesOptions } from "../utils/types";
+import { RulesOptions } from "../utils/types.ts";
 
 export interface CellData {
   points: number;
@@ -128,8 +128,7 @@ export class GameEngine {
 
     switch (this.playRule) {
       case RulesOptions.OnlyOwnOrbs:
-        passRule =
-          (cell.player === 0 && this.roundNumber === 1) ||
+        passRule = (cell.player === 0 && this.roundNumber === 1) ||
           cell.player === currentPlayerId;
         break;
 

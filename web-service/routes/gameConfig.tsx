@@ -5,7 +5,8 @@ import GameSetup from "../islands/GameSetUp.tsx";
 export default define.page(function Configuration(ctx) {
   return (
     <div class="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      <div class="fixed inset-0 bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/50 pointer-events-none"></div>
+      <div class="fixed inset-0 bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/50 pointer-events-none">
+      </div>
 
       <div class="relative z-10 max-w-5xl mx-auto px-6 py-10 flex flex-col min-h-screen">
         <header class="flex justify-between items-center mb-12">
@@ -41,8 +42,8 @@ export default define.page(function Configuration(ctx) {
           </div>
         </header>
 
-        <main class="flex-grow flex items-center justify-center">
-          <div class="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-xl shadow-slate-200/60 transition-transform">
+        <main class="grow flex items-center justify-center">
+          <div class="bg-white border border-slate-200 p-8 rounded-4xl shadow-xl shadow-slate-200/60 transition-transform">
             <GameSetup />
           </div>
         </main>

@@ -1,12 +1,12 @@
 import { Head } from "fresh/runtime";
+import GameBoard from "../../islands/GameBoard.tsx";
 import { define } from "../../utils.ts";
 import {
   AgentType,
-  Player,
   GameConfig,
+  Player,
   RulesOptions,
 } from "../../utils/types.ts";
-import GameBoard from "../../islands/GameBoard.tsx";
 
 export default define.page(function Game(ctx) {
   const { mode } = ctx.params;
@@ -15,20 +15,18 @@ export default define.page(function Game(ctx) {
   const getConfig = (): GameConfig => {
     const playersRaw = searchParams.get("players");
 
-    const players: Player[] = playersRaw
-      ? JSON.parse(playersRaw)
-      : [
-          { id: 1, name: "Victor", type: AgentType.Human },
-          { id: 2, name: "AI", type: AgentType.RandomAI },
-        ];
+    const players: Player[] = playersRaw ? JSON.parse(playersRaw) : [
+      { id: 1, name: "Victor", type: AgentType.Human },
+      { id: 2, name: "AI", type: AgentType.RandomAI },
+    ];
 
     return {
       mode: mode,
       rows: Number(searchParams.get("rows")) || 8,
       cols: Number(searchParams.get("cols")) || 8,
       criticalPoints: Number(searchParams.get("cp")) || 3,
-      rule:
-        (searchParams.get("rule") as RulesOptions) || RulesOptions.OnlyOwnOrbs,
+      rule: (searchParams.get("rule") as RulesOptions) ||
+        RulesOptions.OnlyOwnOrbs,
       players: players,
     };
   };
@@ -41,7 +39,8 @@ export default define.page(function Game(ctx) {
         <title>Color Wars | {config.mode}</title>
       </Head>
 
-      <div class="fixed inset-0 bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/50 pointer-events-none"></div>
+      <div class="fixed inset-0 bg-linear-to-br from-blue-50/50 via-white to-indigo-50/50 pointer-events-none">
+      </div>
 
       <div class="relative z-10 max-w-5xl mx-auto px-6 py-10 flex flex-col min-h-screen">
         <header class="flex justify-between items-center mb-12">
@@ -81,8 +80,8 @@ export default define.page(function Game(ctx) {
           </div>
         </header>
 
-        <main class="flex-grow flex items-center justify-center">
-          <div class="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-xl shadow-slate-200/60 transition-transform">
+        <main class="grow flex items-center justify-center">
+          <div class="bg-white border border-slate-200 p-8 rounded-4xl shadow-xl shadow-slate-200/60 transition-transform">
             <GameBoard config={config} />
           </div>
         </main>
@@ -117,6 +116,7 @@ export default define.page(function Game(ctx) {
               10x10 Pro
             </a>
             <button
+              type="button"
               onClick={() => globalThis.location.reload()}
               class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-all text-xs font-bold uppercase tracking-wide shadow-md shadow-blue-200 active:scale-95"
             >

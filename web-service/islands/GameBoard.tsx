@@ -1,13 +1,13 @@
-import { useSignal, useComputed, signal, Signal } from "@preact/signals";
+import { Signal, signal, useComputed, useSignal } from "@preact/signals";
 import { useMemo } from "preact/hooks";
 import { Cell } from "../components/Cell.tsx";
-import { GameEngine, CellData } from "../core/GameLogic.ts";
+import { CellData, GameEngine } from "../core/GameLogic.ts";
 import { RandomBot } from "../core/AI.ts";
 import { useCallback, useEffect, useRef } from "preact/hooks";
 import {
+  AgentType,
   GameConfig,
   GameMode,
-  AgentType,
   PLAYER_COLOR_MAP,
 } from "../utils/types.ts";
 
@@ -156,7 +156,9 @@ export default function GameBoard({ config }: { config: GameConfig }) {
                 class={`
                   relative flex items-center gap-4 px-6 py-3 rounded-2xl border-2
                   font-bold transition-all duration-500 transform
-                  ${isActive ? "scale-110 z-10 shadow-lg" : "scale-100 opacity-40"}
+                  ${
+                  isActive ? "scale-110 z-10 shadow-lg" : "scale-100 opacity-40"
+                }
                 `}
                 style={{
                   borderColor: color,
@@ -165,13 +167,15 @@ export default function GameBoard({ config }: { config: GameConfig }) {
                 }}
               >
                 <div class="text-xl">
-                  {playerInfo?.type === "bot" ? "🤖" : "👤"}
+                  {playerInfo?.type !== AgentType.Human ? "🤖" : "👤"}
                 </div>
                 <span class="text-lg flex flex-col leading-tight">
                   <span class="text-[10px] uppercase tracking-widest opacity-60">
-                    {playerInfo?.type === "bot" ? "Sistema IA" : "Humano"}
+                    {playerInfo?.type !== AgentType.Human
+                      ? "Sistema IA"
+                      : "Humano"}
                   </span>
-                  <span class="truncate max-w-[100px]">{playerName}</span>
+                  <span class="truncate max-w-25">{playerName}</span>
                 </span>
                 <div class="text-3xl ml-2 font-black">{count}</div>
               </div>

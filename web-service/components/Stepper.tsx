@@ -28,6 +28,7 @@ export function Stepper({
       </label>
       <div class="flex items-center bg-white border border-slate-200 rounded-2xl p-1 shadow-sm w-full max-w-[160px]">
         <button
+          type="button"
           onClick={decrement}
           disabled={value <= min}
           class="w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-90 disabled:opacity-30 disabled:active:scale-100 hover:bg-slate-50 text-slate-600 font-bold"
@@ -35,11 +36,12 @@ export function Stepper({
           −
         </button>
 
-        <div class="flex-grow text-center font-bold text-slate-800 tabular-nums">
+        <div class="grow text-center font-bold text-slate-800 tabular-nums">
           {value}
         </div>
 
         <button
+          type="button"
           onClick={increment}
           disabled={value >= max}
           class="w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-90 disabled:opacity-30 disabled:active:scale-100 hover:bg-slate-50 text-slate-600 font-bold"

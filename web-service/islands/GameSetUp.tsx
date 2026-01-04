@@ -1,7 +1,7 @@
 import { useSignal } from "@preact/signals";
 import { Stepper } from "../components/Stepper.tsx";
-import { RulesOptions, Player, AgentType } from "../utils/types.ts";
 import { AGENT_DESCRIPTIONS } from "../utils/config.ts";
+import { AgentType, Player, RulesOptions } from "../utils/types.ts";
 
 export default function GameSetup() {
   const rows = useSignal(8);
@@ -9,7 +9,7 @@ export default function GameSetup() {
   const cp = useSignal(4);
   const rule = useSignal(RulesOptions.OnlyOwnOrbs);
   const players = useSignal<Player[]>([
-    { id: 1, name: "Victor", type: AgentType.Human },
+    { id: 1, name: "Random Bot", type: AgentType.RandomAI },
     { id: 2, name: "Random Bot", type: AgentType.RandomAI },
   ]);
 
@@ -18,7 +18,7 @@ export default function GameSetup() {
       const newId = Math.max(...players.value.map((p) => p.id), 0) + 1;
       players.value = [
         ...players.value,
-        { id: newId, name: `Player ${newId}`, type: AgentType.Human },
+        { id: newId, name: `Player ${newId}`, type: AgentType.RandomAI },
       ];
     }
   };
@@ -31,7 +31,7 @@ export default function GameSetup() {
 
   const updatePlayer = (id: number, field: keyof Player, value: any) => {
     players.value = players.value.map((p) =>
-      p.id === id ? { ...p, [field]: value } : p,
+      p.id === id ? { ...p, [field]: value } : p
     );
   };
 
@@ -103,9 +103,9 @@ export default function GameSetup() {
                 </label>
                 <select
                   value={rule.value}
-                  onChange={(e) =>
-                    (rule.value = e.currentTarget.value as RulesOptions)
-                  }
+                  onChange={(
+                    e,
+                  ) => (rule.value = e.currentTarget.value as RulesOptions)}
                   class="w-full p-3.5 border border-slate-200 rounded-2xl bg-white text-sm font-medium outline-none focus:ring-4 ring-indigo-500/10 transition-all appearance-none cursor-pointer"
                 >
                   <option value={RulesOptions.OnlyOwnOrbs}>
@@ -132,6 +132,7 @@ export default function GameSetup() {
             </div>
             {players.value.length < 8 && (
               <button
+                type="button"
                 onClick={addPlayer}
                 class="px-4 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 transition-all active:scale-95 shadow-lg shadow-slate-200"
               >
@@ -139,12 +140,12 @@ export default function GameSetup() {
               </button>
             )}
           </header>
-
-          <div class="grid gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+          {/*Desde aqui se debe refactorizar */}
+          <div class="grid gap-4 max-h-150 overflow-y-auto pr-2 custom-scrollbar">
             {players.value.map((p, index) => (
               <div
                 key={p.id}
-                class="group bg-white p-5 rounded-[2rem] border border-slate-200 shadow-sm hover:shadow-md transition-all"
+                class="group bg-white p-5 rounded-4xl border border-slate-200 shadow-sm hover:shadow-md transition-all"
               >
                 <div class="flex flex-wrap items-center gap-4">
                   <div class="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-xs font-black text-slate-400 border border-slate-100">
@@ -153,12 +154,11 @@ export default function GameSetup() {
 
                   <input
                     type="text"
-                    class="flex-grow min-w-[120px] bg-transparent border-b-2 border-slate-50 focus:border-blue-500 outline-none py-1 text-sm font-bold text-slate-700 transition-colors"
+                    class="grow min-w-30 bg-transparent border-b-2 border-slate-50 focus:border-blue-500 outline-none py-1 text-sm font-bold text-slate-700 transition-colors"
                     placeholder="Enter name..."
                     value={p.name}
                     onInput={(e) =>
-                      updatePlayer(p.id, "name", e.currentTarget.value)
-                    }
+                      updatePlayer(p.id, "name", e.currentTarget.value)}
                   />
 
                   <div class="flex items-center gap-2">
@@ -170,8 +170,7 @@ export default function GameSetup() {
                           p.id,
                           "type",
                           e.currentTarget.value as AgentType,
-                        )
-                      }
+                        )}
                     >
                       {Object.values(AgentType).map((type) => (
                         <option value={type}>
@@ -182,6 +181,7 @@ export default function GameSetup() {
 
                     {players.value.length > 2 && (
                       <button
+                        type="button"
                         onClick={() => removePlayer(p.id)}
                         class="p-2 text-slate-300 hover:text-red-500 transition-colors"
                         title="Remove player"
@@ -216,11 +216,13 @@ export default function GameSetup() {
               </div>
             ))}
           </div>
+          {/*Hasta aqui */}
         </main>
       </div>
 
       <footer class="pt-8 border-t border-slate-100 flex justify-center">
         <button
+          type="button"
           onClick={handlePlay}
           class="w-full md:w-auto px-12 py-5 bg-blue-600 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-xs shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 active:scale-95 transition-all"
         >
