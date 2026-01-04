@@ -1,3 +1,5 @@
+import { SectionOption } from "./types.ts";
+
 export enum MainMenuOption {
   BattleArena = "battle_arena",
   Codex = "codex",
@@ -5,16 +7,6 @@ export enum MainMenuOption {
   HallOfFame = "hall_of_fame",
   Settings = "settings",
   AILaboratory = "ai_laboratory",
-}
-
-export type CardColor = "blue" | "indigo" | "red" | "emerald" | "slate";
-
-export interface SectionOption {
-  id: MainMenuOption;
-  title: string;
-  description: string;
-  link: string;
-  color: CardColor;
 }
 
 export const sectionOptions: SectionOption[] = [

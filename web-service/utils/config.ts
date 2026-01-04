@@ -1,4 +1,4 @@
-import { GameConfig, RulesOptions, AgentType } from "./types.ts";
+import { AgentType, GameConfig, RulesOptions } from "./types.ts";
 
 export const parseGameConfig = (
   params: URLSearchParams,
@@ -15,16 +15,4 @@ export const parseGameConfig = (
       { id: 2, name: "Random Bot", type: AgentType.RandomAI },
     ],
   };
-};
-
-export const AGENT_DESCRIPTIONS: Record<AgentType, string> = {
-  [AgentType.Human]: "Direct control. You make every strategic decision.",
-  [AgentType.RandomAI]:
-    "Chaos factor. Moves unpredictably without a specific pattern.",
-  [AgentType.MinimaxAI]:
-    "Deep thinker. Analyzes multiple turns ahead to find the optimal move.",
-  [AgentType.HeuristicAI]:
-    "Tactical scout. Prioritizes cell capture and rapid expansion.",
-  [AgentType.NeuralNetwork]:
-    "Adaptive learner. Utilizes trained patterns to dominate the board.",
 };

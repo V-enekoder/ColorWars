@@ -224,7 +224,9 @@ export default function GameSetup() {
         <button
           type="button"
           onClick={handlePlay}
-          class="w-full md:w-auto px-12 py-5 bg-blue-600 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-xs shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 active:scale-95 transition-all"
+          class="w-full md:w-auto px-12 py-5 bg-blue-600 text-white rounded-4xl
+          font-black uppercase tracking-[0.3em] text-xs shadow-xl shadow-blue-200 hover:bg-blue-700
+          hover:-translate-y-1 active:scale-95 transition-all"
         >
           Launch Battle Arena
         </button>
@@ -232,3 +234,4 @@ export default function GameSetup() {
     </div>
   );
 }
+j;
