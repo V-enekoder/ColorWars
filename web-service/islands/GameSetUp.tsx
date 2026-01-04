@@ -206,7 +206,7 @@ export default function GameSetup() {
                 </div>
 
                 <div class="mt-4 pt-4 border-t border-slate-50">
-                  <p class="text-[10px] leading-relaxed text-slate-400 font-semibold italic">
+                  <p class="text-[14px] leading-relaxed text-slate-400 font-semibold italic">
                     <span class="text-blue-500 not-italic font-bold uppercase mr-2">
                       Behavior:
                     </span>
