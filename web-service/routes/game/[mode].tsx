@@ -1,6 +1,11 @@
 import { Head } from "fresh/runtime";
 import { define } from "../../utils.ts";
-import { AgentType, GameConfig, RulesOptions } from "../../utils/types.ts";
+import {
+  AgentType,
+  Player,
+  GameConfig,
+  RulesOptions,
+} from "../../utils/types.ts";
 import GameBoard from "../../islands/GameBoard.tsx";
 
 export default define.page(function Game(ctx) {
@@ -8,16 +13,23 @@ export default define.page(function Game(ctx) {
   const { searchParams } = ctx.url;
 
   const getConfig = (): GameConfig => {
+    const playersRaw = searchParams.get("players");
+
+    const players: Player[] = playersRaw
+      ? JSON.parse(playersRaw)
+      : [
+          { id: 1, name: "Victor", type: AgentType.Human },
+          { id: 2, name: "AI", type: AgentType.RandomAI },
+        ];
+
     return {
       mode: mode,
-      rows: Number(searchParams.get("rows")) || 10,
-      cols: Number(searchParams.get("cols")) || 10,
-      criticalPoints: Number(searchParams.get("cp")) || 4,
-      players: [
-        { id: 1, name: "Victor", type: AgentType.Human },
-        { id: 2, name: "Random Bot", type: AgentType.RandomAI },
-      ],
-      rule: RulesOptions.OnlyOwnOrbs,
+      rows: Number(searchParams.get("rows")) || 8,
+      cols: Number(searchParams.get("cols")) || 8,
+      criticalPoints: Number(searchParams.get("cp")) || 3,
+      rule:
+        (searchParams.get("rule") as RulesOptions) || RulesOptions.OnlyOwnOrbs,
+      players: players,
     };
   };
 

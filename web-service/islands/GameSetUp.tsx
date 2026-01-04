@@ -1,212 +1,173 @@
-import { useSignal, useComputed, signal, Signal } from "@preact/signals";
-import { useMemo } from "preact/hooks";
-import { Cell } from "../components/Cell.tsx";
-import { GameEngine, CellData } from "../core/GameLogic.ts";
-import { RandomBot } from "../core/AI.ts";
-import { useCallback, useEffect, useRef } from "preact/hooks";
-import {
-  GameConfig,
-  GameMode,
-  AgentType,
-  PLAYER_COLOR_MAP,
-} from "../utils/types.ts";
+import { useSignal } from "@preact/signals";
+import { Stepper } from "../components/Stepper.tsx";
+import { Button } from "../components/Button.tsx";
+import { RulesOptions, Player, AgentType } from "../utils/types.ts";
 
-const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+export default function GameSetup() {
+  const rows = useSignal(10);
+  const cols = useSignal(10);
+  const cp = useSignal(3);
+  const rule = useSignal(RulesOptions.OnlyOwnOrbs);
 
-export default function GameBoard({ config }: { config: GameConfig }) {
-  const { mode, rows, cols, criticalPoints, players, rule } = config;
-
-  const engine = useMemo(() => {
-    return new GameEngine(rows, cols, criticalPoints, players.length, rule);
-  }, [rows, cols, criticalPoints, players.length]);
-
-  const boardSignals: Signal<CellData>[] = useMemo(() => {
-    const initialBoard = engine.getBoard();
-    return initialBoard.map((cellData) => signal(cellData));
-  }, [engine]);
-
-  const currentPlayerId = useSignal(engine.getCurrentPlayerId());
-  const winner = useSignal(0);
-  const playerCounts = useSignal<[number, number][]>(engine.getCellsByPlayer());
-  const isAnimating = useSignal(false);
-  const isMounted = useRef(true);
-
-  const updateUI = useCallback(
-    (rawBoard: CellData[]) => {
-      boardSignals.forEach((sig, index) => {
-        const newCell = rawBoard[index];
-        const currentVal = sig.value;
-        if (
-          currentVal.points !== newCell.points ||
-          currentVal.player !== newCell.player
-        ) {
-          sig.value = { ...newCell };
-        }
-      });
-      playerCounts.value = engine.getCellsByPlayer();
-    },
-    [engine, boardSignals, playerCounts],
-  );
-
-  const handleCellClick = useCallback(
-    async (row: number, col: number) => {
-      if (isAnimating.value || engine.winner !== 0) return;
-
-      const generator = engine.playGenerator(row, col);
-
-      let next = generator.next();
-
-      if (next.done) {
-        console.warn("Movimiento inválido");
-        return;
-      }
-
-      isAnimating.value = true;
-
-      try {
-        let steps = 0;
-        while (!next.done) {
-          steps++;
-          const rawBoard: CellData[] = next.value;
-          updateUI(rawBoard);
-
-          if (engine.winner !== 0) break;
-
-          const dynamicDelay = Math.max(30, 150 - steps * 5);
-          await delay(dynamicDelay);
-          if (!isMounted.current) return;
-          next = generator.next();
-        }
-      } finally {
-        if (isMounted.current) {
-          currentPlayerId.value = engine.getCurrentPlayerId();
-          winner.value = engine.winner;
-          isAnimating.value = false;
-        }
-      }
-    },
-    [engine, updateUI],
-  );
-
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (winner.value !== 0 || isAnimating.value) return;
-
-    const currentPlayerIdx = engine.getCurrentPlayerId() - 1;
-    const playerConfig = players[currentPlayerIdx];
-
-    const runAI = async () => {
-      if (playerConfig?.type === AgentType.RandomAI) {
-        if (mode === GameMode.IAvsIA || mode === GameMode.HumanVsIA) {
-          await delay(600 * 0);
-        }
-
-        if (!isMounted.current) return;
-
-        const move = RandomBot.getMove(engine);
-        if (move) {
-          await handleCellClick(move.r, move.c);
-        }
-      }
-    };
-
-    runAI();
-  }, [
-    currentPlayerId.value,
-    isAnimating.value,
-    engine,
-    mode,
-    players,
-    handleCellClick,
+  // Iniciamos con 2 jugadores (mínimo funcional)
+  const players = useSignal<Player[]>([
+    { id: 1, name: "Victor", type: AgentType.Human },
+    { id: 2, name: "Random Bot", type: AgentType.RandomAI },
   ]);
 
-  const message = useComputed(() => {
-    return winner.value !== 0
-      ? `¡Ganó el jugador ${winner.value}!`
-      : `Turno: Jugador ${currentPlayerId.value}`;
-  });
+  const addPlayer = () => {
+    if (players.value.length < 8) {
+      const newId = Math.max(...players.value.map((p) => p.id), 0) + 1;
+      players.value = [
+        ...players.value,
+        { id: newId, name: `Player ${newId}`, type: AgentType.Human },
+      ];
+    }
+  };
+
+  const removePlayer = (id: number) => {
+    if (players.value.length > 2) {
+      players.value = players.value.filter((p) => p.id !== id);
+    }
+  };
+
+  const updatePlayer = (id: number, field: keyof Player, value: any) => {
+    players.value = players.value.map((p) =>
+      p.id === id ? { ...p, [field]: value } : p,
+    );
+  };
+
+  const handlePlay = () => {
+    const params = new URLSearchParams({
+      rows: rows.value.toString(),
+      cols: cols.value.toString(),
+      cp: cp.value.toString(),
+      rule: rule.value,
+      // Serializamos el array a JSON para pasarlo por URL
+      players: JSON.stringify(players.value),
+    });
+
+    globalThis.location.href = `/game/JvsJ?${params.toString()}`;
+  };
 
   return (
-    <div class="flex flex-col items-center gap-4 p-4 min-h-screen bg-white">
-      <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">
-        {message}
-      </h2>
+    <div class="flex flex-col gap-8 w-full max-w-2xl mx-auto">
+      {/* Configuración del Tablero */}
+      <div class="grid grid-cols-2 gap-4">
+        <Stepper
+          label="Rows"
+          value={rows.value}
+          min={3}
+          max={15}
+          onChange={(v) => (rows.value = v)}
+        />
+        <Stepper
+          label="Cols"
+          value={cols.value}
+          min={3}
+          max={15}
+          onChange={(v) => (cols.value = v)}
+        />
+      </div>
 
-      <div class="flex flex-wrap justify-center gap-6 mb-8">
-        {[...playerCounts.value]
-          .filter(([id]) => id !== 0)
-          .sort((a, b) => b[1] - a[1])
-          .map(([playerId, count]) => {
-            const playerInfo = players.find((p) => p.id === playerId);
-            const playerName = playerInfo
-              ? playerInfo.name
-              : `Jugador ${playerId}`;
-            const color = PLAYER_COLOR_MAP[playerId] || "#cbd5e1";
-            const isActive = playerId === currentPlayerId.value;
+      {/* Reglas Rápidas */}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+        <div>
+          <p class="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest">
+            Critical Points: {cp.value}
+          </p>
+          <input
+            type="range"
+            min={2}
+            max={5}
+            step={1}
+            value={cp.value}
+            onInput={(e) => (cp.value = parseInt(e.currentTarget.value))}
+            class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+          />
+        </div>
 
-            return (
-              <div
-                key={playerId}
-                class={`
-                  relative flex items-center gap-4 px-6 py-3 rounded-2xl border-2
-                  font-bold transition-all duration-500 transform
-                  ${isActive ? "scale-110 z-10 shadow-lg" : "scale-100 opacity-40"}
-                `}
-                style={{
-                  borderColor: color,
-                  backgroundColor: `${color}${isActive ? "20" : "05"}`,
-                  color: color,
-                }}
-              >
-                <div class="text-xl">
-                  {playerInfo?.type === "bot" ? "🤖" : "👤"}
-                </div>
-                <span class="text-lg flex flex-col leading-tight">
-                  <span class="text-[10px] uppercase tracking-widest opacity-60">
-                    {playerInfo?.type === "bot" ? "Sistema IA" : "Humano"}
-                  </span>
-                  <span class="truncate max-w-[100px]">{playerName}</span>
-                </span>
-                <div class="text-3xl ml-2 font-black">{count}</div>
+        <div>
+          <label class="text-[10px] font-black uppercase text-slate-400 block mb-2 tracking-widest">
+            Ruleset
+          </label>
+          <select
+            value={rule.value}
+            onChange={(e) =>
+              (rule.value = e.currentTarget.value as RulesOptions)
+            }
+            class="w-full p-2.5 border border-slate-200 rounded-xl bg-white text-sm outline-none focus:ring-2 ring-blue-500/20"
+          >
+            <option value={RulesOptions.OnlyOwnOrbs}>Only Own Orbs</option>
+            <option value={RulesOptions.EmptyAndOwnOrbs}>
+              Empty And Own Orbs
+            </option>
+          </select>
+        </div>
+      </div>
+
+      {/* Gestión de Jugadores */}
+      <div class="space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+          <h3 class="text-xs font-black uppercase text-slate-400 tracking-widest">
+            Players ({players.value.length}/8)
+          </h3>
+          {players.value.length < 8 && (
+            <button
+              onClick={addPlayer}
+              class="text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold hover:bg-blue-100 transition-colors"
+            >
+              + Add Player
+            </button>
+          )}
+        </div>
+
+        <div class="grid gap-3">
+          {players.value.map((p, index) => (
+            <div
+              key={p.id}
+              class="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"
+            >
+              <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                P{index + 1}
               </div>
-            );
-          })}
+
+              <input
+                type="text"
+                class="flex-grow p-2 border-b border-transparent focus:border-blue-500 outline-none text-sm font-medium"
+                placeholder="Name..."
+                value={p.name}
+                onInput={(e) =>
+                  updatePlayer(p.id, "name", e.currentTarget.value)
+                }
+              />
+
+              <select
+                class="bg-slate-50 p-2 rounded-lg text-xs font-bold outline-none"
+                value={p.type}
+                onChange={(e) =>
+                  updatePlayer(p.id, "type", e.currentTarget.value as AgentType)
+                }
+              >
+                <option value={AgentType.Human}>Human</option>
+                <option value={AgentType.RandomAI}>Random AI</option>
+                <option value={AgentType.MinimaxAI}>Minimax AI</option>
+              </select>
+
+              {players.value.length > 2 && (
+                <button
+                  onClick={() => removePlayer(p.id)}
+                  class="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${cols}, min-content)`,
-          gap: "0.4rem",
-        }}
-      >
-        {boardSignals.map((cellSignal, index) => {
-          const rowIndex = Math.floor(index / cols);
-          const colIndex = index % cols;
-          const cellData = cellSignal.value;
-          const limit = engine.critical_points;
-          const isCritical = cellData.points === limit - 1;
-
-          return (
-            <Cell
-              key={`${rowIndex}-${colIndex}`}
-              row={rowIndex}
-              column={colIndex}
-              points={cellData.points}
-              player={cellData.player}
-              isCritical={isCritical}
-              onClick={handleCellClick}
-              limit={engine.critical_points}
-            />
-          );
-        })}
-      </div>
+      <Button onClick={handlePlay}>Launch Battle</Button>
     </div>
   );
 }
