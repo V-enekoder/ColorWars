@@ -22,7 +22,7 @@ export function Stepper({
   };
 
   return (
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2 items-center">
       <label class="text-xs font-black uppercase tracking-widest text-slate-400">
         {label}
       </label>

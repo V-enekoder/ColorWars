@@ -1,15 +1,13 @@
 import { useSignal } from "@preact/signals";
 import { Stepper } from "../components/Stepper.tsx";
-import { Button } from "../components/Button.tsx";
 import { RulesOptions, Player, AgentType } from "../utils/types.ts";
+import { AGENT_DESCRIPTIONS } from "../utils/config.ts";
 
 export default function GameSetup() {
-  const rows = useSignal(10);
-  const cols = useSignal(10);
-  const cp = useSignal(3);
+  const rows = useSignal(8);
+  const cols = useSignal(8);
+  const cp = useSignal(4);
   const rule = useSignal(RulesOptions.OnlyOwnOrbs);
-
-  // Iniciamos con 2 jugadores (mínimo funcional)
   const players = useSignal<Player[]>([
     { id: 1, name: "Victor", type: AgentType.Human },
     { id: 2, name: "Random Bot", type: AgentType.RandomAI },
@@ -43,131 +41,192 @@ export default function GameSetup() {
       cols: cols.value.toString(),
       cp: cp.value.toString(),
       rule: rule.value,
-      // Serializamos el array a JSON para pasarlo por URL
       players: JSON.stringify(players.value),
     });
-
     globalThis.location.href = `/game/JvsJ?${params.toString()}`;
   };
 
   return (
-    <div class="flex flex-col gap-8 w-full max-w-2xl mx-auto">
-      {/* Configuración del Tablero */}
-      <div class="grid grid-cols-2 gap-4">
-        <Stepper
-          label="Rows"
-          value={rows.value}
-          min={3}
-          max={15}
-          onChange={(v) => (rows.value = v)}
-        />
-        <Stepper
-          label="Cols"
-          value={cols.value}
-          min={3}
-          max={15}
-          onChange={(v) => (cols.value = v)}
-        />
-      </div>
+    <div class="w-full max-w-6xl mx-auto space-y-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <aside class="lg:col-span-5 space-y-10 bg-white/50 p-8 rounded-[2.5rem] border border-slate-100 backdrop-blur-sm">
+          <section class="space-y-6">
+            <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">
+              Board Dimensions
+            </h3>
+            <div class="flex gap-6 justify-center lg:justify-start">
+              <Stepper
+                label="Rows"
+                value={rows.value}
+                min={3}
+                max={20}
+                onChange={(v) => (rows.value = v)}
+              />
+              <Stepper
+                label="Cols"
+                value={cols.value}
+                min={3}
+                max={20}
+                onChange={(v) => (cols.value = v)}
+              />
+            </div>
+          </section>
 
-      {/* Reglas Rápidas */}
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-        <div>
-          <p class="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest">
-            Critical Points: {cp.value}
-          </p>
-          <input
-            type="range"
-            min={2}
-            max={5}
-            step={1}
-            value={cp.value}
-            onInput={(e) => (cp.value = parseInt(e.currentTarget.value))}
-            class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-          />
-        </div>
-
-        <div>
-          <label class="text-[10px] font-black uppercase text-slate-400 block mb-2 tracking-widest">
-            Ruleset
-          </label>
-          <select
-            value={rule.value}
-            onChange={(e) =>
-              (rule.value = e.currentTarget.value as RulesOptions)
-            }
-            class="w-full p-2.5 border border-slate-200 rounded-xl bg-white text-sm outline-none focus:ring-2 ring-blue-500/20"
-          >
-            <option value={RulesOptions.OnlyOwnOrbs}>Only Own Orbs</option>
-            <option value={RulesOptions.EmptyAndOwnOrbs}>
-              Empty And Own Orbs
-            </option>
-          </select>
-        </div>
-      </div>
-
-      {/* Gestión de Jugadores */}
-      <div class="space-y-4">
-        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-          <h3 class="text-xs font-black uppercase text-slate-400 tracking-widest">
-            Players ({players.value.length}/8)
-          </h3>
-          {players.value.length < 8 && (
-            <button
-              onClick={addPlayer}
-              class="text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold hover:bg-blue-100 transition-colors"
-            >
-              + Add Player
-            </button>
-          )}
-        </div>
-
-        <div class="grid gap-3">
-          {players.value.map((p, index) => (
-            <div
-              key={p.id}
-              class="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"
-            >
-              <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
-                P{index + 1}
+          <section class="space-y-6">
+            <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600">
+              Game Rules
+            </h3>
+            <div class="space-y-8">
+              <div>
+                <div class="flex justify-between mb-3">
+                  <span class="text-xs font-bold text-slate-700">
+                    Critical Points
+                  </span>
+                  <span class="text-xs font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">
+                    {cp.value}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={2}
+                  max={6}
+                  step={1}
+                  value={cp.value}
+                  onInput={(e) => (cp.value = parseInt(e.currentTarget.value))}
+                  class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                />
               </div>
 
-              <input
-                type="text"
-                class="flex-grow p-2 border-b border-transparent focus:border-blue-500 outline-none text-sm font-medium"
-                placeholder="Name..."
-                value={p.name}
-                onInput={(e) =>
-                  updatePlayer(p.id, "name", e.currentTarget.value)
-                }
-              />
-
-              <select
-                class="bg-slate-50 p-2 rounded-lg text-xs font-bold outline-none"
-                value={p.type}
-                onChange={(e) =>
-                  updatePlayer(p.id, "type", e.currentTarget.value as AgentType)
-                }
-              >
-                <option value={AgentType.Human}>Human</option>
-                <option value={AgentType.RandomAI}>Random AI</option>
-                <option value={AgentType.MinimaxAI}>Minimax AI</option>
-              </select>
-
-              {players.value.length > 2 && (
-                <button
-                  onClick={() => removePlayer(p.id)}
-                  class="p-2 text-slate-300 hover:text-red-500 transition-colors"
+              <div>
+                <label class="text-[10px] font-black uppercase text-slate-400 block mb-3">
+                  Ruleset Logic
+                </label>
+                <select
+                  value={rule.value}
+                  onChange={(e) =>
+                    (rule.value = e.currentTarget.value as RulesOptions)
+                  }
+                  class="w-full p-3.5 border border-slate-200 rounded-2xl bg-white text-sm font-medium outline-none focus:ring-4 ring-indigo-500/10 transition-all appearance-none cursor-pointer"
                 >
-                  ✕
-                </button>
-              )}
+                  <option value={RulesOptions.OnlyOwnOrbs}>
+                    Only Own Orbs (Classic)
+                  </option>
+                  <option value={RulesOptions.EmptyAndOwnOrbs}>
+                    Empty & Own Orbs (Aggressive)
+                  </option>
+                </select>
+              </div>
             </div>
-          ))}
-        </div>
+          </section>
+        </aside>
+
+        <main class="lg:col-span-7 space-y-6">
+          <header class="flex justify-between items-end px-2">
+            <div>
+              <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                Combatants
+              </h3>
+              <p class="text-2xl font-black text-slate-800">
+                {players.value.length} <span class="text-slate-300">/ 8</span>
+              </p>
+            </div>
+            {players.value.length < 8 && (
+              <button
+                onClick={addPlayer}
+                class="px-4 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 transition-all active:scale-95 shadow-lg shadow-slate-200"
+              >
+                + Add Player
+              </button>
+            )}
+          </header>
+
+          <div class="grid gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+            {players.value.map((p, index) => (
+              <div
+                key={p.id}
+                class="group bg-white p-5 rounded-[2rem] border border-slate-200 shadow-sm hover:shadow-md transition-all"
+              >
+                <div class="flex flex-wrap items-center gap-4">
+                  <div class="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-xs font-black text-slate-400 border border-slate-100">
+                    0{index + 1}
+                  </div>
+
+                  <input
+                    type="text"
+                    class="flex-grow min-w-[120px] bg-transparent border-b-2 border-slate-50 focus:border-blue-500 outline-none py-1 text-sm font-bold text-slate-700 transition-colors"
+                    placeholder="Enter name..."
+                    value={p.name}
+                    onInput={(e) =>
+                      updatePlayer(p.id, "name", e.currentTarget.value)
+                    }
+                  />
+
+                  <div class="flex items-center gap-2">
+                    <select
+                      class="bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:bg-slate-100 transition-colors"
+                      value={p.type}
+                      onChange={(e) =>
+                        updatePlayer(
+                          p.id,
+                          "type",
+                          e.currentTarget.value as AgentType,
+                        )
+                      }
+                    >
+                      {Object.values(AgentType).map((type) => (
+                        <option value={type}>
+                          {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+
+                    {players.value.length > 2 && (
+                      <button
+                        onClick={() => removePlayer(p.id)}
+                        class="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                        title="Remove player"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2.5"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-slate-50">
+                  <p class="text-[10px] leading-relaxed text-slate-400 font-semibold italic">
+                    <span class="text-blue-500 not-italic font-bold uppercase mr-2">
+                      Behavior:
+                    </span>
+                    {AGENT_DESCRIPTIONS[p.type]}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
       </div>
 
-      <Button onClick={handlePlay}>Launch Battle</Button>
+      <footer class="pt-8 border-t border-slate-100 flex justify-center">
+        <button
+          onClick={handlePlay}
+          class="w-full md:w-auto px-12 py-5 bg-blue-600 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-xs shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 active:scale-95 transition-all"
+        >
+          Launch Battle Arena
+        </button>
+      </footer>
     </div>
   );
 }
