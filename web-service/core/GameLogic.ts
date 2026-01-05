@@ -123,38 +123,44 @@ export class GameEngine {
 
   private isLegalMove(idx: number, currentPlayerId: number): boolean {
     const cell = this.board[idx];
-    let passRule = false;
+
+    if (cell.player !== 0 && cell.player !== currentPlayerId) {
+      return false;
+    }
+
+    let canPlayOnEmpty = false;
+    const canPlayOnOwned = true;
 
     switch (this.playRule) {
       case RulesOptions.OnlyOwnOrbs:
-        passRule = (cell.player === 0 && this.roundNumber === 1) ||
-          cell.player === currentPlayerId;
+        if (this.roundNumber === 1) canPlayOnEmpty = true;
         break;
-
       case RulesOptions.EmptyAndOwnOrbs:
-        passRule = cell.player === 0 || cell.player === currentPlayerId;
+        canPlayOnEmpty = true;
         break;
-
       default:
-        passRule = false;
+        return false;
     }
 
-    if (passRule && this.roundNumber === 1 && cell.player === 0) { // Cambiar porque no siempre es asi
+    const isEmpty = cell.player === 0;
+    const isOwned = cell.player === currentPlayerId;
+
+    if ((isEmpty && !canPlayOnEmpty) || (isOwned && !canPlayOnOwned)) {
+      return false;
+    }
+
+    if (this.roundNumber === 1 && isEmpty) {
       const neighborIndices = this.fullAdjacencies[idx];
 
       for (const nIdx of neighborIndices) {
         const neighbor = this.board[nIdx];
         if (neighbor.player !== 0 && neighbor.player !== currentPlayerId) {
-          console.warn(
-            "No puedes jugar adyacente a un enemigo en el primer turno.",
-          );
-          passRule = false;
-          break;
+          return false;
         }
       }
     }
 
-    return passRule;
+    return true;
   }
 
   private *addOrb(idx: number, player: number): Generator<CellData[]> {
@@ -289,33 +295,9 @@ export class GameEngine {
   }
 
   getLegalMoves(playerId: number): number[] {
-    const { rows, cols, board } = this;
-    const totalCells = rows * cols;
     const moves: number[] = [];
-
-    let canPlayOnEmpty: boolean = false;
-    let canPlayOnOwned: boolean = false;
-
-    switch (this.playRule) {
-      case RulesOptions.OnlyOwnOrbs:
-        if (this.roundNumber === 1) canPlayOnEmpty = true;
-        canPlayOnOwned = true;
-        break;
-      case RulesOptions.EmptyAndOwnOrbs:
-        canPlayOnEmpty = true;
-        canPlayOnOwned = true;
-        break;
-      default:
-        return [];
-    }
-
-    for (let idx = 0; idx < totalCells; idx++) {
-      const cell = board[idx];
-      const isEmpty = cell.player === 0;
-      const isOwned = cell.player === playerId;
-      if ((isEmpty && canPlayOnEmpty) || (isOwned && canPlayOnOwned)) {
-        moves.push(idx);
-      }
+    for (let i = 0; i < this.board.length; i++) {
+      if (this.isLegalMove(i, playerId)) moves.push(i);
     }
     return moves;
   }
