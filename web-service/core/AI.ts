@@ -1,7 +1,9 @@
 import { GameEngine } from "./GameLogic.ts";
 
 export class RandomBot {
-  static getMove(engine: GameEngine): { r: number; c: number } | null {
+  static getMove(
+    engine: GameEngine,
+  ): { r: number; c: number; index: number } | null {
     const validMoves: number[] = [];
     const board = engine.getBoard();
     const myId = engine.getCurrentPlayerId();
@@ -20,6 +22,7 @@ export class RandomBot {
     return {
       r: Math.floor(randomIdx / engine.cols),
       c: randomIdx % engine.cols,
+      index: randomIdx,
     };
   }
 }

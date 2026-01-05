@@ -100,15 +100,14 @@ export class GameEngine {
     return r * this.cols + c;
   }
 
-  *playGenerator(r: number, c: number): Generator<CellData[]> {
+  *playGenerator(index: number): Generator<CellData[]> {
     if (this.winner !== 0) return;
 
     const currentPlayer = this.getCurrentPlayerId();
-    const idx = this.getIndex(r, c);
 
-    if (!this.isLegalMove(idx, currentPlayer)) return;
+    if (!this.isLegalMove(index, currentPlayer)) return;
 
-    yield* this.addOrb(idx, currentPlayer);
+    yield* this.addOrb(index, currentPlayer);
 
     if (this.roundNumber > 1) {
       this.checkEliminations();
@@ -159,6 +158,7 @@ export class GameEngine {
   }
 
   private *addOrb(idx: number, player: number): Generator<CellData[]> {
+    let explosion = 0;
     const cell = this.board[idx];
 
     this.setCellOwner(cell, player);
@@ -171,6 +171,7 @@ export class GameEngine {
       cell.points -= this.critical_points;
       if (cell.points === 0) {
         this.setCellOwner(cell, 0);
+        explosion++;
       }
       q.push(idx);
     }
@@ -194,6 +195,7 @@ export class GameEngine {
           neighbor.points -= this.critical_points;
           if (neighbor.points === 0) this.setCellOwner(neighbor, 0);
           q.push(nIdx);
+          explosion++;
         }
       }
       this.checkEliminations();

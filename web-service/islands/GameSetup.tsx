@@ -88,8 +88,8 @@ export default function GameSetup() {
                 </div>
                 <input
                   type="range"
-                  min={2}
-                  max={6}
+                  min={4}
+                  max={10}
                   step={1}
                   value={cp.value}
                   onInput={(e) => (cp.value = parseInt(e.currentTarget.value))}

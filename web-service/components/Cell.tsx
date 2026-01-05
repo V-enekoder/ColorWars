@@ -2,11 +2,10 @@ import { memo } from "preact/compat";
 import { PlayerColor } from "../utils/constans.ts";
 
 export interface CellProps {
-  row: number;
-  column: number;
+  index: number;
   points: number;
   player: number;
-  onClick: (r: number, c: number) => void;
+  onClick: (idx: number) => void;
   isCritical: boolean;
   limit: number;
 }
@@ -27,8 +26,7 @@ export const Cell = memo(function Cell({
   points,
   player,
   onClick,
-  row,
-  column,
+  index,
   isCritical,
   limit,
 }: CellProps) {
@@ -82,7 +80,7 @@ export const Cell = memo(function Cell({
   return (
     <button
       type="button"
-      onClick={() => onClick(row, column)}
+      onClick={() => onClick(index)}
       class="w-14 h-14 rounded-xl border-2 flex items-center justify-center transition-colors duration-200 relative"
       style={{
         backgroundColor: color,

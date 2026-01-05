@@ -45,10 +45,10 @@ export default function GameBoard({ config }: { config: GameConfig }) {
   );
 
   const handleCellClick = useCallback(
-    async (row: number, col: number) => {
+    async (index: number) => {
       if (isAnimating.value || engine.winner !== 0) return;
 
-      const generator = engine.playGenerator(row, col);
+      const generator = engine.playGenerator(index);
 
       let next = generator.next();
 
@@ -107,7 +107,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
 
         const move = RandomBot.getMove(engine);
         if (move) {
-          await handleCellClick(move.r, move.c);
+          await handleCellClick(move.index);
         }
       }
     };
@@ -187,17 +187,14 @@ export default function GameBoard({ config }: { config: GameConfig }) {
         }}
       >
         {boardSignals.map((cellSignal, index) => {
-          const rowIndex = Math.floor(index / cols);
-          const colIndex = index % cols;
           const cellData = cellSignal.value;
           const limit = engine.critical_points;
           const isCritical = cellData.points === limit - 1;
 
           return (
             <Cell
-              key={`${rowIndex}-${colIndex}`}
-              row={rowIndex}
-              column={colIndex}
+              key={`${index}`}
+              index={index}
               points={cellData.points}
               player={cellData.player}
               isCritical={isCritical}
