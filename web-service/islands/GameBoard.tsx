@@ -21,7 +21,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
     return initialBoard.map((cellData) => signal(cellData));
   }, [engine]);
 
-  const currentPlayerId = useSignal(engine.getCurrentPlayerId());
+  const currentPlayerId = useSignal(engine.currentPlayerId);
   const winner = useSignal(0);
   const playerCounts = useSignal<[number, number][]>(engine.getCellsByPlayer());
   const isAnimating = useSignal(false);
@@ -75,7 +75,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
         }
       } finally {
         if (isMounted.current) {
-          currentPlayerId.value = engine.getCurrentPlayerId();
+          currentPlayerId.value = engine.currentPlayerId;
           winner.value = engine.winner;
           isAnimating.value = false;
         }
@@ -94,7 +94,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
   useEffect(() => {
     if (winner.value !== 0 || isAnimating.value) return;
 
-    const currentPlayerIdx = engine.getCurrentPlayerId() - 1;
+    const currentPlayerIdx = engine.currentPlayerId - 1;
     const playerConfig = players[currentPlayerIdx];
 
     const runAI = async () => {

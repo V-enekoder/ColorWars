@@ -103,7 +103,7 @@ export class GameEngine {
   *playGenerator(index: number): Generator<CellData[]> {
     if (this.winner !== 0) return;
 
-    const currentPlayer = this.getCurrentPlayerId();
+    const currentPlayer = this.currentPlayerId;
 
     if (!this.isLegalMove(index, currentPlayer)) return;
 
@@ -117,7 +117,7 @@ export class GameEngine {
     yield this.getBoard();
   }
 
-  getCurrentPlayerId(): number {
+  get currentPlayerId(): number {
     return this.players[this.currentPlayerIndex].id;
   }
 
@@ -139,7 +139,7 @@ export class GameEngine {
         passRule = false;
     }
 
-    if (passRule && this.roundNumber === 1 && cell.player === 0) {
+    if (passRule && this.roundNumber === 1 && cell.player === 0) { // Cambiar porque no siempre es asi
       const neighborIndices = this.fullAdjacencies[idx];
 
       for (const nIdx of neighborIndices) {
@@ -230,6 +230,11 @@ export class GameEngine {
     }
   }
 
+  private updateCellCount(playerId: number, change: number) {
+    const current = this.cellsByPlayer.get(playerId) || 0;
+    this.cellsByPlayer.set(playerId, current + change);
+  }
+
   private checkEliminations() {
     let activeCount = 0;
     let lastActiveId = 0;
@@ -283,8 +288,35 @@ export class GameEngine {
     return this.roundNumber;
   }
 
-  private updateCellCount(playerId: number, change: number) {
-    const current = this.cellsByPlayer.get(playerId) || 0;
-    this.cellsByPlayer.set(playerId, current + change);
+  getLegalMoves(playerId: number): number[] {
+    const { rows, cols, board } = this;
+    const totalCells = rows * cols;
+    const moves: number[] = [];
+
+    let canPlayOnEmpty: boolean = false;
+    let canPlayOnOwned: boolean = false;
+
+    switch (this.playRule) {
+      case RulesOptions.OnlyOwnOrbs:
+        if (this.roundNumber === 1) canPlayOnEmpty = true;
+        canPlayOnOwned = true;
+        break;
+      case RulesOptions.EmptyAndOwnOrbs:
+        canPlayOnEmpty = true;
+        canPlayOnOwned = true;
+        break;
+      default:
+        return [];
+    }
+
+    for (let idx = 0; idx < totalCells; idx++) {
+      const cell = board[idx];
+      const isEmpty = cell.player === 0;
+      const isOwned = cell.player === playerId;
+      if ((isEmpty && canPlayOnEmpty) || (isOwned && canPlayOnOwned)) {
+        moves.push(idx);
+      }
+    }
+    return moves;
   }
 }
