@@ -1,39 +1,30 @@
 import { useSignal } from "@preact/signals";
 import { Stepper } from "../components/Stepper.tsx";
-import { AgentType, Player, RulesOptions } from "../utils/types.ts";
-import { AGENT_DESCRIPTIONS } from "../utils/constans.ts";
+import { AgentType, RulesOptions } from "../utils/types.ts";
+import { PlayerCard } from "../components/PlayerCard.tsx";
+import { useGamePlayers } from "../hooks/useGamePlayers.ts";
+
+const AGENT_OPTIONS = Object.values(AgentType).map((type) => (
+  <option key={type} value={type}>
+    {type.charAt(0).toUpperCase() + type.slice(1)}
+  </option>
+));
 
 export default function GameSetup() {
   const rows = useSignal(8);
   const cols = useSignal(8);
   const cp = useSignal(4);
   const rule = useSignal(RulesOptions.OnlyOwnOrbs);
-  const players = useSignal<Player[]>([
-    { id: 1, name: "Random Bot", type: AgentType.RandomAI },
-    { id: 2, name: "Random Bot", type: AgentType.RandomAI },
-  ]);
 
-  const addPlayer = () => {
-    if (players.value.length < 8) {
-      const newId = Math.max(...players.value.map((p) => p.id), 0) + 1;
-      players.value = [
-        ...players.value,
-        { id: newId, name: `Player ${newId}`, type: AgentType.RandomAI },
-      ];
-    }
-  };
-
-  const removePlayer = (id: number) => {
-    if (players.value.length > 2) {
-      players.value = players.value.filter((p) => p.id !== id);
-    }
-  };
-
-  const updatePlayer = (id: number, field: keyof Player, value: any) => {
-    players.value = players.value.map((p) =>
-      p.id === id ? { ...p, [field]: value } : p
-    );
-  };
+  const {
+    players,
+    addPlayer,
+    removePlayer,
+    updatePlayer,
+    canRemove,
+    canAdd,
+    playerCount,
+  } = useGamePlayers();
 
   const handlePlay = () => {
     const params = new URLSearchParams({
@@ -127,10 +118,10 @@ export default function GameSetup() {
                 Combatants
               </h3>
               <p class="text-2xl font-black text-slate-800">
-                {players.value.length} <span class="text-slate-300">/ 8</span>
+                {playerCount} <span class="text-slate-300">/ 8</span>
               </p>
             </div>
-            {players.value.length < 8 && (
+            {canAdd.value && (
               <button
                 type="button"
                 onClick={addPlayer}
@@ -140,83 +131,20 @@ export default function GameSetup() {
               </button>
             )}
           </header>
-          {/*Desde aqui se debe refactorizar */}
+
           <div class="grid gap-4 max-h-150 overflow-y-auto pr-2 custom-scrollbar">
-            {players.value.map((p, index) => (
-              <div
-                key={p.id}
-                class="group bg-white p-5 rounded-4xl border border-slate-200 shadow-sm hover:shadow-md transition-all"
-              >
-                <div class="flex flex-wrap items-center gap-4">
-                  <div class="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-xs font-black text-slate-400 border border-slate-100">
-                    0{index + 1}
-                  </div>
-
-                  <input
-                    type="text"
-                    class="grow min-w-30 bg-transparent border-b-2 border-slate-50 focus:border-blue-500 outline-none py-1 text-sm font-bold text-slate-700 transition-colors"
-                    placeholder="Enter name..."
-                    value={p.name}
-                    onInput={(e) =>
-                      updatePlayer(p.id, "name", e.currentTarget.value)}
-                  />
-
-                  <div class="flex items-center gap-2">
-                    <select
-                      class="bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:bg-slate-100 transition-colors"
-                      value={p.type}
-                      onChange={(e) =>
-                        updatePlayer(
-                          p.id,
-                          "type",
-                          e.currentTarget.value as AgentType,
-                        )}
-                    >
-                      {Object.values(AgentType).map((type) => (
-                        <option value={type}>
-                          {type.charAt(0).toUpperCase() + type.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-
-                    {players.value.length > 2 && (
-                      <button
-                        type="button"
-                        onClick={() => removePlayer(p.id)}
-                        class="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                        title="Remove player"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2.5"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div class="mt-4 pt-4 border-t border-slate-50">
-                  <p class="text-[14px] leading-relaxed text-slate-400 font-semibold italic">
-                    <span class="text-blue-500 not-italic font-bold uppercase mr-2">
-                      Behavior:
-                    </span>
-                    {AGENT_DESCRIPTIONS[p.type]}
-                  </p>
-                </div>
-              </div>
+            {players.value.map((player, index) => (
+              <PlayerCard
+                key={player.id}
+                player={player}
+                index={index}
+                canRemove={canRemove.value}
+                updatePlayer={updatePlayer}
+                removePlayer={removePlayer}
+                agentOptions={AGENT_OPTIONS}
+              />
             ))}
           </div>
-          {/*Hasta aqui */}
         </main>
       </div>
 
