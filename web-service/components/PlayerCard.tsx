@@ -1,11 +1,15 @@
 import { AgentType, Player } from "../utils/types.ts";
-import { AGENT_DESCRIPTIONS } from "../utils/constans.ts";
-import { ComponentChildren } from "preact";
+import { AGENT_DESCRIPTIONS, AGENT_TYPES_LIST } from "../utils/constans.ts";
+
+const AGENT_OPTIONS_UI = AGENT_TYPES_LIST.map((type) => (
+  <option key={type} value={type}>
+    {type.charAt(0).toUpperCase() + type.slice(1)}
+  </option>
+));
 
 export interface PlayerCardProps {
   player: Player;
   index: number;
-  // Cambiamos any por tipos específicos para evitar bugs de lógica
   updatePlayer: (
     id: number,
     field: keyof Player,
@@ -13,8 +17,6 @@ export interface PlayerCardProps {
   ) => void;
   removePlayer: (id: number) => void;
   canRemove: boolean;
-  // Usamos ComponentChildren que es el estándar de Preact para fragmentos de VNode
-  agentOptions: ComponentChildren;
 }
 
 export const PlayerCard = ({
@@ -23,10 +25,8 @@ export const PlayerCard = ({
   canRemove,
   updatePlayer,
   removePlayer,
-  agentOptions, // Inyectamos las opciones pre-calculadas
 }: PlayerCardProps) => {
   const formattedIndex = (index + 1).toString().padStart(2, "0");
-
   return (
     <div class="group bg-white p-5 rounded-4xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
       <div class="flex flex-wrap items-center gap-4">
@@ -54,14 +54,13 @@ export const PlayerCard = ({
                 e.currentTarget.value as AgentType,
               )}
           >
-            {/* Usamos las opciones inyectadas para evitar re-cálculos */}
-            {agentOptions}
+            {AGENT_OPTIONS_UI}
           </select>
 
           {canRemove && (
             <button
               type="button"
-              onClick={() => removePlayer(player.id)} // Corregido p.id -> player.id
+              onClick={() => removePlayer(player.id)}
               class="p-2 text-slate-300 hover:text-red-500 transition-colors"
               title="Remove player"
             >

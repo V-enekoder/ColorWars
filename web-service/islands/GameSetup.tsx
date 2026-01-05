@@ -1,14 +1,8 @@
 import { useSignal } from "@preact/signals";
 import { Stepper } from "../components/Stepper.tsx";
-import { AgentType, RulesOptions } from "../utils/types.ts";
+import { RulesOptions } from "../utils/types.ts";
 import { PlayerCard } from "../components/PlayerCard.tsx";
 import { useGamePlayers } from "../hooks/useGamePlayers.ts";
-
-const AGENT_OPTIONS = Object.values(AgentType).map((type) => (
-  <option key={type} value={type}>
-    {type.charAt(0).toUpperCase() + type.slice(1)}
-  </option>
-));
 
 export default function GameSetup() {
   const rows = useSignal(8);
@@ -141,7 +135,6 @@ export default function GameSetup() {
                 canRemove={canRemove.value}
                 updatePlayer={updatePlayer}
                 removePlayer={removePlayer}
-                agentOptions={AGENT_OPTIONS}
               />
             ))}
           </div>

@@ -12,11 +12,11 @@ export interface GameConfig {
 }
 
 export enum AgentType {
-  Human = "human",
-  RandomAI = "random",
-  MinimaxAI = "minimax",
-  HeuristicAI = "heuristic",
-  NeuralNetwork = "nn",
+  Human = "Human",
+  RandomAI = "Random",
+  MinimaxAI = "Minimax",
+  HeuristicAI = "Heuristic",
+  NeuralNetwork = "Neural NetWork",
 }
 
 export interface Player {

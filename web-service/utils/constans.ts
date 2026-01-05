@@ -36,3 +36,5 @@ export const AGENT_DESCRIPTIONS: Record<AgentType, string> = {
   [AgentType.NeuralNetwork]:
     "Adaptive learner. Utilizes trained patterns to dominate the board.",
 };
+
+export const AGENT_TYPES_LIST = Object.values(AgentType);
