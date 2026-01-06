@@ -1,6 +1,5 @@
 import { IGameAgent } from "../../utils/types.ts";
 import { GameEngine } from "../GameLogic.ts";
-
 export class RandomBot implements IGameAgent {
   async getMove(engine: GameEngine) {
     const validMoves = engine.getLegalMoves(engine.currentPlayerId);

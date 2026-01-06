@@ -5,6 +5,17 @@ export interface IGameAgent {
   getMove(engine: GameEngine): Promise<{ index: number } | null>;
 }
 
+export enum EngineType {
+  PythonNaive = "python_naive",
+  RustBitboard = "rust_bitboard",
+}
+
+export interface BotConfig {
+  engineType: EngineType;
+  depth?: number;
+  temperature?: number;
+}
+
 export type CardColor = "blue" | "indigo" | "red" | "emerald" | "slate";
 
 export interface GameConfig {
@@ -17,11 +28,11 @@ export interface GameConfig {
 }
 
 export enum AgentType {
-  Human = "Human",
-  RandomAI = "Random",
-  MinimaxAI = "Minimax",
-  HeuristicAI = "Heuristic",
-  NeuralNetwork = "Neural NetWork",
+  Human = "human",
+  RandomAI = "random",
+  MinimaxAI = "minimax",
+  HeuristicAI = "heuristic",
+  NeuralNetwork = "neural_network",
 }
 
 export interface Player {

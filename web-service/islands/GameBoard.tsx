@@ -2,11 +2,10 @@ import { Signal, signal, useComputed, useSignal } from "@preact/signals";
 import { useCallback, useEffect, useMemo, useRef } from "preact/hooks";
 import { Cell } from "../components/Cell.tsx";
 import { PlayerScoreboard } from "../components/PlayerScoreboard.tsx";
-import { RandomBot } from "../core/AI.ts";
 import { CellData, GameEngine } from "../core/GameLogic.ts";
 import { PLAYER_COLOR_MAP } from "../utils/constans.ts";
-import { AgentType, GameConfig, GameMode, Player } from "../utils/types.ts";
-import { AgentRegistry } from "../core/agents/AgentFactory.ts";
+import { GameConfig, IGameAgent, Player } from "../utils/types.ts";
+import { AgentFactory } from "../core/agents/AgentFactory.ts";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -92,30 +91,51 @@ export default function GameBoard({ config }: { config: GameConfig }) {
     };
   }, []);
 
+  const agentsMap = useMemo(() => {
+    const map = new Map<number, IGameAgent>();
+
+    players.forEach((p) => {
+      const agent = AgentFactory.create(p.type, p as any);
+
+      if (agent) {
+        map.set(p.id, agent);
+      }
+    });
+
+    return map;
+  }, [players]);
+
   useEffect(() => {
     if (winner.value !== 0 || isAnimating.value) return;
 
-    const currentPlayerIdx = engine.currentPlayerId - 1;
-    const playerConfig = players[currentPlayerIdx];
+    const currentId = engine.currentPlayerId;
 
     const runAI = async () => {
-      const agent = AgentRegistry[playerConfig.type];
+      const agent = agentsMap.get(currentId);
 
       if (agent) {
         await delay(500);
         if (!isMounted.current) return;
 
-        const move = await agent.getMove(engine);
-
-        if (move && isMounted.current) {
-          await handleCellClick(move.index);
+        try {
+          const move = await agent.getMove(engine);
+          if (move && isMounted.current) {
+            await handleCellClick(move.index);
+          }
+        } catch (e) {
+          console.error("Error en turno de IA:", e);
         }
       }
     };
 
     runAI();
-  }, [currentPlayerId.value, isAnimating.value]);
-
+  }, [
+    currentPlayerId.value,
+    isAnimating.value,
+    engine,
+    agentsMap,
+    handleCellClick,
+  ]);
   const message = useComputed(() => {
     return winner.value !== 0
       ? `¡Ganó el jugador ${winner.value}!`
