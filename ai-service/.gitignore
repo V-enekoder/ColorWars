@@ -1,0 +1,59 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- Virtual Environments (Muy importante para tu caso) ---
+.venv/
+venv/
+ENV/
+env/
+
+# --- UV (Cache local que se ve en tu captura) ---
+.cache/
+
+# --- Ruff & Linters ---
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# --- Jupyter Notebooks ---
+.ipynb_checkpoints
+
+# --- Entorno y Secretos (Por seguridad) ---
+.env
+.env.local
+.env.*.local
+
+# --- Docker / Podman ---
+# Si usas bases de datos locales o archivos de logs de contenedores
+*.log
+
+# --- IDEs ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Sistema OS ---
+.DS_Store
+Thumbs.db
