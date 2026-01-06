@@ -14,7 +14,7 @@ export interface PlayerCardProps {
   index: number;
   updatePlayer: (
     id: number,
-    field: keyof Player,
+    field: "name" | "type",
     value: string | AgentType,
   ) => void;
   removePlayer: (id: number) => void;
