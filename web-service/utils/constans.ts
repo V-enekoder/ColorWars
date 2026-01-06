@@ -38,3 +38,11 @@ export const AGENT_DESCRIPTIONS: Record<AgentType, string> = {
 };
 
 export const AGENT_TYPES_LIST = Object.values(AgentType);
+
+export const AGENT_LABELS: Record<AgentType, string> = {
+  [AgentType.Human]: "Human Player",
+  [AgentType.RandomAI]: "Random Player",
+  [AgentType.MinimaxAI]: "Minimax AI",
+  [AgentType.HeuristicAI]: "Heusristic AI",
+  [AgentType.NeuralNetwork]: "Neural Network",
+};
