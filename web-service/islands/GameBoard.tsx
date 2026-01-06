@@ -6,6 +6,7 @@ import { RandomBot } from "../core/AI.ts";
 import { CellData, GameEngine } from "../core/GameLogic.ts";
 import { PLAYER_COLOR_MAP } from "../utils/constans.ts";
 import { AgentType, GameConfig, GameMode, Player } from "../utils/types.ts";
+import { AgentRegistry } from "../core/agents/AgentFactory.ts";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -98,29 +99,22 @@ export default function GameBoard({ config }: { config: GameConfig }) {
     const playerConfig = players[currentPlayerIdx];
 
     const runAI = async () => {
-      if (playerConfig?.type === AgentType.RandomAI) {
-        if (mode === GameMode.IAvsIA || mode === GameMode.HumanVsIA) {
-          await delay(600 * 0);
-        }
+      const agent = AgentRegistry[playerConfig.type];
 
+      if (agent) {
+        await delay(500);
         if (!isMounted.current) return;
 
-        const move = RandomBot.getMove(engine);
-        if (move) {
+        const move = await agent.getMove(engine);
+
+        if (move && isMounted.current) {
           await handleCellClick(move.index);
         }
       }
     };
 
     runAI();
-  }, [
-    currentPlayerId.value,
-    isAnimating.value,
-    engine,
-    mode,
-    players,
-    handleCellClick,
-  ]);
+  }, [currentPlayerId.value, isAnimating.value]);
 
   const message = useComputed(() => {
     return winner.value !== 0

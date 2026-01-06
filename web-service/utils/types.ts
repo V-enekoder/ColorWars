@@ -1,4 +1,9 @@
 import { MainMenuOption } from "./navigation.ts";
+import { GameEngine } from "../core/GameLogic.ts";
+
+export interface IGameAgent {
+  getMove(engine: GameEngine): Promise<{ index: number } | null>;
+}
 
 export type CardColor = "blue" | "indigo" | "red" | "emerald" | "slate";
 
