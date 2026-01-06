@@ -3,8 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: mi-app-python:3.14
-    container_name: python_dev_env
+    image: mi-app-python:3.13
+    container_name: ai-service
     command: sleep infinity
     volumes:
       - .:/app:z

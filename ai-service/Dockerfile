@@ -1,42 +1,33 @@
-
 FROM python:3.14-slim
 
-# 1. Dependencias del sistema
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Instalar UV (Copiamos también uvx por utilidad)
+# 1. Instalar UV
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# 3. Variables de entorno
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    # Ubicación del venv
     UV_PROJECT_ENVIRONMENT="/app/.venv" \
-    # Compilación de bytecode para arranque rápido
     UV_COMPILE_BYTECODE=1 \
-    # Añadimos el venv al PATH para usar 'ruff' o 'python' directamente sin 'uv run'
     PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
 
-# 4. Instalación de dependencias (Caché optimizado)
+# 2. Copiar archivos de dependencias
 COPY pyproject.toml uv.lock* ./
 
-# Instalamos las dependencias sin instalar el proyecto todavía.
-# Esto permite que Docker use el caché si pyproject.toml no ha cambiado.
-RUN uv sync --frozen --no-install-project || uv sync --no-install-project
+# 3. Instalar dependencias (esto crea el .venv en la imagen)
+RUN uv sync --frozen --no-install-project
 
-# 5. Copiar el código fuente y configs restantes
-COPY ruff.toml .pre-commit-config.yaml* README.md ./
-COPY src ./src
+# 4. Copiar el resto de archivos y el entrypoint
+COPY . .
+# Asegurar que el entrypoint sea ejecutable
+RUN chmod +x entrypoint.sh
 
-# 6. Sincronizar el proyecto (Instala el paquete actual en modo editable)
-RUN uv sync
+# 5. Ajustar el ENTRYPOINT a la ruta correcta
+ENTRYPOINT ["./entrypoint.sh"]
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
-# Comando por defecto (mantiene el contenedor vivo para desarrollo)
 CMD ["/bin/bash"]

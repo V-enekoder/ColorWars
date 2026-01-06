@@ -1,11 +1,11 @@
-CONTAINER_NAME = python_dev_env
+CONTAINER_NAME = ai-service
 .PHONY: help build start stop run simulate notebook install shell lint lint-fix lint-unsafe format clean-code prune pre-commit-install
 
 .DEFAULT_GOAL := help
 
 help:
 	@echo ""
-	@echo "Makefile de Ayuda para el Proyecto Tres en Raya"
+	@echo "Makefile de AI Service"
 	@echo "------------------------------------------------"
 	@echo "Uso: make [target]"
 	@echo ""
@@ -47,8 +47,6 @@ stop: ## Detiene y elimina el contenedor
 	@podman-compose down
 
 run: ## Ejecuta el script principal
-	@echo "-> Concediendo acceso a la pantalla (X11)..."
-	@xhost +local:
 	@echo "-> Ejecutando el juego..."
 	@podman exec -it $(CONTAINER_NAME) uv run src/main.py
 
