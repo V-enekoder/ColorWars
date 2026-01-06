@@ -1,11 +1,11 @@
 import { Signal, signal, useComputed, useSignal } from "@preact/signals";
-import { useMemo } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef } from "preact/hooks";
 import { Cell } from "../components/Cell.tsx";
-import { CellData, GameEngine } from "../core/GameLogic.ts";
+import { PlayerScoreboard } from "../components/PlayerScoreboard.tsx";
 import { RandomBot } from "../core/AI.ts";
-import { useCallback, useEffect, useRef } from "preact/hooks";
-import { AgentType, GameConfig, GameMode } from "../utils/types.ts";
+import { CellData, GameEngine } from "../core/GameLogic.ts";
 import { PLAYER_COLOR_MAP } from "../utils/constans.ts";
+import { AgentType, GameConfig, GameMode, Player } from "../utils/types.ts";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -36,7 +36,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
           currentVal.points !== newCell.points ||
           currentVal.player !== newCell.player
         ) {
-          sig.value = { ...newCell };
+          sig.value = newCell;
         }
       });
       playerCounts.value = engine.getCellsByPlayer();
@@ -128,6 +128,19 @@ export default function GameBoard({ config }: { config: GameConfig }) {
       : `Turno: Jugador ${currentPlayerId.value}`;
   });
 
+  const playerMap = useMemo(() => {
+    return players.reduce((acc, p) => {
+      acc[p.id] = p;
+      return acc;
+    }, {} as Record<number, Player>);
+  }, [players]);
+
+  const sortedScores = useComputed(() => {
+    return [...playerCounts.value]
+      .filter(([id]) => id !== 0)
+      .sort((a, b) => b[1] - a[1]);
+  });
+
   return (
     <div class="flex flex-col items-center gap-4 p-4 min-h-screen bg-white">
       <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">
@@ -135,48 +148,16 @@ export default function GameBoard({ config }: { config: GameConfig }) {
       </h2>
 
       <div class="flex flex-wrap justify-center gap-6 mb-8">
-        {[...playerCounts.value]
-          .filter(([id]) => id !== 0)
-          .sort((a, b) => b[1] - a[1])
-          .map(([playerId, count]) => {
-            const playerInfo = players.find((p) => p.id === playerId);
-            const playerName = playerInfo
-              ? playerInfo.name
-              : `Jugador ${playerId}`;
-            const color = PLAYER_COLOR_MAP[playerId] || "#cbd5e1";
-            const isActive = playerId === currentPlayerId.value;
-
-            return (
-              <div
-                key={playerId}
-                class={`
-                  relative flex items-center gap-4 px-6 py-3 rounded-2xl border-2
-                  font-bold transition-all duration-500 transform
-                  ${
-                  isActive ? "scale-110 z-10 shadow-lg" : "scale-100 opacity-40"
-                }
-                `}
-                style={{
-                  borderColor: color,
-                  backgroundColor: `${color}${isActive ? "20" : "05"}`,
-                  color: color,
-                }}
-              >
-                <div class="text-xl">
-                  {playerInfo?.type !== AgentType.Human ? "🤖" : "👤"}
-                </div>
-                <span class="text-lg flex flex-col leading-tight">
-                  <span class="text-[10px] uppercase tracking-widest opacity-60">
-                    {playerInfo?.type !== AgentType.Human
-                      ? "Sistema IA"
-                      : "Humano"}
-                  </span>
-                  <span class="truncate max-w-25">{playerName}</span>
-                </span>
-                <div class="text-3xl ml-2 font-black">{count}</div>
-              </div>
-            );
-          })}
+        {sortedScores.value.map(([playerId, count]) => (
+          <PlayerScoreboard
+            key={playerId}
+            player={playerMap[playerId]}
+            playerId={playerId}
+            count={count}
+            isActive={playerId === currentPlayerId.value}
+            color={PLAYER_COLOR_MAP[playerId] || "#cbd5e1"}
+          />
+        ))}
       </div>
 
       <div
