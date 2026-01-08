@@ -32,14 +32,14 @@ export const PlayerCard = ({
   return (
     <div class="group bg-white p-5 rounded-4xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
       <div class="flex items-center gap-4">
-        <div class="w-10 h-10 shrink-0 rounded-2xl bg-slate-50 flex items-center justify-center text-xs font-black text-slate-400 border border-slate-100">
+        <div class="w-10 h-10 shrink-0 rounded-2xl bg-slate-50 flex items-center justify-center text-sm font-black text-slate-400 border border-slate-100">
           {formattedIndex}
         </div>
 
         <div class="flex flex-1 items-center gap-3 flex-wrap sm:flex-nowrap">
           <input
             type="text"
-            class="flex-1 min-w-30 bg-transparent border-b-2 border-slate-50 focus:border-blue-500 outline-none py-1 text-sm font-bold text-slate-700 transition-colors"
+            class="flex-1 min-w-30 bg-transparent border-b-2 border-slate-50 focus:border-blue-500 outline-none py-1 text-base font-bold text-slate-700 transition-colors"
             placeholder="Enter name..."
             value={player.name}
             onInput={(e) =>
@@ -47,7 +47,7 @@ export const PlayerCard = ({
           />
 
           <select
-            class="w-full sm:w-auto bg-slate-50 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:bg-slate-100 transition-colors border border-transparent focus:border-slate-200"
+            class="w-full sm:w-auto bg-slate-50 px-3 py-1.5 rounded-xl text-sm font-bold text-slate-600 outline-none cursor-pointer hover:bg-slate-100 transition-colors border border-transparent focus:border-slate-200"
             value={player.type}
             onChange={(e) =>
               updatePlayer(
@@ -88,8 +88,8 @@ export const PlayerCard = ({
       </div>
 
       <div class="mt-3 pt-3 border-t border-slate-50 pl-14">
-        <p class="text-[13px] leading-relaxed text-slate-400 font-medium italic">
-          <span class="text-blue-500 not-italic font-bold uppercase mr-2 text-[10px] tracking-wider">
+        <p class="text-[15px] leading-relaxed text-slate-400 font-medium italic">
+          <span class="text-blue-500 not-italic font-bold uppercase mr-2 text-[12px] tracking-wider">
             Strategy:
           </span>
           {AGENT_DESCRIPTIONS[player.type]}

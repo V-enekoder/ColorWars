@@ -35,7 +35,7 @@ export default define.page(function Configuration(_ctx) {
               <h1 class="text-2xl font-black tracking-tight text-slate-800">
                 COLOR <span class="text-blue-600">WARS</span>
               </h1>
-              <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              <p class="text-[12px] font-bold uppercase tracking-[0.2em] text-slate-400">
                 Battle Arena
               </p>
             </div>

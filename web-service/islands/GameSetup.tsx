@@ -36,7 +36,7 @@ export default function GameSetup() {
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         <aside class="lg:col-span-5 space-y-10 bg-white/50 p-8 rounded-[2.5rem] border border-slate-100 backdrop-blur-sm">
           <section class="space-y-6">
-            <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">
+            <h3 class="text-[14px] font-black uppercase tracking-[0.2em] text-blue-600">
               Board Dimensions
             </h3>
             <div class="flex gap-6 justify-center lg:justify-start">
@@ -58,16 +58,16 @@ export default function GameSetup() {
           </section>
 
           <section class="space-y-6">
-            <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600">
+            <h3 class="text-[12px] font-black uppercase tracking-[0.2em] text-indigo-600">
               Game Rules
             </h3>
             <div class="space-y-8">
               <div>
                 <div class="flex justify-between mb-3">
-                  <span class="text-xs font-bold text-slate-700">
+                  <span class="text-sm font-bold text-slate-700">
                     Critical Points
                   </span>
-                  <span class="text-xs font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">
+                  <span class="text-sm font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">
                     {criticalPoints.value}
                   </span>
                 </div>
@@ -85,7 +85,7 @@ export default function GameSetup() {
               </div>
 
               <div>
-                <label class="text-[10px] font-black uppercase text-slate-400 block mb-3">
+                <label class="text-[12px] font-black uppercase text-slate-400 block mb-3">
                   Ruleset Logic
                 </label>
                 <select
@@ -110,7 +110,7 @@ export default function GameSetup() {
         <main class="lg:col-span-7 space-y-6">
           <header class="flex justify-between items-end px-2">
             <div>
-              <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+              <h3 class="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">
                 Combatants
               </h3>
               <p class="text-2xl font-black text-slate-800">
