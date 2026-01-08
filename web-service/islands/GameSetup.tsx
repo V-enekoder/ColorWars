@@ -7,7 +7,7 @@ import { useGamePlayers } from "../hooks/useGamePlayers.ts";
 export default function GameSetup() {
   const rows = useSignal(8);
   const cols = useSignal(8);
-  const cp = useSignal(4);
+  const criticalPoints = useSignal(4);
   const rule = useSignal(RulesOptions.OnlyOwnOrbs);
 
   const {
@@ -24,7 +24,7 @@ export default function GameSetup() {
     const params = new URLSearchParams({
       rows: rows.value.toString(),
       cols: cols.value.toString(),
-      cp: cp.value.toString(),
+      criticalPoints: criticalPoints.value.toString(),
       rule: rule.value,
       players: JSON.stringify(players.value),
     });
@@ -68,7 +68,7 @@ export default function GameSetup() {
                     Critical Points
                   </span>
                   <span class="text-xs font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">
-                    {cp.value}
+                    {criticalPoints.value}
                   </span>
                 </div>
                 <input
@@ -76,8 +76,10 @@ export default function GameSetup() {
                   min={4}
                   max={10}
                   step={1}
-                  value={cp.value}
-                  onInput={(e) => (cp.value = parseInt(e.currentTarget.value))}
+                  value={criticalPoints.value}
+                  onInput={(
+                    e,
+                  ) => (criticalPoints.value = parseInt(e.currentTarget.value))}
                   class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                 />
               </div>

@@ -10,7 +10,7 @@ import { AgentFactory } from "../core/agents/AgentFactory.ts";
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export default function GameBoard({ config }: { config: GameConfig }) {
-  const { mode, rows, cols, criticalPoints, players, rule } = config;
+  const { rows, cols, criticalPoints, players, rule } = config;
 
   const engine = useMemo(() => {
     return new GameEngine(rows, cols, criticalPoints, players.length, rule);
