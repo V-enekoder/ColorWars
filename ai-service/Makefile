@@ -46,9 +46,9 @@ stop: ## Detiene y elimina el contenedor
 	@echo "-> Deteniendo el contenedor..."
 	@podman-compose down
 
-run: ## Ejecuta el script principal
-	@echo "-> Ejecutando el juego..."
-	@podman exec -it $(CONTAINER_NAME) uv run src/main.py
+run: ## Ejecuta el servidor FastAPI
+	@echo "-> Iniciando servidor FastAPI..."
+	@podman exec -it $(CONTAINER_NAME) uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 
 simulate: ## Ejecuta una simulación de N partidas para recolectar datos
 	@echo "-> Iniciando la simulación estadística (esto puede tardar)..."

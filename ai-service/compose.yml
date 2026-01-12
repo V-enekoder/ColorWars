@@ -6,6 +6,8 @@ services:
     image: mi-app-python:3.13
     container_name: ai-service
     command: sleep infinity
+    ports:
+      - "8000:8000"
     volumes:
       - .:/app:z
       - venv_data:/app/.venv
