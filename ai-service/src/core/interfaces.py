@@ -1,6 +1,6 @@
 import time
 from abc import ABC, abstractmethod
-from typing import List, Tuple
+from typing import List
 
 from src.core.dtos import GameStateDTO, Move
 

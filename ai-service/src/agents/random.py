@@ -1,6 +1,6 @@
-from src.core.interfaces import Agent, IGameEngine
+from src.core.interfaces import Agent, IGameEngine, Move
 
-class MinimaxAgent(Agent):
-    def _calculate_move(self, engine: IGameEngine):
-        # ... lógica minimax ...
-        # Fíjate que el tipo hint ayuda al IDE a saber qué métodos tiene engine
+
+class RandomAgent(Agent):
+    def _calculate_move(self, engine: IGameEngine) -> Move:
+        return Move(1, 1)
