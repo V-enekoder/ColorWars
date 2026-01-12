@@ -89,7 +89,7 @@ export const PlayerCard = ({
 
       <div class="mt-3 pt-3 border-t border-slate-50 pl-14">
         <p class="text-[15px] leading-relaxed text-slate-400 font-medium italic">
-          <span class="text-blue-500 not-italic font-bold uppercase mr-2 text-[12px] tracking-wider">
+          <span class="text-blue-500 not-italic font-bold uppercase mr-2 text-[14px] tracking-wider">
             Strategy:
           </span>
           {AGENT_DESCRIPTIONS[player.type]}

@@ -24,7 +24,7 @@ export default define.page(function Game(ctx) {
       mode: mode,
       rows: Number(searchParams.get("rows")) || 8,
       cols: Number(searchParams.get("cols")) || 8,
-      criticalPoints: Number(searchParams.get("cp")) || 3,
+      criticalPoints: Number(searchParams.get("criticalPoints")) || 4,
       rule: (searchParams.get("rule") as RulesOptions) ||
         RulesOptions.OnlyOwnOrbs,
       players: players,
