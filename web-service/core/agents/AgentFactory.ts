@@ -1,5 +1,4 @@
 import { AgentType, BotConfig, EngineType } from "../../utils/types.ts";
-import { RandomBot } from "../agents/RandomBot.ts";
 import { RemoteAgent } from "../agents/RemoteAgent.ts";
 import { IGameAgent } from "../../utils/types.ts";
 
@@ -19,7 +18,7 @@ export class AgentFactory {
         return null;
 
       case AgentType.RandomAI:
-        return new RandomBot();
+        return new RemoteAgent(AgentType.RandomAI, finalConfig);
 
       case AgentType.MinimaxAI:
         return new RemoteAgent(AgentType.MinimaxAI, finalConfig);

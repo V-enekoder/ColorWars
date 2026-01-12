@@ -29,7 +29,9 @@ export class RemoteAgent implements IGameAgent {
       });
 
       const data = await response.json();
-      return { index: data.index };
+      const row = data.row;
+      const col = data.col;
+      return { index: engine.getIndex(row, col) };
     } catch (e) {
       console.error("Error AI:", e);
       throw e;
