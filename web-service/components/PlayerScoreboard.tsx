@@ -31,11 +31,11 @@ export const PlayerScoreboard = ({
       }}
     >
       <div class="text-xl">
-        {player?.type !== AgentType.Human ? "🤖" : "👤"}
+        {player?.type === AgentType.HUMAN ? "👤" : "🤖"}
       </div>
       <span class="text-lg flex flex-col leading-tight">
         <span class="text-[10px] uppercase tracking-widest opacity-60">
-          {player?.type !== AgentType.Human ? "Sistema IA" : "Humano"}
+          {player?.type === AgentType.HUMAN ? "Humano" : "Sistema IA"}
         </span>
         <span class="truncate max-w-25">{name}</span>
       </span>

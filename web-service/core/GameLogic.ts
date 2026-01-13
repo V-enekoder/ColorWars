@@ -10,6 +10,11 @@ interface Player {
   active: boolean;
 }
 
+export interface Move {
+  row: number;
+  col: number;
+}
+
 type Direction = readonly [number, number];
 
 type DirectionList = readonly Direction[];
@@ -294,11 +299,22 @@ export class GameEngine {
     return this.roundNumber;
   }
 
-  getLegalMoves(playerId: number): number[] {
-    const moves: number[] = [];
+  getLegalMoves(playerId: number): Move[] {
+    const moves: Move[] = [];
+
     for (let i = 0; i < this.board.length; i++) {
-      if (this.isLegalMove(i, playerId)) moves.push(i);
+      if (this.isLegalMove(i, playerId)) {
+        moves.push(this.getCoordinates(i));
+      }
     }
+
     return moves;
+  }
+
+  getCoordinates(index: number): Move {
+    return {
+      row: Math.floor(index / this.cols),
+      col: index % this.cols,
+    };
   }
 }

@@ -6,12 +6,15 @@ export interface IGameAgent {
 }
 
 export enum EngineType {
-  PythonNaive = "python_naive",
-  RustBitboard = "rust_bitboard",
+  PYTHON_NAIVE = "python_naive",
+  PYTHON_OPTIMIZED = "python_optimized",
+  PYTHON_RUST = "python_rust",
+  RUST_NAIVE = "rust_naive",
+  RUST_BITBOARD = "rust_bitboard",
 }
 
 export interface BotConfig {
-  engineType: EngineType;
+  engine: EngineType;
   depth?: number;
   temperature?: number;
 }
@@ -27,18 +30,28 @@ export interface GameConfig {
   rule: RulesOptions;
 }
 
-export enum AgentType {
-  Human = "human",
-  RandomAI = "random",
-  MinimaxAI = "minimax",
-  HeuristicAI = "heuristic",
-  NeuralNetwork = "neural_network",
+export enum AgentStrategy {
+  NONE = "none",
+  RANDOM = "random",
+  MINIMAX = "minimax",
+  MINIMAX_ALPHA_BETA = "minimax_alpha_beta",
+  MONTE_CARLO = "mcts",
+  PPO = "ppo",
+  GENETIC = "genetic",
+  HEURISTIC = "heuristic",
+  NEURAL_NETWORK = "neural_network",
 }
 
 export interface Player {
   id: number;
   name: string;
   type: AgentType;
+  strategy: AgentStrategy;
+}
+
+export enum AgentType {
+  HUMAN = "human",
+  BOT = "bot",
 }
 
 export enum GameState {

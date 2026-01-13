@@ -1,6 +1,12 @@
-import { AgentType, BotConfig, EngineType } from "../../utils/types.ts";
+import {
+  AgentStrategy,
+  BotConfig,
+  EngineType,
+  IGameAgent,
+} from "../../utils/types.ts";
 import { RemoteAgent } from "../agents/RemoteAgent.ts";
-import { IGameAgent } from "../../utils/types.ts";
+
+export type AgentType = "human" | AgentStrategy;
 
 export class AgentFactory {
   static create(
@@ -8,26 +14,15 @@ export class AgentFactory {
     config: Partial<BotConfig> = {},
   ): IGameAgent | null {
     const finalConfig: BotConfig = {
-      engineType: config.engineType || EngineType.PythonNaive,
+      engine: config.engine || EngineType.PYTHON_NAIVE,
       depth: config.depth || 4,
       ...config,
     };
 
-    switch (type) {
-      case AgentType.Human:
-        return null;
-
-      case AgentType.RandomAI:
-        return new RemoteAgent(AgentType.RandomAI, finalConfig);
-
-      case AgentType.MinimaxAI:
-        return new RemoteAgent(AgentType.MinimaxAI, finalConfig);
-
-      case AgentType.NeuralNetwork:
-        return new RemoteAgent(AgentType.NeuralNetwork, finalConfig);
-
-      default:
-        throw new Error(`Tipo de agente desconocido: ${type}`);
+    if (Object.values(AgentStrategy).includes(type as AgentStrategy)) {
+      return new RemoteAgent(type as AgentStrategy, finalConfig);
     }
+
+    throw new Error(`Estrategia de agente no soportada: ${type}`);
   }
 }
