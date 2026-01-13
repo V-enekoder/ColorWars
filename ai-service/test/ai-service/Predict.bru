@@ -1,0 +1,38 @@
+meta {
+  name: Predict
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8000/predict
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "board": [
+      {
+        "points": 10,
+        "player": 1
+      },
+      {
+        "points": 5,
+        "player": 2
+      }
+    ],
+    "player_id": 1,
+    "algorithm_id": "minimax_v2",
+    "config": {
+      "engine": "neural-engine",
+      "depth": 5,
+      "temperature": 1
+    }
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
