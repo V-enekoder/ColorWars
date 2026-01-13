@@ -2,13 +2,16 @@ import time
 from abc import ABC, abstractmethod
 from typing import List
 
-from src.core.dtos import GameStateDTO, Move
+from src.core.dtos import GameStateDTO, Move, PredictRequest
 
 
 class IGameEngine(ABC):
     """
     Interface to represent the tables and game logic
     """
+
+    def __init__(self, request: PredictRequest):
+        pass
 
     @abstractmethod
     def set_state(self, state: GameStateDTO) -> None:
@@ -37,12 +40,12 @@ class Agent(ABC):
         self.name = name
 
     def select_move(self, engine: IGameEngine) -> Move:
-        start_time = time.time()
+        start_time: float = time.time()
 
         move = self._calculate_move(engine)
 
-        end_time = time.time()
-        duration_ms = (end_time - start_time) * 1000
+        end_time: float = time.time()
+        move.time_ms = (end_time - start_time) * 1000
 
         return move
 

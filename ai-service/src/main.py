@@ -1,7 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 
+from src.application.predict_move import execute_prediction
 from src.core.dtos import PredictRequest
 
 app = FastAPI()
@@ -22,5 +22,9 @@ def read_root():
 
 @app.post("/predict")
 def get_move(request: PredictRequest):
-    print(request)
-    return {"row": 1, "col": 1}
+    try:
+        move = execute_prediction(request)
+        print(move)
+        return {"row": move.row, "col": move.col}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
