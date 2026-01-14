@@ -1,12 +1,12 @@
-import { BotConfig, IGameAgent } from "../../utils/types.ts";
+import { AgentStrategy, BotConfig, IGameAgent } from "../../utils/types.ts";
 import { GameEngine, Move } from "../GameLogic.ts";
 
 export class RemoteAgent implements IGameAgent {
-  private botId: string;
+  private agent_strategy: AgentStrategy;
   private config: BotConfig;
 
-  constructor(botId: string, config: BotConfig) {
-    this.botId = botId;
+  constructor(agent_strategy: AgentStrategy, config: BotConfig) {
+    this.agent_strategy = agent_strategy;
     this.config = config;
   }
 
@@ -21,7 +21,7 @@ export class RemoteAgent implements IGameAgent {
           board: engine.getBoard(),
           player_id: engine.currentPlayerId,
           legal_moves: legalMoves,
-          agent_strategy: this.botId,
+          agent_strategy: this.agent_strategy,
           config: {
             engine: this.config.engine,
             depth: this.config.depth,
