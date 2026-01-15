@@ -109,33 +109,28 @@ export default function GameBoard({ config }: { config: GameConfig }) {
     if (winner.value !== 0 || isAnimating.value) return;
 
     const currentId = engine.currentPlayerId;
+    const agent = agentsMap.get(currentId);
+
+    if (!agent) return;
 
     const runAI = async () => {
-      const agent = agentsMap.get(currentId);
-
-      if (agent) {
+      try {
         await delay(500);
         if (!isMounted.current) return;
 
-        try {
-          const move = await agent.getMove(engine);
-          if (move && isMounted.current) {
-            await handleCellClick(move.index);
-          }
-        } catch (e) {
-          console.error("Error en turno de IA:", e);
+        const move = await agent.getMove(engine);
+
+        if (move && isMounted.current && engine.currentPlayerId === currentId) {
+          await handleCellClick(move.index);
         }
+      } catch (e) {
+        console.error("Error en turno de IA:", e);
       }
     };
 
     runAI();
-  }, [
-    currentPlayerId.value,
-    isAnimating.value,
-    engine,
-    agentsMap,
-    handleCellClick,
-  ]);
+  }, [currentPlayerId.value, isAnimating.value]);
+
   const message = useComputed(() => {
     return winner.value !== 0
       ? `¡Ganó el jugador ${winner.value}!`
