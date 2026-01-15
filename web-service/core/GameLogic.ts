@@ -36,10 +36,6 @@ const DIAGONALS: DirectionList = [
 const ALL_DIRECTIONS: DirectionList = [...CARDINALS, ...DIAGONALS];
 
 export class GameEngine {
-  rows: number;
-  cols: number;
-  critical_points: number;
-
   board: CellData[];
   players: Player[];
   currentPlayerIndex: number = 0;
@@ -48,14 +44,13 @@ export class GameEngine {
   cellsByPlayer: Map<number, number> = new Map<number, number>();
   private neighbors: number[][];
   private fullAdjacencies: number[][];
-  private playRule: RulesOptions;
 
   constructor(
-    rows: number,
-    cols: number,
-    critical_points: number,
+    public readonly rows: number,
+    public readonly cols: number,
+    public readonly critical_points: number,
     num_players: number,
-    playRule: RulesOptions,
+    public readonly playRule: RulesOptions,
   ) {
     this.rows = rows;
     this.cols = cols;
