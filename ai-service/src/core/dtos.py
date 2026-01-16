@@ -3,6 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 from src.core.enums import AgentStrategy, EngineType
+from src.core.types import CellData
 
 
 class GameStateDTO(BaseModel):
@@ -27,11 +28,6 @@ class BotConfig(BaseModel):
     engine: EngineType
     depth: int | None = None
     temperature: int | None = None
-
-
-class CellData(BaseModel):
-    points: int
-    player: int
 
 
 class PredictRequest(BaseModel):
