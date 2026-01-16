@@ -2,7 +2,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import List
 
-from src.core.dtos import GameStateDTO, Move, PredictRequest
+from src.core.dtos import Move, PredictRequest
 
 
 class IGameEngine(ABC):
@@ -10,11 +10,11 @@ class IGameEngine(ABC):
     Interface to represent the tables and game logic
     """
 
-    def __init__(self, request: PredictRequest):
+    def __init__(self, rows: int, cols: int, critical_points: int, num_players: int):
         pass
 
     @abstractmethod
-    def set_state(self, state: GameStateDTO) -> None:
+    def set_state(self, request: PredictRequest) -> None:
         pass
 
     @abstractmethod

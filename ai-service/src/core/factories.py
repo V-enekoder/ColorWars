@@ -10,13 +10,13 @@ from src.engines.mock_engine import MockEngine
 class EngineFactory:
     @staticmethod
     def get_engine(request: PredictRequest) -> IGameEngine:
-        # Usar el Enum como llave es más seguro que usar "default"
         engines: Dict[EngineType, Type[IGameEngine]] = {
             EngineType.MOCK: MockEngine,
-            # EngineType.REAL: RealEngine,
         }
         engine_class = engines.get(request.config.engine, MockEngine)
-        return engine_class(request)
+        engine = engine_class(8, 8, 4, 2)
+        engine.set_state(request)
+        return engine
 
 
 class AgentFactory:

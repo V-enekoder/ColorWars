@@ -24,7 +24,6 @@ def read_root():
 def get_move(request: PredictRequest):
     try:
         move = execute_prediction(request)
-        print(move)
         return {"row": move.row, "col": move.col}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
