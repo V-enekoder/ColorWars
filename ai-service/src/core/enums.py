@@ -19,3 +19,8 @@ class EngineType(str, Enum):
     PYTHON_RUST = "python_rust"
     RUST_NAIVE = "rust_naive"
     RUST_BITBOARD = "rust_bitboard"
+
+
+class RuleOptions(str, Enum):
+    EMPTY_AND_OWN_ORBS = "EmptyAndOwnOrbs"
+    ONLY_OWN_ORB = "OnlyOwnOrbs"

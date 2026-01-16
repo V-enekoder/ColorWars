@@ -27,3 +27,8 @@ def get_move(request: PredictRequest):
         return {"row": move.row, "col": move.col}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+"""
+Investigar mejora de rendimiento Pypy vs Cpython
+"""

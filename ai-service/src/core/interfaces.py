@@ -22,7 +22,7 @@ class IGameEngine(ABC):
         pass
 
     @abstractmethod
-    def apply_move(self, move: Move) -> None:
+    def apply_move(self, index: int) -> None:
         pass
 
     @abstractmethod
