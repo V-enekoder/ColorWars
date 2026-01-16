@@ -2,6 +2,7 @@ import { MainMenuOption } from "./navigation.ts";
 import { GameEngine } from "../core/GameLogic.ts";
 
 export interface IGameAgent {
+  initRemoteEngine(engine: GameEngine): Promise<{ status: string } | null>;
   getMove(engine: GameEngine): Promise<{ index: number } | null>;
 }
 
@@ -13,7 +14,7 @@ export enum EngineType {
   RUST_BITBOARD = "rust_bitboard",
 }
 
-export interface BotConfig {
+export interface BotConfig { //Un bot viene definido tanto por su estrategia como por su engine. agregar engine
   engine: EngineType;
   depth?: number;
   temperature?: number;

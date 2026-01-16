@@ -100,6 +100,10 @@ export class GameEngine {
     return r * this.cols + c;
   }
 
+  getNumPlayers(): number {
+    return this.players.length;
+  }
+
   *playGenerator(index: number): Generator<CellData[]> {
     if (this.winner !== 0) return;
 
