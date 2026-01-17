@@ -1,4 +1,3 @@
-
 from collections import deque
 from typing import Final, List
 
@@ -37,16 +36,15 @@ class PythonNaive(IGameEngine):
         self._current_player_index: int = 0
         self._round_number: int = 1
         self._winner: int = 0
-        self._board: List[CellData] = [CellData(0, 0) for _ in range(0, rows * cols)]
-        self._players: List[Player] = [Player(i + 1, True) for i in range(0, num_players)]
+        self._board: List[CellData] = [CellData(points=0, player=0) for _ in range(rows * cols)]
+        self._players: List[Player] = [Player(id=i + 1, active=True) for i in range(num_players)]
         self._cells_by_player: dict[int, int] = {}
-
 
         for p in self._players:
             self._cells_by_player[p.id] = 0
 
-        self.__neighbors: list[list[int]] = self._calculate_neighbors(CARDINALS)
-        self.__fullAdjacencies: list[list[int]] = self._calculate_neighbors(ALL_DIRECTIONS)
+        self._neighbors: list[list[int]] = self._calculate_neighbors(CARDINALS)
+        self._fullAdjacencies: list[list[int]] = self._calculate_neighbors(ALL_DIRECTIONS)
 
     def _calculate_neighbors(self, directions: DirectionList) -> list[list[int]]:
         neighbors: list[list[int]] = []
@@ -81,7 +79,7 @@ class PythonNaive(IGameEngine):
         self._legal_moves = request.legal_moves
         self.__winner: int = -1
 
-    def __get_current_player_id(self) -> int:
+    def _get_current_player_id(self) -> int:
         idx: int = self._current_player_index
         return self._players[idx].id
 
@@ -93,20 +91,20 @@ class PythonNaive(IGameEngine):
             return
         current_player: int = self._current_player_index
 
-        if not self.__is_legal_move(index, current_player):
+        if not self._is_legal_move(index, current_player):
             return
 
-        self.__add_orb(index, current_player)
+        self._add_orb(index, current_player)
 
         if self._round_number > 1:
-            self.__check_eliminations()
+            self._check_eliminations()
 
-        self.__advance_turn()
+        self._advance_turn()
 
-    def __is_legal_move(self, index: int, current_player_idx: int) -> bool:
+    def _is_legal_move(self, index: int, current_player_idx: int) -> bool:
         cell: CellData = self._board[index]
 
-        if(cell.player != 0 and cell.player != current_player_idx)
+        if cell.player != 0 and cell.player != current_player_idx:
             return False
 
         can_play_on_empty: bool = False
@@ -123,77 +121,85 @@ class PythonNaive(IGameEngine):
         is_empty = cell.player == 0
         is_owned = cell.player == current_player_idx
 
-        if((is_empty and not can_play_on_empty) or (is_owned and not can_play_on_own)):
+        if (is_empty and not can_play_on_empty) or (is_owned and not can_play_on_own):
             return False
 
-        if(self._round_number == 1 and is_empty):
-            neighbors_indexes = self.__fullAdjacencies[index]
+        if self._round_number == 1 and is_empty:
+            neighbors_indexes = self._fullAdjacencies[index]
             for n_idx in neighbors_indexes:
                 neighbor = self._board[n_idx]
-                if(neighbor.player != 0 and neighbor.player != current_player_idx):
+                if neighbor.player != 0 and neighbor.player != current_player_idx:
                     return False
         return True
 
-    def __add_orb(self, cell_index: int, player_index: int) -> None:
-
+    def _add_orb(self, cell_index: int, player_index: int) -> None:
         board: list[CellData] = self._board
-        neighbors:  list[list[int]] = self.__neighbors
-        points_to_add: int = self.__get_points_to_add()
+        neighbors: list[list[int]] = self._neighbors
+        points_to_add: int = self._get_points_to_add()
         critical_points: int = self._critical_points
 
         cell: CellData = board[cell_index]
 
-        self.__set_cell_owner(cell,player_index)
+        self._set_cell_owner(cell, player_index)
 
-        cell.points += points_to_add ##Se pueden añadir __slots__
+        cell.points += points_to_add  ##Se pueden añadir __slots__
 
         explosion_queue: deque[int] = deque([])
 
-        if(cell.points >=critical_points):
+        if cell.points >= critical_points:
             cell.points -= critical_points
-            if (cell.points == 0):
-                self.__set_cell_owner(cell,0)
+            if cell.points == 0:
+                self._set_cell_owner(cell, 0)
             explosion_queue.append(cell_index)
 
-        while (len(explosion_queue) > 0):
+        while len(explosion_queue) > 0:
             current_idx: int = explosion_queue.popleft()
             current_neighbors: list[int] = neighbors[current_idx]
-            for n_idx in current_neighbors :
+            for n_idx in current_neighbors:
                 neighbor = board[n_idx]
-                if(neighbor.player != player_index):
-                    self.__set_cell_owner(neighbor,player_index) #Se puede elimianr la llamada a la funcion en un futuro y poner directamente el codigo para el overhead
+                if neighbor.player != player_index:
+                    self._set_cell_owner(
+                        neighbor, player_index
+                    )  # Se puede elimianr la llamada a la funcion en un futuro y poner directamente el codigo para el overhead
                 neighbor.points += 1
 
-                if(neighbor.points >=critical_points):
+                if neighbor.points >= critical_points:
                     neighbor.points -= critical_points
-                    if (neighbor.points == 0):
-                        self.__set_cell_owner(neighbor,0)
+                    if neighbor.points == 0:
+                        self._set_cell_owner(neighbor, 0)
                     explosion_queue.append(n_idx)
 
-            self.__check_eliminations()
-            if(self._winner != 0):
+            self._check_eliminations()
+            if self._winner != 0:
                 break
 
         return
 
+    def _get_points_to_add(self):
+        is_first_round = self._round_number == 1
+        match self._play_rule:
+            case RuleOptions.ONLY_OWN_ORB:
+                return self._critical_points - 1 if is_first_round else 1
+            case _:
+                return 1
 
-    def __set_cell_owner(self,cell: CellData, new_player_index: int)-> None:
-        old_player_index:int = cell.player
+    def _set_cell_owner(self, cell: CellData, new_player_index: int) -> None:
+        old_player_index: int = cell.player
 
-        if(old_player_index == new_player_index)
+        if old_player_index == new_player_index:
             return
 
         cell.player = new_player_index
 
-        if (old_player_index != 0)
-            self.__update_cell_count(old_player_index,-1)
-        if (new_player_index != 0)
-            self.__update_cell_count(new_player_index,1)
+        if old_player_index != 0:
+            self._update_cell_count(old_player_index, -1)
+        if new_player_index != 0:
+            self._update_cell_count(new_player_index, 1)
 
-    def __update_cell_count(self, player_id: int, change: int) -> None:
+    def _update_cell_count(self, player_id: int, change: int) -> None:
         self._cells_by_player[player_id] += change
 
-    def __get_points_to_add(self)-> int:
+    def __get_points_to_add(self) -> int:
         is_first_round = self._round_number == 1
 
         match self._play_rule:
@@ -202,18 +208,18 @@ class PythonNaive(IGameEngine):
             case _:
                 return 1
 
-    def __check_eliminations(self) -> None:
+    def _check_eliminations(self) -> None:
         active_count: int = 0
         last_active_id: int = 0
 
         for p in self._players:
             cell_count: int = self._cells_by_player.get(p.id) or 0
-            if (cell_count == 0 and p.active and self._round_number > 1):
+            if cell_count == 0 and p.active and self._round_number > 1:
                 p.active = False
-            if(p.active):
+            if p.active:
                 active_count += 1
                 last_active_id = p.id
-        if (active_count == 1)
+        if active_count == 1:
             self._winner = last_active_id
 
     def _advance_turn(self):
@@ -234,6 +240,10 @@ class PythonNaive(IGameEngine):
 
     def get_winner(self) -> int:
         return self._winner
+
+    @property
+    def current_player_id(self) -> int:
+        return self._players[self._current_player_index].id
 
 
 """

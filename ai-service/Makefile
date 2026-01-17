@@ -50,6 +50,9 @@ run: ## Ejecuta el servidor FastAPI
 	@echo "-> Iniciando servidor FastAPI..."
 	@podman exec -it $(CONTAINER_NAME) uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 
+bridge:## Ejecuta el bridge de Python para pruebas diferenciales
+	@podman exec -i ai-service env PYTHONPATH=. UV_COMPILE_BYTECODE=0 UV_QUIET=1 uv run test/bridge_python.py
+
 simulate: ## Ejecuta una simulación de N partidas para recolectar datos
 	@echo "-> Iniciando la simulación estadística (esto puede tardar)..."
 	@podman exec -it $(CONTAINER_NAME) uv run src/simulate.py

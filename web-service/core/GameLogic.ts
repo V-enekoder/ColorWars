@@ -117,7 +117,7 @@ export class GameEngine {
       this.checkEliminations();
     }
 
-    this.nextTurn();
+    this.advanceTurn();
     yield this.getBoard();
   }
 
@@ -168,7 +168,6 @@ export class GameEngine {
   }
 
   private *addOrb(idx: number, player: number): Generator<CellData[]> {
-    let explosion = 0;
     const cell = this.board[idx];
 
     this.setCellOwner(cell, player);
@@ -181,7 +180,6 @@ export class GameEngine {
       cell.points -= this.critical_points;
       if (cell.points === 0) {
         this.setCellOwner(cell, 0);
-        explosion++;
       }
       q.push(idx);
     }
@@ -205,7 +203,6 @@ export class GameEngine {
           neighbor.points -= this.critical_points;
           if (neighbor.points === 0) this.setCellOwner(neighbor, 0);
           q.push(nIdx);
-          explosion++;
         }
       }
       this.checkEliminations();
@@ -266,7 +263,7 @@ export class GameEngine {
     }
   }
 
-  private nextTurn() {
+  private advanceTurn() {
     if (this.winner !== 0) return;
 
     let attempts = 0;
