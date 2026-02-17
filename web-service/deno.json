@@ -5,14 +5,20 @@
     "dev": "vite",
     "build": "vite build",
     "start": "deno serve -A _fresh/server.js",
-    "update": "deno run -A -r jsr:@fresh/update ."
+    "update": "deno run -A -r jsr:@fresh/update .",
+    "bridge": "deno run --allow-read bridge_deno.ts"
   },
   "lint": {
     "rules": {
-      "tags": ["fresh", "recommended"]
+      "tags": [
+        "fresh",
+        "recommended"
+      ]
     }
   },
-  "exclude": ["**/_fresh/*"],
+  "exclude": [
+    "**/_fresh/*"
+  ],
   "imports": {
     "@/": "./",
     "fresh": "jsr:@fresh/core@^2.2.0",
@@ -25,7 +31,12 @@
     "@tailwindcss/vite": "npm:@tailwindcss/vite@^4.1.12"
   },
   "compilerOptions": {
-    "lib": ["dom", "dom.asynciterable", "dom.iterable", "deno.ns"],
+    "lib": [
+      "dom",
+      "dom.asynciterable",
+      "dom.iterable",
+      "deno.ns"
+    ],
     "jsx": "react-jsx",
     "jsxImportSource": "preact",
     "jsxPrecompileSkipElements": [
@@ -44,6 +55,9 @@
       "noscript",
       "template"
     ],
-    "types": ["vite/client", "preact"]
+    "types": [
+      "vite/client",
+      "preact"
+    ]
   }
 }

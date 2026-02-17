@@ -4,17 +4,31 @@ from src.agents.random_agent import RandomAgent
 from src.core.dtos import PredictRequest
 from src.core.enums import AgentStrategy, EngineType
 from src.core.interfaces import Agent, IGameEngine
+from src.core.types import GameConfig
 from src.engines.mock_engine import MockEngine
+from src.engines.python_naive import PythonNaive
 
 
 class EngineFactory:
-    @staticmethod
-    def get_engine(request: PredictRequest) -> IGameEngine:
-        engines: Dict[EngineType, Type[IGameEngine]] = {
-            EngineType.MOCK: MockEngine,
-        }
-        engine_class = engines.get(request.config.engine, MockEngine)
-        engine = engine_class(8, 8, 4, 2)
+    _ENGINES: Dict[EngineType, Type[IGameEngine]] = {
+        EngineType.MOCK: MockEngine,
+        EngineType.PYTHON_NAIVE: PythonNaive,
+    }
+
+    @classmethod
+    def create(cls, config: GameConfig) -> IGameEngine:
+        engine_class = cls._ENGINES.get(config.engine_type)
+        if not engine_class:
+            raise ValueError(f"Motor {config.engine_type} no implementado")
+
+        return engine_class(config)
+
+    @classmethod
+    def get_from_request(cls, request: PredictRequest) -> IGameEngine:
+        """Crea un motor y lo sincroniza con el estado de una petición."""
+        engine = cls.create(request.config)
+
+        # Cargamos el estado del tablero
         engine.set_state(request)
         return engine
 

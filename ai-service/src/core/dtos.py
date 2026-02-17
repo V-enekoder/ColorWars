@@ -3,7 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 from src.core.enums import AgentStrategy, EngineType
-from src.core.types import CellData
+from src.core.types import CellData, GameConfig
 
 
 class GameStateDTO(BaseModel):
@@ -36,3 +36,4 @@ class PredictRequest(BaseModel):
     legal_moves: list[Move]
     agent_strategy: AgentStrategy
     config: BotConfig
+    config_game: GameConfig

@@ -2,8 +2,22 @@ import json
 import random
 import subprocess
 import sys
+import time
+from functools import wraps
 
-# CONFIGURACIÓN
+
+def time_it(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        end = time.perf_counter()
+        print(f"[Timer] {func.__name__}: {end - start:.6f}s")
+        return result
+
+    return wrapper
+
+
 CMD_PYTHON = ["make", "-C", "ai-service", "-s", "bridge"]
 CMD_DENO = ["deno", "run", "--allow-all", "web-service/bridge_deno.ts"]
 
@@ -34,11 +48,9 @@ class EngineProcess:
             if response.startswith("{"):
                 try:
                     data = json.loads(response)
-                    # --- ESTA ES LA PARTE CLAVE PARA DEBUGEAR ---
                     if "error" in data:
                         print(f"\n❌ ERROR CRÍTICO EN {self.name}:")
                         print(f"Mensaje: {data['error']}")
-                        # Intentamos leer el stderr por si hay un traceback de Python
                         sys.exit(1)
                     return data
                 except json.JSONDecodeError:
@@ -57,13 +69,11 @@ def compare_states(step, py_state, ts_state):
     if py_state == ts_state:
         return True, ""
 
-    # Si hay error, mostramos qué llaves tiene cada uno para debuguear
     diff = [
         f"Llaves en Py: {list(py_state.keys())}",
         f"Llaves en TS: {list(ts_state.keys())}",
     ]
 
-    # Comparamos valores específicos
     for key in ["currentPlayerIndex", "roundNumber", "winner", "currentPlayerId"]:
         py_val = py_state.get(key)
         ts_val = ts_state.get(key)
@@ -73,6 +83,7 @@ def compare_states(step, py_state, ts_state):
     return False, "\n".join(diff)
 
 
+@time_it
 def run_random_test(test_id, config):
     print(f"\n🚀 Iniciando Test #{test_id}: {config['rows']}x{config['cols']}...")
 
@@ -80,37 +91,30 @@ def run_random_test(test_id, config):
     ts = EngineProcess("Deno", CMD_DENO)
 
     try:
-        # 1. Inicializar ambos
         init_cmd = {"action": "init", **config}
         py_state = py.send(init_cmd)
         ts_state = ts.send(init_cmd)
 
         moves_count = 0
         while py_state["winner"] == 0:
-            # 2. Obtener jugador actual y elegir jugada aleatoria
-            # Nota: En este nivel elegimos una celda al azar.
-            # Si el motor dice que es ilegal, el test simplemente sigue intentando.
             idx = random.randint(0, (config["rows"] * config["cols"]) - 1)
             player = (
                 py_state["currentPlayerId"]
                 if "currentPlayerId" in py_state
                 else ts_state.get("currentPlayerId")
-            )  # Manejo de id si lo añades
+            )
 
             play_cmd = {"action": "play", "index": idx, "player": player}
 
-            # 3. Ejecutar en ambos
             py_state = py.send(play_cmd)
             ts_state = ts.send(play_cmd)
 
             moves_count += 1
 
-            # 4. Comparar
             success, report = compare_states(moves_count, py_state, ts_state)
             if not success:
                 print(f"❌ DISCREPANCIA en jugada {moves_count} (Índice {idx}):")
                 print(report)
-                # Guardamos el histórico para debug
                 with open("error_report.json", "w") as f:
                     json.dump(
                         {"last_move": play_cmd, "python": py_state, "ts": ts_state},
@@ -119,7 +123,7 @@ def run_random_test(test_id, config):
                     )
                 return False
 
-            if moves_count > 1000:  # Failsafe
+            if moves_count > 1000000:  # Failsafe
                 print("⚠️ Demasiadas jugadas, posible bucle infinito.")
                 break
 
@@ -134,7 +138,6 @@ def run_random_test(test_id, config):
 
 
 if __name__ == "__main__":
-    # Configuraciones de prueba
     configs = [
         {
             "rows": 3,
@@ -154,8 +157,8 @@ if __name__ == "__main__":
             "rows": 8,
             "cols": 8,
             "criticalPoints": 4,
-            "numPlayers": 4,
-            "rules": "EmptyAndOwnOrbs",
+            "numPlayers": 8,
+            "rules": "OnlyOwnOrbs",
         },
     ]
 

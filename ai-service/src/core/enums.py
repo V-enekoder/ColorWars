@@ -17,6 +17,7 @@ class EngineType(str, Enum):
     PYTHON_NAIVE = "python_naive"
     PYTHON_OPTIMIZED = "python_optimized"
     PYTHON_RUST = "python_rust"
+    RUST_PYTHON = "rust_python"
     RUST_NAIVE = "rust_naive"
     RUST_BITBOARD = "rust_bitboard"
 

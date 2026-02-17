@@ -1,0 +1,17 @@
+A. Micro-benchmarking con timeit
+
+Es la herramienta estándar para comparar dos formas de escribir la misma lógica. Permite ejecutar un fragmento de código millones de veces y obtener el tiempo promedio.
+
+    Uso: Compararías un bucle que llama a self.metodo() contra uno que tiene la lógica inyectada o usa una referencia local.
+
+B. Profiling Determinista con cProfile
+
+Es un módulo de la biblioteca estándar que te dice cuántas veces se llamó a cada función y el tiempo total invertido en ellas.
+
+    Escala: Úsalo para ver la imagen completa de tu motor. Si cProfile te dice que __set_cell_owner consume el 40% del tiempo total de ejecución, es un candidato crítico para optimizar.
+
+C. Profiling de línea con line_profiler
+
+Si cProfile te dice que una función es lenta, line_profiler te dice exactamente qué línea dentro de esa función es la culpable.
+
+    Escala: Ideal para bucles for complejos. Te mostrará el porcentaje de tiempo que Python gasta "buscando" el vecino vs "actualizando" sus puntos.

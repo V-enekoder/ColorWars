@@ -1,0 +1,3 @@
+Impelemntar Python Naive
+Implementar Heuristic Agent
+Optimizar algo

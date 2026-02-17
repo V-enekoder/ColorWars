@@ -4,7 +4,7 @@ from typing import Final, List
 from src.core.dtos import CellData, PredictRequest
 from src.core.enums import RuleOptions
 from src.core.interfaces import IGameEngine, Move
-from src.core.types import Player
+from src.core.types import GameConfig, Player
 
 type Direction = tuple[int, int]
 type DirectionList = tuple[Direction, ...]
@@ -27,24 +27,23 @@ ALL_DIRECTIONS: Final[DirectionList] = CARDINALS + DIAGONALS
 
 
 class PythonNaive(IGameEngine):
-    def __init__(self, rows: int, cols: int, critical_points: int, num_players: int, rules: RuleOptions):
-        self._rows = rows
-        self._cols = cols
-        self._critical_points = critical_points
-        self._play_rule: RuleOptions = rules
+    def __init__(self, config: GameConfig):
+        self._rows: int = config.rows
+        self._cols: int = config.cols
+        self._num_cells: int = config.rows * config.cols
+        self._critical_points: int = config.critical_points
+        self._play_rule: RuleOptions = config.rules
 
         self._current_player_index: int = 0
         self._round_number: int = 1
         self._winner: int = 0
-        self._board: List[CellData] = [CellData(points=0, player=0) for _ in range(rows * cols)]
-        self._players: List[Player] = [Player(id=i + 1, active=True) for i in range(num_players)]
-        self._cells_by_player: dict[int, int] = {}
 
-        for p in self._players:
-            self._cells_by_player[p.id] = 0
+        self._board: List[CellData] = [CellData(points=0, player=0) for _ in range(self._num_cells)]
+        self._players: List[Player] = [Player(id=i + 1, active=True) for i in range(config.num_players)]
+        self._cells_by_player = {p.id: 0 for p in self._players}
 
         self._neighbors: list[list[int]] = self._calculate_neighbors(CARDINALS)
-        self._fullAdjacencies: list[list[int]] = self._calculate_neighbors(ALL_DIRECTIONS)
+        self._full_adjacencies: list[list[int]] = self._calculate_neighbors(ALL_DIRECTIONS)
 
     def _calculate_neighbors(self, directions: DirectionList) -> list[list[int]]:
         neighbors: list[list[int]] = []
@@ -125,7 +124,7 @@ class PythonNaive(IGameEngine):
             return False
 
         if self._round_number == 1 and is_empty:
-            neighbors_indexes = self._fullAdjacencies[index]
+            neighbors_indexes = self._full_adjacencies[index]
             for n_idx in neighbors_indexes:
                 neighbor = self._board[n_idx]
                 if neighbor.player != 0 and neighbor.player != current_player_idx:
@@ -198,15 +197,6 @@ class PythonNaive(IGameEngine):
 
     def _update_cell_count(self, player_id: int, change: int) -> None:
         self._cells_by_player[player_id] += change
-
-    def __get_points_to_add(self) -> int:
-        is_first_round = self._round_number == 1
-
-        match self._play_rule:
-            case RuleOptions.ONLY_OWN_ORB:
-                return self._critical_points - 1 if is_first_round else 1
-            case _:
-                return 1
 
     def _check_eliminations(self) -> None:
         active_count: int = 0

@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from src.core.dtos import Move, PredictRequest
+from src.core.types import GameConfig
 
 
 class IGameEngine(ABC):
@@ -10,7 +11,7 @@ class IGameEngine(ABC):
     Interface to represent the tables and game logic
     """
 
-    def __init__(self, rows: int, cols: int, critical_points: int, num_players: int):
+    def __init__(self, config: GameConfig):
         pass
 
     @abstractmethod

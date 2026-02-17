@@ -16,11 +16,10 @@ def to_camel_case(snake_str: str) -> str:
 def serialize_state(engine: PythonNaive):
     return {
         "board": [{"points": c.points, "player": c.player} for c in engine._board],
-        "currentPlayerIndex": engine._current_player_index,  # <-- Asegura que se llame así
-        "roundNumber": engine._round_number,  # <-- Y así
+        "currentPlayerIndex": engine._current_player_index,
+        "roundNumber": engine._round_number,
         "winner": engine._winner,
         "cellsByPlayer": engine._cells_by_player,
-        # Importante: El orquestador necesita saber el ID para la siguiente jugada
         "currentPlayerId": engine._players[engine._current_player_index].id,
     }
 
@@ -58,14 +57,12 @@ def main():
             elif action == "quit":
                 break
 
-            # Enviar el estado resultante siempre
             if engine:
                 print(json.dumps(serialize_state(engine)), flush=True)
 
         except Exception as e:
-            # Enviamos el error por stderr para no ensuciar stdout
             print(f"Error in Python Bridge: {e}", file=sys.stderr)
-            # Opcionalmente enviar un JSON de error
+
             print(json.dumps({"error": str(e)}), flush=True)
 
 
