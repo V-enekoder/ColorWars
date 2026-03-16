@@ -10,7 +10,7 @@ from src.engines.python_naive import PythonNaive
 
 
 class EngineFactory:
-    _ENGINES: Dict[EngineType, Type[IGameEngine]] = {
+    _ENGINES: dict[EngineType, type[IGameEngine]] = {
         EngineType.MOCK: MockEngine,
         EngineType.PYTHON_NAIVE: PythonNaive,
     }
@@ -26,7 +26,7 @@ class EngineFactory:
     @classmethod
     def get_from_request(cls, request: PredictRequest) -> IGameEngine:
         """Crea un motor y lo sincroniza con el estado de una petición."""
-        engine = cls.create(request.config)
+        engine = cls.create(request.config_game)
 
         # Cargamos el estado del tablero
         engine.set_state(request)

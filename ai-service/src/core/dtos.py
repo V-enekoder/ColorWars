@@ -21,7 +21,7 @@ class Move(BaseModel):
     row: int
     col: int
     time_ms: float | None = None
-    player: Optional[int] = None
+    player: int | None = None
 
 
 class BotConfig(BaseModel):

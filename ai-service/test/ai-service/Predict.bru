@@ -23,11 +23,29 @@ body:json {
       }
     ],
     "player_id": 1,
-    "algorithm_id": "minimax_v2",
+    "legal_moves": [
+      {
+        "row": 5,
+        "col": 5
+      },
+      {
+        "row": 4,
+        "col": 4
+      }
+    ],
+    "agent_strategy": "random",
     "config": {
-      "engine": "neural-engine",
+      "engine": "python_naive",
       "depth": 5,
       "temperature": 1
+    },
+    "config_game":{
+      "rows": 8,
+      "cols": 8,
+      "critical_points": 4,
+      "num_players": 2,
+      "rules": "OnlyOwnOrbs",
+      "engine_type": "python_naive"
     }
   }
 }

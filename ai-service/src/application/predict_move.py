@@ -3,7 +3,7 @@ from src.core.factories import AgentFactory, EngineFactory
 
 
 def execute_prediction(request: PredictRequest):
-    engine = EngineFactory.get_engine(request)
+    engine = EngineFactory.get_from_request(request)
 
     agent = AgentFactory.get_agent(algorithm_id=request.agent_strategy, player_id=request.player_id)
 
