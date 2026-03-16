@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from src.core.enums import EngineType, RuleOptions
+from src.core.enums import RuleOptions
 
 
 class Player(BaseModel):
@@ -19,4 +19,16 @@ class GameConfig(BaseModel):
     critical_points: int
     num_players: int
     rules: RuleOptions
-    engine_type: EngineType
+
+
+class Move(BaseModel):
+    row: int
+    col: int
+    time_ms: float | None = None
+    player: int | None = None
+
+
+class GameState(BaseModel):
+    board: list[CellData]
+    player_id: int
+    legal_moves: list[Move]

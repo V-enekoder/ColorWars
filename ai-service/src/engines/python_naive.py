@@ -1,10 +1,10 @@
 from collections import deque
 from typing import Final, List
 
-from src.core.dtos import CellData, PredictRequest
+from src.core.dtos import PredictRequest
 from src.core.enums import RuleOptions
 from src.core.interfaces import IGameEngine, Move
-from src.core.types import GameConfig, Player
+from src.core.types import CellData, GameConfig, Player
 
 type Direction = tuple[int, int]
 type DirectionList = tuple[Direction, ...]

@@ -3,37 +3,17 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 from src.core.enums import AgentStrategy, EngineType
-from src.core.types import CellData, GameConfig
+from src.core.types import GameConfig, GameState
 
 
-class GameStateDTO(BaseModel):
-    """
-    El formato universal del tablero que envía Deno.
-    """
-
-    rows: int
-    cols: int
-    player_turn: int
-    cells: List[int]
-
-
-class Move(BaseModel):
-    row: int
-    col: int
-    time_ms: float | None = None
-    player: int | None = None
-
-
-class BotConfig(BaseModel):
+class AgentPolicy(BaseModel):
     engine: EngineType
+    strategy: AgentStrategy
     depth: int | None = None
     temperature: int | None = None
 
 
 class PredictRequest(BaseModel):
-    board: list[CellData]
-    player_id: int
-    legal_moves: list[Move]
-    agent_strategy: AgentStrategy
-    config: BotConfig
-    config_game: GameConfig
+    game_config: GameConfig
+    game_state: GameState
+    agent_policy: AgentPolicy

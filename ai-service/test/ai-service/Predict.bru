@@ -12,7 +12,15 @@ post {
 
 body:json {
   {
-    "board": [
+    "game_config":{
+      "rows": 8,
+      "cols": 8,
+      "critical_points": 4,
+      "num_players": 2,
+      "rules": "OnlyOwnOrbs"
+    },
+    "game_state": {
+      "board": [
       {
         "points": 10,
         "player": 1
@@ -22,30 +30,21 @@ body:json {
         "player": 2
       }
     ],
-    "player_id": 1,
-    "legal_moves": [
-      {
-        "row": 5,
-        "col": 5
-      },
-      {
-        "row": 4,
-        "col": 4
-      }
-    ],
-    "agent_strategy": "random",
-    "config": {
-      "engine": "python_naive",
-      "depth": 5,
-      "temperature": 1
+      "player_id": 1,
+      "legal_moves": [
+        {
+          "row": 5,
+          "col": 5
+        },
+        {
+          "row": 4,
+          "col": 4
+        }
+      ]
     },
-    "config_game":{
-      "rows": 8,
-      "cols": 8,
-      "critical_points": 4,
-      "num_players": 2,
-      "rules": "OnlyOwnOrbs",
-      "engine_type": "python_naive"
+    "agent_policy":{
+      "engine": "mock",
+      "strategy": "random"
     }
   }
 }

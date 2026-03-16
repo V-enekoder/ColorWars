@@ -1,11 +1,16 @@
 from src.core.dtos import PredictRequest
+from src.core.enums import AgentStrategy
 from src.core.factories import AgentFactory, EngineFactory
+from src.core.interfaces import Agent, IGameEngine
 
 
 def execute_prediction(request: PredictRequest):
-    engine = EngineFactory.get_from_request(request)
+    engine: IGameEngine = EngineFactory.get_from_request(request)
 
-    agent = AgentFactory.get_agent(algorithm_id=request.agent_strategy, player_id=request.player_id)
+    strategy: AgentStrategy = request.agent_policy.strategy
+    player_id: int = request.game_state.player_id
+
+    agent: Agent = AgentFactory.get_agent(strategy, player_id)
 
     move = agent.select_move(engine)
     return move

@@ -1,9 +1,8 @@
 import time
 from abc import ABC, abstractmethod
-from typing import List
 
-from src.core.dtos import Move, PredictRequest
-from src.core.types import GameConfig
+from src.core.dtos import PredictRequest
+from src.core.types import GameConfig, Move
 
 
 class IGameEngine(ABC):
@@ -19,7 +18,7 @@ class IGameEngine(ABC):
         pass
 
     @abstractmethod
-    def get_legal_moves(self, player: int) -> List[Move]:
+    def get_legal_moves(self, player: int) -> list[Move]:
         pass
 
     @abstractmethod
