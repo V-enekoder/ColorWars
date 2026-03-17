@@ -22,11 +22,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# --- Virtual Environments (Muy importante para tu caso) ---
+# --- Virtual Environments ---
 .venv*
-venv/
-ENV/
-env/
+.env*
 
 
 # --- UV (Cache local que se ve en tu captura) ---
@@ -46,7 +44,6 @@ env/
 .env.*.local
 
 # --- Docker / Podman ---
-# Si usas bases de datos locales o archivos de logs de contenedores
 *.log
 
 # --- IDEs ---
@@ -54,7 +51,7 @@ env/
 .idea/
 *.swp
 *.swo
-
+.zed/
 # --- Sistema OS ---
 .DS_Store
 Thumbs.db
