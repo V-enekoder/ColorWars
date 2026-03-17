@@ -43,7 +43,7 @@ class PythonNaive(IGameEngine):
         self._cells_by_player = {p.id: 0 for p in self._players}
 
         self._neighbors: list[list[int]] = self._calculate_neighbors(CARDINALS)
-        self._full_adjacencies: list[list[int]] = self._calculate_neighbors(ALL_DIRECTIONS)
+        self._full_adjacency: list[list[int]] = self._calculate_neighbors(ALL_DIRECTIONS)
 
     def _calculate_neighbors(self, directions: DirectionList) -> list[list[int]]:
         neighbors: list[list[int]] = []
@@ -124,7 +124,7 @@ class PythonNaive(IGameEngine):
             return False
 
         if self._round_number == 1 and is_empty:
-            neighbors_indexes = self._full_adjacencies[index]
+            neighbors_indexes = self._full_adjacency[index]
             for n_idx in neighbors_indexes:
                 neighbor = self._board[n_idx]
                 if neighbor.player != 0 and neighbor.player != current_player_idx:
