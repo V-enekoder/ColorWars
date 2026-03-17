@@ -56,14 +56,23 @@ export class RemoteAgent implements IGameAgent {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          //id: this.agentId,
-          board: engine.getBoard(),
-          player_id: engine.currentPlayerId,
-          legal_moves: legalMoves,
-          agent_strategy: this.agent_strategy,
-          config: {
+          game_config: {
+            rows: engine.rows,
+            cols: engine.cols,
+            critical_points: engine.critical_points,
+            num_players: engine.getNumPlayers(),
+            rules: engine.playRule,
+          },
+
+          game_state: {
+            board: engine.getBoard(),
+            player_id: engine.currentPlayerId,
+            legal_moves: legalMoves,
+          },
+
+          agent_policy: {
             engine: this.config.engine,
-            depth: this.config.depth,
+            strategy: this.agent_strategy,
           },
         }),
       });
