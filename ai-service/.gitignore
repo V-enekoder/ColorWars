@@ -23,10 +23,11 @@ share/python-wheels/
 MANIFEST
 
 # --- Virtual Environments (Muy importante para tu caso) ---
-.venv/
+.venv*
 venv/
 ENV/
 env/
+
 
 # --- UV (Cache local que se ve en tu captura) ---
 .cache/
