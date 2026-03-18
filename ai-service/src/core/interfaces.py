@@ -43,6 +43,16 @@ class IGameEngine(ABC):
     def debug_state(self) -> None:
         pass
 
+    @property
+    @abstractmethod
+    def rows(self) -> int:
+        pass
+
+    @property
+    @abstractmethod
+    def cols(self) -> int:
+        pass
+
 class Agent(ABC):
     """
     Abstract class for agents

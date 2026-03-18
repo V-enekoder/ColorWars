@@ -94,6 +94,14 @@ class PythonNaive(IGameEngine):
 
         return neighbors
 
+    @property
+    def rows(self) -> int:
+        return self._rows
+
+    @property
+    def cols(self) -> int:
+        return self._cols
+
     def _is_valid_coord(self, row: int, col: int) -> bool:
         return 0 <= row < self._rows and 0 <= col < self._cols
 
