@@ -18,12 +18,12 @@ class MinimaxAgent(Agent):
 
     def _calculate_move(self, engine: IGameEngine) -> Move:
         best_score: float = -math.inf
-        best_move: Move = None
+        best_move: Move | None = None
         player_id = engine.get_current_player_id()
         available_moves: list[Move] = engine.get_legal_moves(player_id)
 
         if not available_moves:
-            return Move(0, 0)
+            return Move(row=0, col=0)
 
         prev_state = GameState(
             board=engine.get_board(),
@@ -56,7 +56,7 @@ class MinimaxAgent(Agent):
         winner: int,
     ) -> float:
         if winner != 0:
-            return 1000 if maximizing_player_id == 1 else -1000
+            return 1000.0 if maximizing_player_id == 1 else -1000.0
 
         if depth == max_depth:
             return engine.evaluate_position(maximizing_player_id)

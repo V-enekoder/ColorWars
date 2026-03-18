@@ -1,10 +1,9 @@
 from collections import deque
 from typing import Final, List
 
-from src.core.types import GameState
 from src.core.enums import RuleOptions
 from src.core.interfaces import IGameEngine, Move
-from src.core.types import CellData, GameConfig, Player
+from src.core.types import CellData, GameConfig, GameState, Player
 
 type Direction = tuple[int, int]
 type DirectionList = tuple[Direction, ...]
@@ -42,7 +41,7 @@ class PythonNaive(IGameEngine):
 
         self._board: List[CellData] = [CellData(points=0, player=0) for _ in range(self._num_cells)]
         self._players: List[Player] = [Player(id=i + 1, active=True) for i in range(config.num_players)]
-        self._cells_by_player: dict[int,int] = {p.id: 0 for p in self._players}
+        self._cells_by_player: dict[int, int] = {p.id: 0 for p in self._players}
 
         self._neighbors: list[list[int]] = self._calculate_neighbors(CARDINALS)
         self._full_adjacency: list[list[int]] = self._calculate_neighbors(ALL_DIRECTIONS)
@@ -77,7 +76,6 @@ class PythonNaive(IGameEngine):
             print("\nNo hay jugadas legales cargadas.")
         print("=" * 40 + "\n")
 
-
     def _calculate_neighbors(self, directions: DirectionList) -> list[list[int]]:
         neighbors: list[list[int]] = []
         for i in range(0, self._rows * self._cols):
@@ -111,12 +109,12 @@ class PythonNaive(IGameEngine):
     def _get_coordinates(self, index: int) -> Move:
         row: int = index // self._cols
         col: int = index % self._cols
-        return Move(row, col)
+        return Move(row=row, col=col)
 
     def set_state(self, state: GameState) -> None:
-        self._board:list[CellData] = state.board
+        self._board: list[CellData] = state.board
         self._current_player_index: int = state.player_id
-        self._legal_moves: list[Move]  = state.legal_moves
+        self._legal_moves: list[Move] = state.legal_moves
 
     def evaluate_position(self, player: int) -> float:
         if player == 1:
@@ -281,8 +279,9 @@ class PythonNaive(IGameEngine):
         val = self._current_player_index
         return self._players[self._current_player_index - 1].id
 
-    def get_board(self)-> list[CellData]:
+    def get_board(self) -> list[CellData]:
         return self._board
+
 
 """
 consideraciones:
