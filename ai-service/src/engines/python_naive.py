@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Final, List
 
-from src.core.dtos import PredictRequest
+from src.core.types import GameState
 from src.core.enums import RuleOptions
 from src.core.interfaces import IGameEngine, Move
 from src.core.types import CellData, GameConfig, Player
@@ -28,6 +28,8 @@ ALL_DIRECTIONS: Final[DirectionList] = CARDINALS + DIAGONALS
 
 class PythonNaive(IGameEngine):
     def __init__(self, config: GameConfig):
+        super().__init__(config)
+        self._legal_moves = None
         self._rows: int = config.rows
         self._cols: int = config.cols
         self._num_cells: int = config.rows * config.cols
@@ -40,10 +42,41 @@ class PythonNaive(IGameEngine):
 
         self._board: List[CellData] = [CellData(points=0, player=0) for _ in range(self._num_cells)]
         self._players: List[Player] = [Player(id=i + 1, active=True) for i in range(config.num_players)]
-        self._cells_by_player = {p.id: 0 for p in self._players}
+        self._cells_by_player: dict[int,int] = {p.id: 0 for p in self._players}
 
         self._neighbors: list[list[int]] = self._calculate_neighbors(CARDINALS)
         self._full_adjacency: list[list[int]] = self._calculate_neighbors(ALL_DIRECTIONS)
+
+    def debug_state(self) -> None:
+        """Imprime el estado interno del motor para debugging."""
+        print("\n" + "=" * 40)
+        print("DEBUG: ESTADO DEL MOTOR PYTHON_NAIVE")
+        print("=" * 40)
+
+        # 1. Datos básicos
+        print(f"Jugador Actual: {self._current_player_index}")
+        print(f"Ronda: {self._round_number}")
+        print(f"Jugadores Activos: {[p.id for p in self._players]}")
+        print(f"Conteo celdas por jugador: {self._cells_by_player}")
+
+        # 2. Renderizado ASCII del tablero
+        print("\nTABLERO (ASCII):")
+        for r in range(self._rows):
+            row_str = ""
+            for c in range(self._cols):
+                idx = r * self._cols + c
+                cell = self._board[idx]
+                # Representamos el jugador y sus puntos
+                row_str += f"[{cell.player if cell.player else '.'}:{cell.points:02d}] "
+            print(row_str)
+
+        # 3. Info técnica adicional
+        if self._legal_moves:
+            print(f"\nJugadas legales disponibles: {len(self._legal_moves)}")
+        else:
+            print("\nNo hay jugadas legales cargadas.")
+        print("=" * 40 + "\n")
+
 
     def _calculate_neighbors(self, directions: DirectionList) -> list[list[int]]:
         neighbors: list[list[int]] = []
@@ -72,11 +105,16 @@ class PythonNaive(IGameEngine):
         col: int = index % self._cols
         return Move(row, col)
 
-    def set_state(self, request: PredictRequest) -> None:
-        self._board = request.board
-        self._current_player = request.player_id
-        self._legal_moves = request.legal_moves
-        self.__winner: int = -1
+    def set_state(self, state: GameState) -> None:
+        self._board:list[CellData] = state.board
+        self._current_player_index: int = state.player_id
+        self._legal_moves: list[Move]  = state.legal_moves
+
+    def evaluate_position(self, player: int) -> float:
+        if player == 1:
+            return self._cells_by_player[player] - self._cells_by_player[2]
+        else:
+            return self._cells_by_player[player] - self._cells_by_player[1]
 
     def _get_current_player_id(self) -> int:
         idx: int = self._current_player_index
@@ -231,10 +269,12 @@ class PythonNaive(IGameEngine):
     def get_winner(self) -> int:
         return self._winner
 
-    @property
-    def current_player_id(self) -> int:
-        return self._players[self._current_player_index].id
+    def get_current_player_id(self) -> int:
+        val = self._current_player_index
+        return self._players[self._current_player_index - 1].id
 
+    def get_board(self)-> list[CellData]:
+        return self._board
 
 """
 consideraciones:

@@ -25,3 +25,6 @@ class EngineType(str, Enum):
 class RuleOptions(str, Enum):
     EMPTY_AND_OWN_ORBS = "EmptyAndOwnOrbs"
     ONLY_OWN_ORB = "OnlyOwnOrbs"
+
+class EvaluationRules(str, Enum):
+    GREEDY = "greddy"

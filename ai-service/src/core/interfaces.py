@@ -1,8 +1,8 @@
 import time
 from abc import ABC, abstractmethod
+from typing import Any
 
-from src.core.dtos import PredictRequest
-from src.core.types import GameConfig, Move
+from src.core.types import GameConfig, GameState, Move, CellData
 
 
 class IGameEngine(ABC):
@@ -14,7 +14,7 @@ class IGameEngine(ABC):
         pass
 
     @abstractmethod
-    def set_state(self, request: PredictRequest) -> None:
+    def set_state(self, state:GameState) -> None:
         pass
 
     @abstractmethod
@@ -28,7 +28,20 @@ class IGameEngine(ABC):
     @abstractmethod
     def get_winner(self) -> int:
         pass
+    @abstractmethod
+    def evaluate_position(self, player_id: int) -> float:
+        pass
 
+    @abstractmethod
+    def get_board(self) -> list[CellData]:
+        pass
+
+    @abstractmethod
+    def get_current_player_id(self) -> int:
+        pass
+    @abstractmethod
+    def debug_state(self) -> None:
+        pass
 
 class Agent(ABC):
     """

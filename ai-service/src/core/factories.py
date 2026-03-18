@@ -1,5 +1,4 @@
-from typing import Dict, Type
-
+from src.agents.minimax import MinimaxAgent
 from src.agents.random_agent import RandomAgent
 from src.core.dtos import AgentPolicy, PredictRequest
 from src.core.enums import AgentStrategy, EngineType
@@ -27,9 +26,10 @@ class EngineFactory:
     def get_from_request(cls, request: PredictRequest) -> IGameEngine:
         """Crea un motor y lo sincroniza con el estado de una petición."""
         engine: IGameEngine = cls.create(request.agent_policy, request.game_config)
-
+       #engine.debug_state()
         # Cargamos el estado del tablero
         engine.set_state(request.game_state)
+        #engine.debug_state()
         return engine
 
 
@@ -38,6 +38,7 @@ class AgentFactory:
     def get_agent(strategy: AgentStrategy, player_id: int) -> Agent:
         agents_map = {
             AgentStrategy.RANDOM: (RandomAgent, "Bot Aleatorio"),
+            AgentStrategy.MINIMAX: (MinimaxAgent, "Minimax"),
         }
 
         config = agents_map.get(strategy)

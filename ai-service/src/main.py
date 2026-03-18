@@ -11,7 +11,9 @@ from src.core.types import Move
 
 app = FastAPI()
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("api_logger")
+logger.setLevel(logging.INFO)
 
 app.add_middleware(
     CORSMiddleware,
@@ -40,7 +42,12 @@ def read_root():
 @app.post("/predict")
 def get_move(request: PredictRequest):
     try:
+        print(request.agent_policy)
         move: Move = execute_prediction(request)
         return {"row": move.row, "col": move.col}
     except ValueError as e:
+        logger.exception("Error procesando la predicción: %s", str(e))
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception("Error inesperado en el sistema: %s", str(e))
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
