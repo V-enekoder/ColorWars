@@ -1,20 +1,22 @@
 import math
 import time
 
+from src.core.dtos import MinimaxOptimizations
 from src.core.interfaces import Agent, EngineMinimax, Move
 
 
 class MinimaxAgent(Agent):
     def __init__(self, player_id: int, name: str):
         super().__init__(player_id, name)
+        self._optimizations: MinimaxOptimizations = MinimaxOptimizations()
         self._maximizing_player_id = None
         self._is_maximizing = None
-        self._depth = None
 
-    def set_configuration(self, depth: int = 10, is_maximizing: bool = False, maximizing_player_id: int = None):
-        self._depth: int = depth
-        self._is_maximizing: bool = is_maximizing
-        self._maximizing_player_id: int = maximizing_player_id
+    def set_configuration(
+        self,
+        optimizations,
+    ):
+        self._optimizations: MinimaxOptimizations = optimizations
 
     def _calculate_move(self, engine: EngineMinimax) -> Move:
         best_score: float = -math.inf
@@ -26,27 +28,36 @@ class MinimaxAgent(Agent):
             return Move(row=0, col=0)
 
         engine.save_state()
+
+        alpha: float = -math.inf if self._optimizations.alpha_beta_pruning else None
+        beta: float = math.inf if self._optimizations.alpha_beta_pruning else None
+
+        counter = {"nodes": 0}
+        inicio = time.time()
         for move in available_moves:
             index: int = move.row * engine.cols + move.col
             engine.apply_move(index)
-            counter = {"nodes": 0}
-            inicio = time.time()
+
             score: float = self.minimax(
                 engine=engine,
                 depth=0,
-                max_depth=2,
+                max_depth=10,
                 is_maximizing=False,
                 maximizing_player_id=player_id,
                 winner=engine.get_winner(),
                 counter=counter,
+                alpha=alpha,
+                beta=beta,
             )
-            fin = time.time()
-            tiempo = fin - inicio
-            print(f"Se evaluaron {counter['nodes']} nodos  en {tiempo} segundos\n")
-            print(f"Nodos/segundo = {counter['nodes'] / tiempo}")
+
             engine.restore_state()
             if score > best_score:
                 best_score, best_move = score, move
+        fin = time.time()
+        tiempo = fin - inicio
+        eficiencia = counter["nodes"] / tiempo
+        print(f"\nSe evaluaron {counter['nodes']} nodos  en {tiempo:.3f} segundos")
+        print(f"Nodos/segundo = {eficiencia:.3f}\n")
         return best_move
 
     def minimax(
@@ -58,6 +69,8 @@ class MinimaxAgent(Agent):
         maximizing_player_id: int,
         winner: int,
         counter: dict[str, int],
+        alpha: float,
+        beta: float,
     ) -> float:
         counter["nodes"] += 1
 
@@ -80,13 +93,21 @@ class MinimaxAgent(Agent):
             score: float = self.minimax(
                 engine=engine,
                 depth=depth + 1,
-                max_depth=2,
+                max_depth=max_depth,
                 is_maximizing=not is_maximizing,
                 maximizing_player_id=maximizing_player_id,
                 winner=engine.get_winner(),
                 counter=counter,
+                alpha=alpha,
+                beta=beta,
             )
             engine.restore_state()
             best_score = max(score, best_score) if is_maximizing else min(score, best_score)
-
+            if alpha is not None:
+                if is_maximizing:
+                    alpha = max(alpha, best_score)
+                else:
+                    beta = min(beta, best_score)
+                if beta <= alpha:
+                    break
         return best_score

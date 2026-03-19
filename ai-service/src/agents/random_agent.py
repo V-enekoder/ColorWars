@@ -4,6 +4,9 @@ from src.core.interfaces import Agent, IGameEngine, Move
 
 
 class RandomAgent(Agent):
+    def set_configuration(self, optimizations) -> None:
+        pass
+
     def __init__(self, player_id: int, name: str):
         super().__init__(player_id, name)
 

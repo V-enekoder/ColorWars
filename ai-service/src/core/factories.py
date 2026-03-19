@@ -26,10 +26,9 @@ class EngineFactory:
     def get_from_request(cls, request: PredictRequest) -> IGameEngine:
         """Crea un motor y lo sincroniza con el estado de una petición."""
         engine: IGameEngine = cls.create(request.agent_policy, request.game_config)
-       #engine.debug_state()
         # Cargamos el estado del tablero
         engine.set_state(request.game_state)
-        #engine.debug_state()
+
         return engine
 
 

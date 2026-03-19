@@ -11,6 +11,6 @@ def execute_prediction(request: PredictRequest):
     player_id: int = request.game_state.player_id
 
     agent: Agent = AgentFactory.get_agent(strategy, player_id)
-
+    agent.set_configuration(request.agent_policy.optimizations)
     move = agent.select_move(engine)
     return move

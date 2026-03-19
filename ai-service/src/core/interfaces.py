@@ -94,3 +94,6 @@ class Agent(ABC):
     @abstractmethod
     def _calculate_move(self, engine: IGameEngine) -> Move:
         pass
+
+    @abstractmethod
+    def set_configuration(self, optimizations) -> None: ...
