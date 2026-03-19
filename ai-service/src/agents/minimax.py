@@ -1,7 +1,7 @@
 import math
+import time
 
-from src.core.interfaces import Agent, IGameEngine, Move
-from src.core.types import GameState
+from src.core.interfaces import Agent, EngineMinimax, Move
 
 
 class MinimaxAgent(Agent):
@@ -16,7 +16,7 @@ class MinimaxAgent(Agent):
         self._is_maximizing: bool = is_maximizing
         self._maximizing_player_id: int = maximizing_player_id
 
-    def _calculate_move(self, engine: IGameEngine) -> Move:
+    def _calculate_move(self, engine: EngineMinimax) -> Move:
         best_score: float = -math.inf
         best_move: Move | None = None
         player_id = engine.get_current_player_id()
@@ -25,36 +25,42 @@ class MinimaxAgent(Agent):
         if not available_moves:
             return Move(row=0, col=0)
 
-        prev_state = GameState(
-            board=engine.get_board(),
-            player_id=engine.get_current_player_id(),
-            legal_moves=engine.get_legal_moves(engine.get_current_player_id()),
-        )
+        engine.save_state()
         for move in available_moves:
             index: int = move.row * engine.cols + move.col
             engine.apply_move(index)
+            counter = {"nodes": 0}
+            inicio = time.time()
             score: float = self.minimax(
                 engine=engine,
                 depth=0,
-                max_depth=10,
+                max_depth=2,
                 is_maximizing=False,
                 maximizing_player_id=player_id,
                 winner=engine.get_winner(),
+                counter=counter,
             )
-            engine.set_state(prev_state)
+            fin = time.time()
+            tiempo = fin - inicio
+            print(f"Se evaluaron {counter['nodes']} nodos  en {tiempo} segundos\n")
+            print(f"Nodos/segundo = {counter['nodes'] / tiempo}")
+            engine.restore_state()
             if score > best_score:
                 best_score, best_move = score, move
         return best_move
 
     def minimax(
         self,
-        engine: IGameEngine,
+        engine: EngineMinimax,
         depth: int,
         max_depth: int,
         is_maximizing: bool,
         maximizing_player_id: int,
         winner: int,
+        counter: dict[str, int],
     ) -> float:
+        counter["nodes"] += 1
+
         if winner != 0:
             return 1000.0 if maximizing_player_id == 1 else -1000.0
 
@@ -64,12 +70,7 @@ class MinimaxAgent(Agent):
         legal_moves: list[Move] = engine.get_legal_moves(maximizing_player_id)
         if legal_moves is None or len(legal_moves) == 0:
             return 0
-
-        prev_state = GameState(
-            board=engine.get_board(),
-            player_id=engine.get_current_player_id(),
-            legal_moves=engine.get_legal_moves(engine.get_current_player_id()),
-        )
+        engine.save_state()
 
         best_score: float = -math.inf if is_maximizing else math.inf
 
@@ -79,12 +80,13 @@ class MinimaxAgent(Agent):
             score: float = self.minimax(
                 engine=engine,
                 depth=depth + 1,
-                max_depth=10,
+                max_depth=2,
                 is_maximizing=not is_maximizing,
                 maximizing_player_id=maximizing_player_id,
                 winner=engine.get_winner(),
+                counter=counter,
             )
-            engine.set_state(prev_state)
+            engine.restore_state()
             best_score = max(score, best_score) if is_maximizing else min(score, best_score)
 
         return best_score

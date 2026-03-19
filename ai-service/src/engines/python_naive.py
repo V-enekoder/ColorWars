@@ -112,9 +112,9 @@ class PythonNaive(IGameEngine):
         return Move(row=row, col=col)
 
     def set_state(self, state: GameState) -> None:
-        self._board: list[CellData] = state.board
-        self._current_player_index: int = state.player_id
-        self._legal_moves: list[Move] = state.legal_moves
+        self._board = [cell.model_copy() for cell in state.board]
+        self._current_player_index = state.player_id
+        self._legal_moves = list(state.legal_moves)
 
     def evaluate_position(self, player: int) -> float:
         if player == 1:
@@ -276,11 +276,20 @@ class PythonNaive(IGameEngine):
         return self._winner
 
     def get_current_player_id(self) -> int:
-        val = self._current_player_index
         return self._players[self._current_player_index - 1].id
 
     def get_board(self) -> list[CellData]:
         return self._board
+
+    def save_state(self) -> None:
+        self._saved_board = self._board[:]
+        self._saved_player_index = self._current_player_index
+        self._saved_legal_moves = self._legal_moves
+
+    def restore_state(self) -> None:
+        self._board = self._saved_board
+        self._current_player_index = self._saved_player_index
+        self._legal_moves = self._saved_legal_moves
 
 
 """

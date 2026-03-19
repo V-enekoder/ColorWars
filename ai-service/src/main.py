@@ -42,7 +42,6 @@ def read_root():
 @app.post("/predict")
 def get_move(request: PredictRequest):
     try:
-        print(request.agent_policy)
         move: Move = execute_prediction(request)
         return {"row": move.row, "col": move.col}
     except ValueError as e:
