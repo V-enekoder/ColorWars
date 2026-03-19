@@ -1,5 +1,5 @@
-from src.agents.minimax import MinimaxAgent
-from src.agents.random_agent import RandomAgent
+from agents.minimax import MinimaxAgent
+from agents.random_agent import RandomAgent
 from src.core.dtos import AgentPolicy, PredictRequest
 from src.core.enums import AgentStrategy, EngineType
 from src.core.interfaces import Agent, IGameEngine
@@ -12,6 +12,11 @@ class EngineFactory:
     _ENGINES: dict[EngineType, type[IGameEngine]] = {
         EngineType.MOCK: MockEngine,
         EngineType.PYTHON_NAIVE: PythonNaive,
+        # EngineType.PYTHON_OPTIMIZED: PythonOptimized,
+        # EngineType.PYTHON_RUST: PythonRust,
+        # EngineType.RUST_PYTHON: RustPython,
+        # EngineType.RUST_NAIVE: RustNaive,
+        # EngineType.RUST_BITBOARD: RustBitboard,
     }
 
     @classmethod
@@ -33,14 +38,19 @@ class EngineFactory:
 
 
 class AgentFactory:
+    _AGENTS_REGISTRY: dict[AgentStrategy, type[Agent]] = {
+        AgentStrategy.RANDOM: RandomAgent,
+        AgentStrategy.MINIMAX: MinimaxAgent,
+        # AgentStrategy.MONTE_CARLO: MonteCarloAgent,
+        # AgentStrategy.PPO: PPOAgent,
+        # AgentStrategy.GENETIC: GeneticAgent,
+        # AgentStrategy.HEURISTIC: HeuristicAgent,
+        # AgentStrategy.NEURAL_NETWORK: NeuralNetworkAgent,
+    }
+
     @staticmethod
     def get_agent(strategy: AgentStrategy, player_id: int) -> Agent:
-        agents_map = {
-            AgentStrategy.RANDOM: (RandomAgent, "Bot Aleatorio"),
-            AgentStrategy.MINIMAX: (MinimaxAgent, "Minimax"),
-        }
-
-        config = agents_map.get(strategy)
+        config = AgentFactory._AGENTS_REGISTRY.get(strategy)
 
         if not config:
             raise ValueError(f"Agente {strategy} no soportado")
