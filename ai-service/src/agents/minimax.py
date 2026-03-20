@@ -58,7 +58,7 @@ class MinimaxAgent(Agent):
                 engine.restore_state()
                 if score > best_score:
                     best_score, best_move = score, move
-            max_depth = max_depth + 1
+            max_depth += 1
         # fin = time.time()
         # tiempo = fin - inicio
         # eficiencia = counter["nodes"] / tiempo
