@@ -77,9 +77,9 @@ class Agent(ABC):
     Abstract class for agents
     """
 
-    def __init__(self, player_id: int, name: str):
+    def __init__(self, player_id: int, name: str | None = None):
         self.player_id = player_id
-        self.name = name
+        self.name = name or self.__class__.__name__
 
     def select_move(self, engine: IGameEngine) -> Move:
         start_time: float = time.time()
@@ -88,6 +88,7 @@ class Agent(ABC):
 
         end_time: float = time.time()
         move.time_ms = (end_time - start_time) * 1000
+        print(f"Tarda: {move.time_ms:.3f}ms")
 
         return move
 

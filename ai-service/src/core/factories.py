@@ -1,5 +1,5 @@
-from agents.minimax import MinimaxAgent
-from agents.random_agent import RandomAgent
+from src.agents.minimax import MinimaxAgent
+from src.agents.random_agent import RandomAgent
 from src.core.dtos import AgentPolicy, PredictRequest
 from src.core.enums import AgentStrategy, EngineType
 from src.core.interfaces import Agent, IGameEngine
@@ -49,12 +49,13 @@ class AgentFactory:
     }
 
     @staticmethod
-    def get_agent(strategy: AgentStrategy, player_id: int) -> Agent:
-        config = AgentFactory._AGENTS_REGISTRY.get(strategy)
+    def get_agent(strategy: AgentStrategy, player_id: int, **kwargs) -> Agent:
+        agent_class = AgentFactory._AGENTS_REGISTRY.get(strategy)
 
-        if not config:
+        if not agent_class:
             raise ValueError(f"Agente {strategy} no soportado")
 
-        agent_class, display_name = config
-
-        return agent_class(player_id=player_id, name=display_name)
+        return agent_class(
+            player_id=player_id,
+            name=strategy.value.capitalize(),
+        )

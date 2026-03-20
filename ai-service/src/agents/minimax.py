@@ -34,30 +34,36 @@ class MinimaxAgent(Agent):
 
         counter = {"nodes": 0}
         inicio = time.time()
-        for move in available_moves:
-            index: int = move.row * engine.cols + move.col
-            engine.apply_move(index)
-
-            score: float = self.minimax(
-                engine=engine,
-                depth=0,
-                max_depth=10,
-                is_maximizing=False,
-                maximizing_player_id=player_id,
-                winner=engine.get_winner(),
-                counter=counter,
-                alpha=alpha,
-                beta=beta,
-            )
-
-            engine.restore_state()
-            if score > best_score:
-                best_score, best_move = score, move
-        fin = time.time()
-        tiempo = fin - inicio
-        eficiencia = counter["nodes"] / tiempo
-        print(f"\nSe evaluaron {counter['nodes']} nodos  en {tiempo:.3f} segundos")
-        print(f"Nodos/segundo = {eficiencia:.3f}\n")
+        deadline: float = time.time() + 5
+        max_depth: int = 1
+        while time.time() - inicio < deadline:
+            for move in available_moves:
+                index: int = move.row * engine.cols + move.col
+                engine.apply_move(index)
+                try:
+                    score: float = self.minimax(
+                        engine=engine,
+                        depth=0,
+                        max_depth=max_depth,
+                        is_maximizing=True,
+                        maximizing_player_id=player_id,
+                        winner=engine.get_winner(),
+                        counter=counter,
+                        alpha=alpha,
+                        beta=beta,
+                        deadline=deadline,
+                    )
+                except TimeExpired:
+                    return best_move
+                engine.restore_state()
+                if score > best_score:
+                    best_score, best_move = score, move
+            max_depth = max_depth + 1
+        # fin = time.time()
+        # tiempo = fin - inicio
+        # eficiencia = counter["nodes"] / tiempo
+        # print(f"\nSe evaluaron {counter['nodes']} nodos  en {tiempo:.3f} segundos")
+        # print(f"Nodos/segundo = {eficiencia:.3f}\n")
         return best_move
 
     def minimax(
@@ -71,25 +77,31 @@ class MinimaxAgent(Agent):
         counter: dict[str, int],
         alpha: float,
         beta: float,
+        deadline: float,
     ) -> float:
         counter["nodes"] += 1
 
         if winner != 0:
             return 1000.0 if maximizing_player_id == 1 else -1000.0
 
-        if depth == max_depth:
+        if depth == max_depth or depth == 5:
             return engine.evaluate_position(maximizing_player_id)
+
+        if time.time() > deadline:
+            raise TimeExpired()
 
         legal_moves: list[Move] = engine.get_legal_moves(maximizing_player_id)
         if legal_moves is None or len(legal_moves) == 0:
             return 0
+
         engine.save_state()
 
         best_score: float = -math.inf if is_maximizing else math.inf
-
+        # inicio = time.time()
         for move in legal_moves:
             index: int = move.row * engine.cols + move.col
             engine.apply_move(index)
+
             score: float = self.minimax(
                 engine=engine,
                 depth=depth + 1,
@@ -100,14 +112,32 @@ class MinimaxAgent(Agent):
                 counter=counter,
                 alpha=alpha,
                 beta=beta,
+                deadline=deadline,
             )
             engine.restore_state()
-            best_score = max(score, best_score) if is_maximizing else min(score, best_score)
-            if alpha is not None:
+
+            if self._optimizations.alpha_beta_pruning:
                 if is_maximizing:
+                    best_score = max(best_score, score)
                     alpha = max(alpha, best_score)
+                    if beta <= alpha:
+                        break  # Poda beta
                 else:
+                    best_score = min(best_score, score)
                     beta = min(beta, best_score)
-                if beta <= alpha:
-                    break
+                    if beta <= alpha:
+                        break  # Poda alpha
+
+            else:
+                best_score = max(score, best_score) if is_maximizing else min(score, best_score)
+        # fin = time.time()
+        # tiempo = fin - inicio
+        # eficiencia = counter["nodes"] / tiempo
+        # print(f"\nSe evaluaron {counter['nodes']} nodos  en {tiempo:.3f} segundos")
+        # print(f"Nodos/segundo = {eficiencia:.3f}\n")
         return best_score
+
+
+class TimeExpired(Exception):
+    def __init__(self):
+        pass
