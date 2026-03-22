@@ -2,7 +2,7 @@ import json
 import os
 import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 
 from src.core.enums import RuleOptions
 from src.engines.python_naive import PythonNaive
