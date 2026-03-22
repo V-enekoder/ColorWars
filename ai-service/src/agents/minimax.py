@@ -1,5 +1,5 @@
-from agents.minimax.alpha_beta_prune import MinimaxAlphaBeta
-from agents.minimax.vanilla import Minimax
+from src.agents.minimax_variants.alpha_beta_prune import MinimaxAlphaBeta
+from src.agents.minimax_variants.vanilla import Minimax
 from src.core.dtos import MinimaxOptimizations
 from src.core.interfaces import Agent, EngineMinimax, ISearcher, Move
 

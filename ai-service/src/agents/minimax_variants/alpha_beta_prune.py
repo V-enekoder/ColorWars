@@ -1,9 +1,10 @@
 import math
 import time
 
-import src.exceptions.TimeExpired
 from src.core.interfaces import EngineMinimax, ISearcher
 from src.core.types import Move
+from src.exceptions.TimeExpired import TimeExpired
+from test.benchmarks.SearchStats import SearchStats
 
 
 class MinimaxAlphaBeta(ISearcher):
@@ -29,9 +30,9 @@ class MinimaxAlphaBeta(ISearcher):
         alpha: float = -math.inf
         beta: float = math.inf
         inicio = time.time()
-        deadline: float = time.time() + 5
+        deadline: float = time.time() + time_limit
         max_depth: int = 1
-
+        stats: SearchStats = SearchStats(start_time=time.time())
         while time.time() - inicio < deadline:
             sorted_moves = self.order_moves(moves_to_order=available_moves, engine=engine)
 
@@ -46,13 +47,16 @@ class MinimaxAlphaBeta(ISearcher):
                     alpha=alpha,
                     beta=beta,
                     deadline=deadline,
+                    stats=stats,
                 )
-            except src.exceptions.TimeExpired.TimeExpired:
+            except TimeExpired:
+                print(f"Se exploraron {stats.get_nps():.3f}")
                 return best_move
             if score > best_score:
                 best_score, best_move = score, move
             self.best_moves_by_depth[max_depth] = best_move
             max_depth += 1
+        print(f"Se exploraron ya{stats.get_nps():.3f}")
         return best_move
 
     def minimax_alpha_beta(
@@ -66,7 +70,9 @@ class MinimaxAlphaBeta(ISearcher):
         alpha: float,
         beta: float,
         deadline: float,
+        stats: SearchStats | None = None,
     ) -> tuple[float, Move | None]:
+        stats.increment_nodes()
         if engine.get_winner() != 0:
             return (1000.0 if maximizing_player_id == 1 else -1000.0), None
 
@@ -74,7 +80,7 @@ class MinimaxAlphaBeta(ISearcher):
             return engine.evaluate_position(maximizing_player_id), None
 
         if time.time() > deadline:
-            raise src.exceptions.TimeExpired.TimeExpired()
+            raise TimeExpired
 
         if moves is None or len(moves) == 0:
             moves: list[Move] = engine.get_legal_moves(maximizing_player_id)
@@ -105,6 +111,7 @@ class MinimaxAlphaBeta(ISearcher):
                 alpha=alpha,
                 beta=beta,
                 deadline=deadline,
+                stats=stats,
             )
             engine.restore_state()
 

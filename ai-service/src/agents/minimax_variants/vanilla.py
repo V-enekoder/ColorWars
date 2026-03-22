@@ -4,6 +4,7 @@ import time
 from src.core.interfaces import EngineMinimax, ISearcher
 from src.core.types import Move
 from src.exceptions.TimeExpired import TimeExpired
+from test.benchmarks.SearchStats import SearchStats
 
 
 class Minimax(ISearcher):
@@ -20,6 +21,7 @@ class Minimax(ISearcher):
         inicio = time.time()
         deadline: float = time.time() + time_limit
         max_depth: int = 1
+        stats: SearchStats = SearchStats(start_time=time.time())
         while time.time() - inicio < deadline:
             try:
                 score, move = self.minimax(
@@ -29,12 +31,15 @@ class Minimax(ISearcher):
                     is_maximizing=True,
                     maximizing_player_id=player_id,
                     deadline=deadline,
+                    stats=stats,
                 )
             except TimeExpired:
+                print(f"Se exploraron {stats.get_nps():.3f}")
                 return best_move
             if score > best_score:
                 best_score, best_move = score, move
             max_depth += 1
+        print(f"Se exploraron ya{stats.get_nps():.3f}")
         return best_move
 
     def minimax(
@@ -45,7 +50,10 @@ class Minimax(ISearcher):
         is_maximizing: bool,
         maximizing_player_id: int,
         deadline: float,
+        stats: SearchStats | None = None,
     ) -> (float, Move | None):
+        stats.increment_nodes()
+
         if engine.get_winner() != 0:
             return (1000.0 if maximizing_player_id == 1 else -1000.0), None
 
@@ -74,6 +82,7 @@ class Minimax(ISearcher):
                 is_maximizing=not is_maximizing,
                 maximizing_player_id=maximizing_player_id,
                 deadline=deadline,
+                stats=stats,
             )
             engine.restore_state()
 
