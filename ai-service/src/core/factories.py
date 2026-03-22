@@ -49,7 +49,7 @@ class AgentFactory:
     }
 
     @staticmethod
-    def get_agent(strategy: AgentStrategy, player_id: int, **kwargs) -> Agent:
+    def get_agent(strategy: AgentStrategy, player_id: int) -> Agent:
         agent_class = AgentFactory._AGENTS_REGISTRY.get(strategy)
 
         if not agent_class:
@@ -57,5 +57,5 @@ class AgentFactory:
 
         return agent_class(
             player_id=player_id,
-            name=strategy.value.capitalize(),
+            name="victor",  # strategy.value.capitalize(),
         )

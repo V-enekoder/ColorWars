@@ -27,6 +27,9 @@ class Move(BaseModel):
     time_ms: float | None = None
     player: int | None = None
 
+    class Config:
+        frozen = True
+
 
 class GameState(BaseModel):
     board: list[CellData]

@@ -87,8 +87,8 @@ class Agent(ABC):
         move = self._calculate_move(engine)
 
         end_time: float = time.time()
-        move.time_ms = (end_time - start_time) * 1000
-        print(f"Tarda: {move.time_ms:.3f}ms")
+        time_ms = (end_time - start_time) * 1000
+        print(f"Tarda: {time_ms:.3f}ms")
 
         return move
 
@@ -98,3 +98,8 @@ class Agent(ABC):
 
     @abstractmethod
     def set_configuration(self, optimizations) -> None: ...
+
+
+class ISearcher(ABC):
+    @abstractmethod
+    def search(self, engine: EngineMinimax, time_limit: float) -> Move: ...
