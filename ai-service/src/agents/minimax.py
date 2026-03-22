@@ -10,7 +10,7 @@ from src.core.interfaces import Agent, EngineMinimax, ISearcher, Move
 class MinimaxAgent(Agent):
     def __init__(self, player_id: int, name: str):
         super().__init__(player_id, name)
-        # self._optimizations: MinimaxOptimizations = MinimaxOptimizations()
+        self._optimizations = None
         self._maximizing_player_id = None
 
     def set_configuration(
@@ -38,118 +38,6 @@ class MinimaxAgent(Agent):
             return Minimax()
 
         return searcher()
-        """
-        best_score: float = -math.inf
-        best_move: Move | None = None
-        player_id = engine.get_current_player_id()
-        available_moves: list[Move] = engine.get_legal_moves(player_id)
-
-        if not available_moves:
-            return Move(row=0, col=0)
-
-        engine.save_state()
-
-        alpha: float | None = -math.inf if self._optimizations.alpha_beta_pruning else None
-        beta: float | None = math.inf if self._optimizations.alpha_beta_pruning else None
-
-        counter = {"nodes": 0}
-        inicio = time.time()
-        deadline: float = time.time() + 5
-        max_depth: int = 1
-        while time.time() - inicio < deadline:
-            try:
-                score, move = self.minimax(
-                    engine=engine,
-                    depth=0,
-                    max_depth=max_depth,
-                    is_maximizing=True,
-                    maximizing_player_id=player_id,
-                    winner=engine.get_winner(),
-                    counter=counter,
-                    alpha=alpha,
-                    beta=beta,
-                    deadline=deadline,
-                )
-            except TimeExpired:
-                return best_move
-            if score > best_score:
-                best_score, best_move = score, move
-            max_depth += 1
-        return best_move
-        """
-
-
-"""
-    def minimax(
-        self,
-        engine: EngineMinimax,
-        depth: int,
-        max_depth: int,
-        is_maximizing: bool,
-        maximizing_player_id: int,
-        winner: int,
-        counter: dict[str, int],
-        alpha: float,
-        beta: float,
-        deadline: float,
-    ) -> (float, Move | None):
-        counter["nodes"] += 1
-
-        if winner != 0:
-            return 1000.0, None if maximizing_player_id == 1 else -1000.0, None
-
-        if depth == max_depth or depth == 5:
-            return engine.evaluate_position(maximizing_player_id), None
-
-        if time.time() > deadline:
-            raise TimeExpired()
-
-        legal_moves: list[Move] = engine.get_legal_moves(maximizing_player_id)
-        if legal_moves is None or len(legal_moves) == 0:
-            return 0.0, None
-
-        engine.save_state()
-
-        best_score: float = -math.inf if is_maximizing else math.inf
-        best_move: Move | None = None
-        # inicio = time.time()
-        for move in legal_moves:
-            index: int = move.row * engine.cols + move.col
-            engine.apply_move(index)
-
-            score, _ = self.minimax(
-                engine=engine,
-                depth=depth + 1,
-                max_depth=max_depth,
-                is_maximizing=not is_maximizing,
-                maximizing_player_id=maximizing_player_id,
-                winner=engine.get_winner(),
-                counter=counter,
-                alpha=alpha,
-                beta=beta,
-                deadline=deadline,
-            )
-            engine.restore_state()
-
-            if self._optimizations.alpha_beta_pruning:
-                if is_maximizing:
-                    best_score = max(best_score, score)
-                    best_move = move
-                    alpha = max(alpha, best_score)
-                    if beta <= alpha:
-                        break  # Poda beta
-                else:
-                    best_score = min(best_score, score)
-                    best_move = move
-                    beta = min(beta, best_score)
-                    if beta <= alpha:
-                        break  # Poda alpha
-
-            else:
-                best_score = max(score, best_score) if is_maximizing else min(score, best_score)
-                best_move = move
-        return (best_score, best_move)
-    """
 
 
 class TimeExpired(Exception):
@@ -168,7 +56,6 @@ class Minimax(ISearcher):
             return Move(row=0, col=0)
 
         engine.save_state()
-        counter = {"nodes": 0}
         inicio = time.time()
         deadline: float = time.time() + time_limit
         max_depth: int = 1
@@ -180,7 +67,6 @@ class Minimax(ISearcher):
                     max_depth=max_depth,
                     is_maximizing=True,
                     maximizing_player_id=player_id,
-                    counter=counter,
                     deadline=deadline,
                 )
             except TimeExpired:
@@ -197,11 +83,8 @@ class Minimax(ISearcher):
         max_depth: int,
         is_maximizing: bool,
         maximizing_player_id: int,
-        counter: dict[str, int],
         deadline: float,
     ) -> (float, Move | None):
-        counter["nodes"] += 1
-
         if engine.get_winner() != 0:
             return (1000.0 if maximizing_player_id == 1 else -1000.0), None
 
@@ -229,7 +112,6 @@ class Minimax(ISearcher):
                 max_depth=max_depth,
                 is_maximizing=not is_maximizing,
                 maximizing_player_id=maximizing_player_id,
-                counter=counter,
                 deadline=deadline,
             )
             engine.restore_state()
@@ -261,7 +143,6 @@ class MinimaxAlphaBeta(ISearcher):
 
         alpha: float = -math.inf
         beta: float = math.inf
-        counter = {"nodes": 0}
         inicio = time.time()
         deadline: float = time.time() + 5
         max_depth: int = 1
@@ -277,7 +158,6 @@ class MinimaxAlphaBeta(ISearcher):
                     max_depth=max_depth,
                     is_maximizing=True,
                     maximizing_player_id=player_id,
-                    counter=counter,
                     alpha=alpha,
                     beta=beta,
                     deadline=deadline,
@@ -298,13 +178,10 @@ class MinimaxAlphaBeta(ISearcher):
         max_depth: int,
         is_maximizing: bool,
         maximizing_player_id: int,
-        counter: dict[str, int],
         alpha: float,
         beta: float,
         deadline: float,
     ) -> tuple[float, Move | None]:
-        counter["nodes"] += 1
-
         if engine.get_winner() != 0:
             return (1000.0 if maximizing_player_id == 1 else -1000.0), None
 
@@ -340,7 +217,6 @@ class MinimaxAlphaBeta(ISearcher):
                 max_depth=max_depth,
                 is_maximizing=not is_maximizing,
                 maximizing_player_id=maximizing_player_id,
-                counter=counter,
                 alpha=alpha,
                 beta=beta,
                 deadline=deadline,
