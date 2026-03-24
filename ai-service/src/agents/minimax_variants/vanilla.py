@@ -8,7 +8,7 @@ from test.benchmarks.SearchStats import SearchStats
 
 
 class Minimax(ISearcher):
-    def search(self, engine: EngineMinimax, time_limit: float) -> Move:
+    def search(self, engine: EngineMinimax, time_limit: float, stats: SearchStats | None = None) -> Move:
         best_score: float = -math.inf
         best_move: Move | None = None
         player_id = engine.get_current_player_id()
@@ -21,7 +21,8 @@ class Minimax(ISearcher):
         inicio = time.time()
         deadline: float = time.time() + time_limit
         max_depth: int = 1
-        stats: SearchStats = SearchStats(start_time=time.time())
+        if stats:
+            stats.start_time = time.time()
         while time.time() - inicio < deadline:
             try:
                 score, move = self.minimax(
@@ -34,12 +35,14 @@ class Minimax(ISearcher):
                     stats=stats,
                 )
             except TimeExpired:
-                print(f"Se exploraron {stats.get_nps():.3f}")
+                if stats:
+                    stats.end_time = time.time()
                 return best_move
             if score > best_score:
                 best_score, best_move = score, move
             max_depth += 1
-        print(f"Se exploraron ya{stats.get_nps():.3f}")
+        if stats:
+            stats.end_time = time.time()
         return best_move
 
     def minimax(
@@ -52,7 +55,8 @@ class Minimax(ISearcher):
         deadline: float,
         stats: SearchStats | None = None,
     ) -> (float, Move | None):
-        stats.increment_nodes()
+        if stats:
+            stats.increment_nodes()
 
         if engine.get_winner() != 0:
             return (1000.0 if maximizing_player_id == 1 else -1000.0), None

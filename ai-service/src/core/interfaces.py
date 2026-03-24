@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Protocol
 
 from src.core.types import CellData, GameConfig, GameState, Move
+from test.benchmarks.SearchStats import SearchStats
 
 
 class IGameEngine(ABC):
@@ -89,7 +90,6 @@ class Agent(ABC):
         end_time: float = time.time()
         time_ms = (end_time - start_time) * 1000
         print(f"Tarda: {time_ms:.3f}ms")
-
         return move
 
     @abstractmethod
@@ -102,4 +102,4 @@ class Agent(ABC):
 
 class ISearcher(ABC):
     @abstractmethod
-    def search(self, engine: EngineMinimax, time_limit: float) -> Move: ...
+    def search(self, engine: EngineMinimax, time_limit: float, stats: SearchStats | None = None) -> Move: ...

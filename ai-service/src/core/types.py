@@ -34,4 +34,5 @@ class Move(BaseModel):
 class GameState(BaseModel):
     board: list[CellData]
     player_id: int
+    round_number: int
     legal_moves: list[Move]

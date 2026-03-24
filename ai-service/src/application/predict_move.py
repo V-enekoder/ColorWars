@@ -6,7 +6,6 @@ from src.core.interfaces import Agent, IGameEngine
 
 def execute_prediction(request: PredictRequest):
     engine: IGameEngine = EngineFactory.get_from_request(request)
-
     strategy: AgentStrategy = request.agent_policy.strategy
     player_id: int = request.game_state.player_id
 

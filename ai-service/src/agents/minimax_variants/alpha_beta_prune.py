@@ -50,13 +50,11 @@ class MinimaxAlphaBeta(ISearcher):
                     stats=stats,
                 )
             except TimeExpired:
-                print(f"Se exploraron {stats.get_nps():.3f}")
                 return best_move
             if score > best_score:
                 best_score, best_move = score, move
             self.best_moves_by_depth[max_depth] = best_move
             max_depth += 1
-        print(f"Se exploraron ya{stats.get_nps():.3f}")
         return best_move
 
     def minimax_alpha_beta(
