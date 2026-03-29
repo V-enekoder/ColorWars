@@ -1,4 +1,4 @@
-import { RulesOptions , GameResult,GameState} from "../utils/types.ts";
+import { GameResult, GameState, RulesOptions } from "../utils/types.ts";
 
 export interface CellData {
   points: number;
@@ -40,7 +40,6 @@ export class GameEngine {
   players: Player[];
   currentPlayerIndex: number = 0;
   roundNumber: number = 1;
-  winner: number = 0;
   cellsByPlayer: Map<number, number> = new Map<number, number>();
   private totalCells: number;
   private neighbors: number[][];
@@ -78,8 +77,7 @@ export class GameEngine {
     this.zobristTable = this.initZobristTable();
     this.turnRandoms = this.initTurnHash();
     this.currentHash = this.initZobristhHash();
-    this._gameResult = {status: GameState.Playing, winnerId: null}
-
+    this._gameResult = { status: GameState.Playing, winnerId: null };
   }
 
   private calculateNeighbors(list: DirectionList): number[][] {
@@ -171,16 +169,19 @@ export class GameEngine {
     return this.players.length;
   }
 
-  get gameResult(): GameResult{
+  get gameResult(): GameResult {
     return this._gameResult;
   }
 
-  set gameResult(result: GameResult): void{
+  set gameResult(result: GameResult) {
     this._gameResult = result;
   }
 
   *playGenerator(index: number): Generator<CellData[]> {
-    if(this._gameResult.winnerId !== null) return; 
+    console.log(this._gameResult.status);
+    if (this._gameResult.status !== GameState.Playing) {
+      return;
+    }
     const currentPlayer = this.currentPlayerId;
 
     if (!this.isLegalMove(index, currentPlayer)) return;
@@ -290,10 +291,10 @@ export class GameEngine {
         }
 
         this.updateCellHash(nIdx, neighbor.points, neighbor.player);
-
       }
       this.checkEliminations();
-      if(this._gameResult.winnerId !== null) break;
+      if (this._gameResult.status !== GameState.Playing) break;
+
       yield this.getBoard();
     }
   }
@@ -356,8 +357,8 @@ export class GameEngine {
   }
 
   private advanceTurn() {
+    if (this._gameResult.status !== GameState.Playing) return;
 
-    if(this._gameResult.winnerId !== null) return;
     let attempts = 0;
     do {
       this.currentPlayerIndex++;

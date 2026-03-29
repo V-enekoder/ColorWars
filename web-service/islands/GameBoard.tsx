@@ -4,7 +4,7 @@ import { Cell } from "../components/Cell.tsx";
 import { PlayerScoreboard } from "../components/PlayerScoreboard.tsx";
 import { CellData, GameEngine } from "../core/GameLogic.ts";
 import { PLAYER_COLOR_MAP } from "../utils/constans.ts";
-import { GameConfig, IGameAgent, Player } from "../utils/types.ts";
+import { GameConfig, GameState, IGameAgent, Player } from "../utils/types.ts";
 import { AgentFactory } from "../core/agents/AgentFactory.ts";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
@@ -22,7 +22,8 @@ export default function GameBoard({ config }: { config: GameConfig }) {
   }, [engine]);
 
   const currentPlayerId = useSignal(engine.currentPlayerId);
-  const winner = useSignal(0);
+  const gameResult = useSignal(engine.gameResult);
+
   const playerCounts = useSignal<[number, number][]>(engine.getCellsByPlayer());
   const isAnimating = useSignal(false);
   const isMounted = useRef(true);
@@ -46,7 +47,9 @@ export default function GameBoard({ config }: { config: GameConfig }) {
 
   const handleCellClick = useCallback(
     async (index: number) => {
-      if (isAnimating.value || engine.winner !== 0) return;
+      if (isAnimating.value || engine.gameResult.status !== GameState.Playing) {
+        return;
+      }
 
       const generator = engine.playGenerator(index);
 
@@ -66,8 +69,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
           const rawBoard: CellData[] = next.value;
           updateUI(rawBoard);
 
-          if (engine.winner !== 0) break;
-
+          if (engine.gameResult.status !== GameState.Playing) break;
           const dynamicDelay = Math.max(30, 150 - steps * 5);
           await delay(dynamicDelay);
           if (!isMounted.current) return;
@@ -76,7 +78,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
       } finally {
         if (isMounted.current) {
           currentPlayerId.value = engine.currentPlayerId;
-          winner.value = engine.winner;
+          gameResult.value = engine.gameResult;
           isAnimating.value = false;
         }
       }
@@ -104,10 +106,11 @@ export default function GameBoard({ config }: { config: GameConfig }) {
 
     return map;
   }, [players]);
-
   useEffect(() => {
-    if (winner.value !== 0 || isAnimating.value) return;
-
+    console.log(engine.gameResult.status);
+    if (isAnimating.value || engine.gameResult.status !== GameState.Playing) {
+      return;
+    }
     const currentId = engine.currentPlayerId;
     const agent = agentsMap.get(currentId);
 
@@ -132,8 +135,8 @@ export default function GameBoard({ config }: { config: GameConfig }) {
   }, [currentPlayerId.value, isAnimating.value]);
 
   const message = useComputed(() => {
-    return winner.value !== 0
-      ? `¡Ganó el jugador ${winner.value}!`
+    return gameResult.value.status !== GameState.Playing
+      ? `¡Ganó el jugador ${engine.gameResult.winnerId}!`
       : `Turno: Jugador ${currentPlayerId.value}`;
   });
 
@@ -189,7 +192,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
               player={cellData.player}
               isCritical={isCritical}
               onClick={handleCellClick}
-              limit={engine.critical_points}
+              limit={limit}
             />
           );
         })}
