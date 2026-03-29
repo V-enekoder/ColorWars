@@ -67,12 +67,14 @@ export class RemoteAgent implements IGameAgent {
           game_state: {
             board: engine.getBoard(),
             player_id: engine.currentPlayerId,
+            round_number: engine.getRoundNumber(),
             legal_moves: legalMoves,
           },
 
           agent_policy: {
             engine: this.config.engine,
             strategy: this.agent_strategy,
+            optimizations: "vanilla",
           },
         }),
       });

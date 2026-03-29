@@ -236,61 +236,61 @@ export class GameEngine {
   }
 
   private *addOrb(idx: number, player: number): Generator<CellData[]> {
-      const cell = this.board[idx];
+    const cell = this.board[idx];
 
+    this.updateCellHash(idx, cell.points, cell.player);
+
+    this.setCellOwner(cell, player);
+    cell.points += this.getPointsToAdd();
+
+    this.updateCellHash(idx, cell.points, cell.player);
+
+    const q: number[] = [];
+
+    if (cell.points >= this.critical_points) {
       this.updateCellHash(idx, cell.points, cell.player);
 
-      this.setCellOwner(cell, player);
-      cell.points += this.getPointsToAdd();
+      cell.points -= this.critical_points;
+      if (cell.points === 0) {
+        this.setCellOwner(cell, 0);
+      }
 
       this.updateCellHash(idx, cell.points, cell.player);
-
-      const q: number[] = [];
-
-      if (cell.points >= this.critical_points) {
-        this.updateCellHash(idx, cell.points, cell.player);
-
-        cell.points -= this.critical_points;
-        if (cell.points === 0) {
-          this.setCellOwner(cell, 0);
-        }
-
-        this.updateCellHash(idx, cell.points, cell.player);
-        q.push(idx);
-      }
-
-      yield this.getBoard();
-
-      while (q.length > 0) {
-        const currIdx = q.shift()!;
-        const currentNeighbors = this.neighbors[currIdx];
-
-        for (const nIdx of currentNeighbors) {
-          const neighbor = this.board[nIdx];
-
-          this.updateCellHash(nIdx, neighbor.points, neighbor.player);
-
-          if (neighbor.player !== player) {
-            this.setCellOwner(neighbor, player);
-          }
-          neighbor.points += 1;
-
-          if (neighbor.points >= this.critical_points) {
-            neighbor.points -= this.critical_points;
-            if (neighbor.points === 0) this.setCellOwner(neighbor, 0);
-          }
-
-          this.updateCellHash(nIdx, neighbor.points, neighbor.player);
-
-          if (neighbor.points >= this.critical_points) {
-             q.push(nIdx);
-          }
-        }
-        this.checkEliminations();
-        if (this.winner !== 0) break;
-        yield this.getBoard();
-      }
+      q.push(idx);
     }
+
+    yield this.getBoard();
+
+    while (q.length > 0) {
+      const currIdx = q.shift()!;
+      const currentNeighbors = this.neighbors[currIdx];
+
+      for (const nIdx of currentNeighbors) {
+        const neighbor = this.board[nIdx];
+
+        this.updateCellHash(nIdx, neighbor.points, neighbor.player);
+
+        if (neighbor.player !== player) {
+          this.setCellOwner(neighbor, player);
+        }
+        neighbor.points += 1;
+
+        if (neighbor.points >= this.critical_points) {
+          neighbor.points -= this.critical_points;
+          if (neighbor.points === 0) this.setCellOwner(neighbor, 0);
+        }
+
+        this.updateCellHash(nIdx, neighbor.points, neighbor.player);
+
+        if (neighbor.points >= this.critical_points) {
+          q.push(nIdx);
+        }
+      }
+      this.checkEliminations();
+      if (this.winner !== 0) break;
+      yield this.getBoard();
+    }
+  }
 
   private updateCellHash(idx: number, points: number, player: number): void {
     this.currentHash ^= this.getHashForCell(idx, points, player);

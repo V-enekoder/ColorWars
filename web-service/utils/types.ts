@@ -35,7 +35,6 @@ export enum AgentStrategy {
   NONE = "none",
   RANDOM = "random",
   MINIMAX = "minimax",
-  MINIMAX_ALPHA_BETA = "minimax_alpha_beta",
   MONTE_CARLO = "mcts",
   PPO = "ppo",
   GENETIC = "genetic",
@@ -57,8 +56,13 @@ export enum AgentType {
 
 export enum GameState {
   Playing = "playing",
-  Paused = "paused",
+  Draw = "draw",
   GameOver = "gameover",
+}
+
+export interface GameResult{
+  status: GameState
+  winnerId: number | null;
 }
 
 export enum GameMode {
