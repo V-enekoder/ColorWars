@@ -1,4 +1,4 @@
-import { RulesOptions,GameState } from "../utils/types.ts";
+import { RulesOptions } from "../utils/types.ts";
 
 export interface CellData {
   points: number;
@@ -38,17 +38,17 @@ const ALL_DIRECTIONS: DirectionList = [...CARDINALS, ...DIAGONALS];
 export class GameEngine {
   board: CellData[];
   players: Player[];
-  private totalCells: number;
   currentPlayerIndex: number = 0;
   roundNumber: number = 1;
   winner: number = 0;
   cellsByPlayer: Map<number, number> = new Map<number, number>();
+  private totalCells: number;
   private neighbors: number[][];
   private fullAdjacencies: number[][];
+  private zobristTable: bigint[][][]; // [cell][points][player]
+  private turnRandoms: bigint[]; // [actual_player]
+  private currentHash: bigint;
 
-  private zobristTable: BigInt[][][]; // [celda][puntos][jugador]
-  private turnRandoms: BigInt[];      // [jugador_activo]
-  private gameState: GameState;
   constructor(
     public readonly rows: number,
     public readonly cols: number,
@@ -61,8 +61,6 @@ export class GameEngine {
     this.critical_points = critical_points;
     this.playRule = playRule;
 
-    this.totalCells = this.rows * this.cols;
-
     this.players = Array.from({ length: num_players }, (_, i) => ({
       id: i + 1,
       active: true,
@@ -72,45 +70,15 @@ export class GameEngine {
       points: 0,
       player: 0,
     }));
-
+    this.totalCells = this.rows * this.cols;
     this.players.forEach((p) => this.cellsByPlayer.set(p.id, 0));
 
     this.neighbors = this.calculateNeighbors(CARDINALS);
     this.fullAdjacencies = this.calculateNeighbors(ALL_DIRECTIONS);
-
-    this.initZobristTable();
-    this.gameState = GameState.Playing;
-
+    this.zobristTable = this.initZobristTable();
+    this.turnRandoms = this.initTurnHash();
+    this.currentHash = this.initZobristhHash();
   }
-
-  private initZobristTable(): void {
-    const numStates = this.criticalPoints; 
-    const numPlayers = this.players.length + 1;
-    const numTurnPlayers = this.players.length + 1;
-
-    this.zobristTable = [];
-    for (let i = 0; i < this.totalCells; i++) {
-      this.zobristTable[i] = [];
-      for (let p = 0; p < numStates; p++) {
-        this.zobristTable[i][p] = [];
-        for (let j = 0; j < numPlayers; j++) {
-          this.zobristTable[i][p][j] = this.getRandom64();
-        }
-      }
-    }
-
-    this.turnRandoms = [];
-    for (let j = 0; j < numTurnPlayers; j++) {
-      this.turnRandoms[j] = this.getRandom64();
-    }
-  }
-
-  private getRandom64(): BigInt {
-    const buffer = new BigUint64Array(1);
-    crypto.getRandomValues(buffer);
-    return buffer[0];
-  }
-
 
   private calculateNeighbors(list: DirectionList): number[][] {
     const neighbors: number[][] = new Array(this.rows * this.cols);
@@ -134,6 +102,64 @@ export class GameEngine {
   private isValidCoord(r: number, c: number): boolean {
     return r >= 0 && r < this.rows && c >= 0 && c < this.cols;
   }
+  private initZobristTable(): bigint[][][] {
+    const numStates = this.critical_points + 1;
+    const numPlayers = this.players.length + 1; //Add empty player
+    let zobristTable = [];
+    for (let i = 0; i < this.totalCells; i++) {
+      zobristTable[i] = [];
+
+      for (let p = 0; p < numStates; p++) {
+        zobristTable[i][p] = [];
+        for (let j = 0; j < numPlayers; j++) {
+          zobristTable[i][p][j] = this.getRandom64();
+        }
+      }
+    }
+    return zobristTable;
+  }
+
+  private getRandom64(): bigint {
+    const buffer = new BigUint64Array(1);
+    crypto.getRandomValues(buffer);
+    return buffer[0];
+  }
+
+  private initTurnHash(): bigint[] {
+    const numTurnPlayers = this.players.length + 1;
+    let turnRandoms = [];
+    for (let j = 0; j < numTurnPlayers; j++) {
+      turnRandoms[j] = this.getRandom64();
+    }
+    return turnRandoms;
+  }
+
+  private initZobristhHash(): bigint {
+    let initialHash = 0n;
+    for (let i = 0; i < this.totalCells; i++) {
+      initialHash ^= this.zobristTable[i][0][0];
+    }
+
+    initialHash ^= this.turnRandoms[this.currentPlayerId];
+    return initialHash;
+  }
+
+  private getZobristHash(): bigint {
+    let hash = 0n;
+    for (let i = 0; i < this.totalCells; i++) {
+      hash ^= this.getHashForCell(
+        i,
+        this.board[i].points,
+        this.board[i].player,
+      );
+    }
+    hash ^= this.turnRandoms[this.currentPlayerId];
+    return hash;
+  }
+
+  private getHashForCell(idx: number, points: number, player: number): bigint {
+    return this.zobristTable[idx][points][player];
+  }
 
   getIndex(r: number, c: number): number {
     return r * this.cols + c;
@@ -142,11 +168,6 @@ export class GameEngine {
   getNumPlayers(): number {
     return this.players.length;
   }
-
-  get gameState(){
-    return this.gameState;
-  }
-
   *playGenerator(index: number): Generator<CellData[]> {
     if (this.winner !== 0) return;
 
@@ -154,26 +175,19 @@ export class GameEngine {
 
     if (!this.isLegalMove(index, currentPlayer)) return;
 
+    this.currentHash ^= this.turnRandoms[this.currentPlayerId];
     yield* this.addOrb(index, currentPlayer);
-
-    if(this.isADraw())
-      return;
 
     if (this.roundNumber > 1) {
       this.checkEliminations();
     }
 
     this.advanceTurn();
+    this.currentHash ^= this.turnRandoms[this.currentPlayerId];
+    const realHash = this.getZobristHash();
+
     yield this.getBoard();
   }
-
-  private isADraw(): boolean{
-    return false
-  }
-
-
-
-
 
   get currentPlayerId(): number {
     return this.players[this.currentPlayerIndex].id;
@@ -222,47 +236,64 @@ export class GameEngine {
   }
 
   private *addOrb(idx: number, player: number): Generator<CellData[]> {
-    const cell = this.board[idx];
+      const cell = this.board[idx];
 
-    this.setCellOwner(cell, player);
+      this.updateCellHash(idx, cell.points, cell.player);
 
-    cell.points += this.getPointsToAdd();
+      this.setCellOwner(cell, player);
+      cell.points += this.getPointsToAdd();
 
-    const q: number[] = [];
+      this.updateCellHash(idx, cell.points, cell.player);
 
-    if (cell.points >= this.critical_points) {
-      cell.points -= this.critical_points;
-      if (cell.points === 0) {
-        this.setCellOwner(cell, 0);
-      }
-      q.push(idx);
-    }
+      const q: number[] = [];
 
-    yield this.getBoard();
+      if (cell.points >= this.critical_points) {
+        this.updateCellHash(idx, cell.points, cell.player);
 
-    while (q.length > 0) {
-      const currIdx = q.shift();
-      if (currIdx === undefined) continue;
-
-      const currentNeighbors = this.neighbors[currIdx];
-
-      for (const nIdx of currentNeighbors) {
-        const neighbor = this.board[nIdx];
-
-        if (neigkhbor.player !== player) this.setCellOwner(neighbor, player);
-
-        neighbor.points += 1;
-
-        if (neighbor.points >= this.critical_points) {
-          neighbor.points -= this.critical_points;
-          if (neighbor.points === 0) this.setCellOwner(neighbor, 0);
-          q.push(nIdx);
+        cell.points -= this.critical_points;
+        if (cell.points === 0) {
+          this.setCellOwner(cell, 0);
         }
+
+        this.updateCellHash(idx, cell.points, cell.player);
+        q.push(idx);
       }
-      this.checkEliminations();
-      if (this.winner !== 0) break;
+
       yield this.getBoard();
+
+      while (q.length > 0) {
+        const currIdx = q.shift()!;
+        const currentNeighbors = this.neighbors[currIdx];
+
+        for (const nIdx of currentNeighbors) {
+          const neighbor = this.board[nIdx];
+
+          this.updateCellHash(nIdx, neighbor.points, neighbor.player);
+
+          if (neighbor.player !== player) {
+            this.setCellOwner(neighbor, player);
+          }
+          neighbor.points += 1;
+
+          if (neighbor.points >= this.critical_points) {
+            neighbor.points -= this.critical_points;
+            if (neighbor.points === 0) this.setCellOwner(neighbor, 0);
+          }
+
+          this.updateCellHash(nIdx, neighbor.points, neighbor.player);
+
+          if (neighbor.points >= this.critical_points) {
+             q.push(nIdx);
+          }
+        }
+        this.checkEliminations();
+        if (this.winner !== 0) break;
+        yield this.getBoard();
+      }
     }
+
+  private updateCellHash(idx: number, points: number, player: number): void {
+    this.currentHash ^= this.getHashForCell(idx, points, player);
   }
 
   private getPointsToAdd(): number {
@@ -331,7 +362,7 @@ export class GameEngine {
       attempts++;
     } while (
       !this.players[this.currentPlayerIndex].active &&
-        attempts < this.players.length * 2
+      attempts < this.players.length * 2
     );
   }
 
