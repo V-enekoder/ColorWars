@@ -260,10 +260,8 @@ export class GameEngine {
     if (cell.points >= this.critical_points) {
       this.updateCellHash(idx, cell.points, cell.player);
 
-      cell.points -= this.critical_points;
-      if (cell.points === 0) {
-        this.setCellOwner(cell, 0);
-      }
+      cell.points = 0;
+      this.setCellOwner(cell, 0);
 
       this.updateCellHash(idx, cell.points, cell.player);
       q.push(idx);
@@ -286,16 +284,13 @@ export class GameEngine {
         neighbor.points += 1;
 
         if (neighbor.points >= this.critical_points) {
-          neighbor.points -= this.critical_points;
-          if (neighbor.points === 0) this.setCellOwner(neighbor, 0);
+          neighbor.points = 0;
+          this.setCellOwner(neighbor, 0);
           q.push(nIdx);
         }
 
         this.updateCellHash(nIdx, neighbor.points, neighbor.player);
 
-        if (neighbor.points >= this.critical_points) {
-          q.push(nIdx);
-        }
       }
       this.checkEliminations();
       if(this._gameResult.winnerId !== null) break;
