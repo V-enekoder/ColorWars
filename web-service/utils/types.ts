@@ -57,7 +57,7 @@ export enum AgentType {
 export enum GameState {
   Playing = "playing",
   Draw = "draw",
-  GameOver = "gameover",
+  Win = "win"
 }
 
 export interface GameResult{

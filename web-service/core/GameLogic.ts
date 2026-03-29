@@ -1,4 +1,4 @@
-import { RulesOptions } from "../utils/types.ts";
+import { RulesOptions , GameResult,GameState} from "../utils/types.ts";
 
 export interface CellData {
   points: number;
@@ -48,7 +48,7 @@ export class GameEngine {
   private zobristTable: bigint[][][]; // [cell][points][player]
   private turnRandoms: bigint[]; // [actual_player]
   private currentHash: bigint;
-
+  private _gameResult: GameResult;
   constructor(
     public readonly rows: number,
     public readonly cols: number,
@@ -78,6 +78,8 @@ export class GameEngine {
     this.zobristTable = this.initZobristTable();
     this.turnRandoms = this.initTurnHash();
     this.currentHash = this.initZobristhHash();
+    this._gameResult = {status: GameState.Playing, winnerId: null}
+
   }
 
   private calculateNeighbors(list: DirectionList): number[][] {
@@ -168,9 +170,17 @@ export class GameEngine {
   getNumPlayers(): number {
     return this.players.length;
   }
-  *playGenerator(index: number): Generator<CellData[]> {
-    if (this.winner !== 0) return;
 
+  get gameResult(): GameResult{
+    return this._gameResult;
+  }
+
+  set gameResult(result: GameResult): void{
+    this._gameResult = result;
+  }
+
+  *playGenerator(index: number): Generator<CellData[]> {
+    if(this._gameResult.winnerId !== null) return; 
     const currentPlayer = this.currentPlayerId;
 
     if (!this.isLegalMove(index, currentPlayer)) return;
@@ -278,6 +288,7 @@ export class GameEngine {
         if (neighbor.points >= this.critical_points) {
           neighbor.points -= this.critical_points;
           if (neighbor.points === 0) this.setCellOwner(neighbor, 0);
+          q.push(nIdx);
         }
 
         this.updateCellHash(nIdx, neighbor.points, neighbor.player);
@@ -287,7 +298,7 @@ export class GameEngine {
         }
       }
       this.checkEliminations();
-      if (this.winner !== 0) break;
+      if(this._gameResult.winnerId !== null) break;
       yield this.getBoard();
     }
   }
@@ -344,13 +355,14 @@ export class GameEngine {
     }
 
     if (activeCount === 1) {
-      this.winner = lastActiveId;
+      this._gameResult.status = GameState.Win;
+      this._gameResult.winnerId = lastActiveId;
     }
   }
 
   private advanceTurn() {
-    if (this.winner !== 0) return;
 
+    if(this._gameResult.winnerId !== null) return;
     let attempts = 0;
     do {
       this.currentPlayerIndex++;
