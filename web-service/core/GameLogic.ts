@@ -48,6 +48,8 @@ export class GameEngine {
   private turnRandoms: bigint[]; // [actual_player]
   private currentHash: bigint;
   private _gameResult: GameResult;
+  private repetitionTable:  Map<bigint, number>;
+
   constructor(
     public readonly rows: number,
     public readonly cols: number,
@@ -74,10 +76,13 @@ export class GameEngine {
 
     this.neighbors = this.calculateNeighbors(CARDINALS);
     this.fullAdjacencies = this.calculateNeighbors(ALL_DIRECTIONS);
+    this.repetitionTable = new Map<bigint, number>();
+
     this.zobristTable = this.initZobristTable();
     this.turnRandoms = this.initTurnHash();
     this.currentHash = this.initZobristhHash();
     this._gameResult = { status: GameState.Playing, winnerId: null };
+    
   }
 
   private calculateNeighbors(list: DirectionList): number[][] {
@@ -153,13 +158,27 @@ export class GameEngine {
         this.board[i].player,
       );
     }
+
     hash ^= this.turnRandoms[this.currentPlayerId];
+    this.registerPosition(hash);    
     return hash;
   }
 
   private getHashForCell(idx: number, points: number, player: number): bigint {
     return this.zobristTable[idx][points][player];
   }
+
+  private registerPosition(key: bigint): void{
+    if (!this.repetitionTable.has(key)){
+      this.repetitionTable.set(key,1);
+    }
+
+    else{
+      occurrences: int = this.repetitionTable.get(key);
+      this.repetitionTable.set(key,occurrences++);
+    }
+  }
+
 
   getIndex(r: number, c: number): number {
     return r * this.cols + c;
@@ -178,7 +197,6 @@ export class GameEngine {
   }
 
   *playGenerator(index: number): Generator<CellData[]> {
-    console.log(this._gameResult.status);
     if (this._gameResult.status !== GameState.Playing) {
       return;
     }
@@ -188,14 +206,19 @@ export class GameEngine {
 
     this.currentHash ^= this.turnRandoms[this.currentPlayerId];
     yield* this.addOrb(index, currentPlayer);
-
+    
     if (this.roundNumber > 1) {
       this.checkEliminations();
     }
 
     this.advanceTurn();
     this.currentHash ^= this.turnRandoms[this.currentPlayerId];
-    const realHash = this.getZobristHash();
+    
+    this.registerPosition(this.currentHash);
+
+    if(this.isDraw()){
+      this._gameResult.status = GameState.Draw;
+    }
 
     yield this.getBoard();
   }
@@ -373,6 +396,16 @@ export class GameEngine {
       attempts < this.players.length * 2
     );
   }
+
+
+  private isDraw(key: bigint): boolean {
+    const count = this.repetitionTable.get(key) || 0;
+    if(count >= 3)
+      return true
+    return false
+  }
+
+
 
   getBoard(): CellData[] {
     return [...this.board];
