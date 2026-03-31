@@ -48,31 +48,32 @@ export class GameEngine {
   private turnRandoms: bigint[]; // [actual_player]
   private currentHash: bigint;
   private _gameResult: GameResult;
-  private repetitionTable:  Map<bigint, number>;
-  private turnsWithoutTakes: number;
+  private repetitionTable: Map<bigint, number>;
+  private turnsWithoutCaptures: number;
 
-  private static readonly MAX_REPETITIONS = 3;
+  private readonly MAX_REPETITIONS = 3;
+  private readonly MAX_TURNS_WITHOUT_CAPTURES;
   private activePlayerIds: number[] = [];
 
   constructor(
     public readonly rows: number,
     public readonly cols: number,
     public readonly critical_points: number,
-    num_players: number,
+    numPlayers: number,
     public readonly playRule: RulesOptions,
   ) {
     this.rows = rows;
     this.cols = cols;
     this.critical_points = critical_points;
     this.playRule = playRule;
-    this.turnsWithoutTakes = 0;
-    this.players = Array.from({ length: num_players }, (_, i) => ({
+    this.turnsWithoutCaptures = 0;
+    this.players = Array.from({ length: numPlayers }, (_, i) => ({
       id: i + 1,
       active: true,
     }));
 
-    this.activePlayerIds = this.players.map(p => p.id);
-
+    this.activePlayerIds = this.players.map((p) => p.id);
+    this.MAX_TURNS_WITHOUT_CAPTURES = 25 * numPlayers;
     this.board = Array.from({ length: rows * cols }, () => ({
       points: 0,
       player: 0,
@@ -173,17 +174,14 @@ export class GameEngine {
     return this.zobristTable[idx][points][player];
   }
 
-  private registerPosition(key: bigint): void{
-    if (!this.repetitionTable.has(key)){
-      this.repetitionTable.set(key,1);
-    }
-
-    else{
+  private registerPosition(key: bigint): void {
+    if (!this.repetitionTable.has(key)) {
+      this.repetitionTable.set(key, 1);
+    } else {
       occurrences: int = this.repetitionTable.get(key);
-      this.repetitionTable.set(key,occurrences++);
+      this.repetitionTable.set(key, occurrences++);
     }
   }
-
 
   getIndex(r: number, c: number): number {
     return r * this.cols + c;
@@ -205,12 +203,18 @@ export class GameEngine {
     if (this._gameResult.status !== GameState.Playing) {
       return;
     }
+
     const currentPlayer = this.currentPlayerId;
 
     if (!this.isLegalMove(index, currentPlayer)) return;
 
     this.currentHash ^= this.turnRandoms[this.currentPlayerId];
+
+    const prev = this.turnsWithoutCaptures;
     yield* this.addOrb(index, currentPlayer);
+    if (this.turnsWithoutCaptures === prev) {
+      this.turnsWithoutCaptures += 1;
+    }
 
     if (this.roundNumber > 1) {
       this.checkEliminations();
@@ -221,8 +225,8 @@ export class GameEngine {
 
     this.registerPosition(this.currentHash);
 
-    if(this.isDraw()){
-      this._gameResult.status = GameState.Draw;
+    if (this.isDraw(this.currentHash)) {
+      this._gameResult = { status: GameState.Draw, winnerId: null };
     }
 
     yield this.getBoard();
@@ -275,7 +279,6 @@ export class GameEngine {
   }
 
   private *addOrb(idx: number, player: number): Generator<CellData[]> {
-
     let iscellTaken: boolean = false;
 
     const cell = this.board[idx];
@@ -354,6 +357,7 @@ export class GameEngine {
 
     if (oldPlayer !== 0) {
       this.updateCellCount(oldPlayer, -1);
+      this.turnsWithoutCaptures = 0;
     }
     if (newPlayer !== 0) {
       this.updateCellCount(newPlayer, 1);
@@ -366,47 +370,53 @@ export class GameEngine {
   }
 
   private checkEliminations(): void {
-      for (const p of this.players) {
-          if (p.active && this.roundNumber > 2 && (this.cellsByPlayer.get(p.id) || 0) === 0) {
-              p.active = false;
-          }
+    for (const p of this.players) {
+      if (
+        p.active && this.roundNumber > 2 &&
+        (this.cellsByPlayer.get(p.id) || 0) === 0
+      ) {
+        p.active = false;
       }
+    }
 
-      this.activePlayerIds = this.players.filter(p => p.active).map(p => p.id);
+    this.activePlayerIds = this.players.filter((p) => p.active).map((p) =>
+      p.id
+    );
 
-      if (this.activePlayerIds.length === 1) {
-          this._gameResult.status = GameState.Win;
-          this._gameResult.winnerId = this.activePlayerIds[0];
-      }
+    if (this.activePlayerIds.length === 1) {
+      this._gameResult.status = GameState.Win;
+      this._gameResult.winnerId = this.activePlayerIds[0];
+    }
   }
 
   private advanceTurn(): void {
-      if (this._gameResult.status !== GameState.Playing) return;
+    if (this._gameResult.status !== GameState.Playing) return;
 
-      const currentId = this.players[this.currentPlayerIndex].id;
-      const activeIdx = this.activePlayerIds.indexOf(currentId);
+    const currentId = this.players[this.currentPlayerIndex].id;
+    const activeIdx = this.activePlayerIds.indexOf(currentId);
 
-      const nextActiveIdx = (activeIdx + 1) % this.activePlayerIds.length;
-      const nextPlayerId = this.activePlayerIds[nextActiveIdx];
+    const nextActiveIdx = (activeIdx + 1) % this.activePlayerIds.length;
+    const nextPlayerId = this.activePlayerIds[nextActiveIdx];
 
-      if (nextPlayerId < currentId) {
-          this.roundNumber++;
-      }
+    if (nextPlayerId < currentId) {
+      this.roundNumber++;
+    }
 
-      this.currentPlayerIndex = this.players.findIndex(p => p.id === nextPlayerId);
+    this.currentPlayerIndex = this.players.findIndex((p) =>
+      p.id === nextPlayerId
+    );
   }
-
 
   private isDraw(key: bigint): boolean {
     const count = this.repetitionTable.get(key) || 0;
-    if(count >= this.MAX_REPETITIONS)
-      return true
-    if(this.turnsWithoutTakes >= 50)
+    if (count >= this.MAX_REPETITIONS) {
       return true;
-    return false
+    }
+    if (this.turnsWithoutCaptures >= this.MAX_TURNS_WITHOUT_CAPTURES) {
+      return true;
+    }
+    return false;
   }
-
-
 
   getBoard(): CellData[] {
     return [...this.board];

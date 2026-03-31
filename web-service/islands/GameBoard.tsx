@@ -107,7 +107,6 @@ export default function GameBoard({ config }: { config: GameConfig }) {
     return map;
   }, [players]);
   useEffect(() => {
-    console.log(engine.gameResult.status);
     if (isAnimating.value || engine.gameResult.status !== GameState.Playing) {
       return;
     }
