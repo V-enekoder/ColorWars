@@ -49,6 +49,10 @@ export class GameEngine {
   private currentHash: bigint;
   private _gameResult: GameResult;
   private repetitionTable:  Map<bigint, number>;
+  private turnsWithoutTakes: number;
+
+  private static readonly MAX_REPETITIONS = 3;
+  private activePlayerIds: number[] = [];
 
   constructor(
     public readonly rows: number,
@@ -61,11 +65,13 @@ export class GameEngine {
     this.cols = cols;
     this.critical_points = critical_points;
     this.playRule = playRule;
-
+    this.turnsWithoutTakes = 0;
     this.players = Array.from({ length: num_players }, (_, i) => ({
       id: i + 1,
       active: true,
     }));
+
+    this.activePlayerIds = this.players.map(p => p.id);
 
     this.board = Array.from({ length: rows * cols }, () => ({
       points: 0,
@@ -82,7 +88,6 @@ export class GameEngine {
     this.turnRandoms = this.initTurnHash();
     this.currentHash = this.initZobristhHash();
     this._gameResult = { status: GameState.Playing, winnerId: null };
-    
   }
 
   private calculateNeighbors(list: DirectionList): number[][] {
@@ -160,7 +165,7 @@ export class GameEngine {
     }
 
     hash ^= this.turnRandoms[this.currentPlayerId];
-    this.registerPosition(hash);    
+    this.registerPosition(hash);
     return hash;
   }
 
@@ -206,14 +211,14 @@ export class GameEngine {
 
     this.currentHash ^= this.turnRandoms[this.currentPlayerId];
     yield* this.addOrb(index, currentPlayer);
-    
+
     if (this.roundNumber > 1) {
       this.checkEliminations();
     }
 
     this.advanceTurn();
     this.currentHash ^= this.turnRandoms[this.currentPlayerId];
-    
+
     this.registerPosition(this.currentHash);
 
     if(this.isDraw()){
@@ -270,6 +275,9 @@ export class GameEngine {
   }
 
   private *addOrb(idx: number, player: number): Generator<CellData[]> {
+
+    let iscellTaken: boolean = false;
+
     const cell = this.board[idx];
 
     this.updateCellHash(idx, cell.points, cell.player);
@@ -357,51 +365,44 @@ export class GameEngine {
     this.cellsByPlayer.set(playerId, current + change);
   }
 
-  private checkEliminations() {
-    let activeCount = 0;
-    let lastActiveId = 0;
-
-    for (const p of this.players) {
-      const cellCount = this.cellsByPlayer.get(p.id) || 0;
-
-      if (cellCount === 0 && p.active && this.roundNumber > 2) {
-        p.active = false;
+  private checkEliminations(): void {
+      for (const p of this.players) {
+          if (p.active && this.roundNumber > 2 && (this.cellsByPlayer.get(p.id) || 0) === 0) {
+              p.active = false;
+          }
       }
-      if (p.active) {
-        activeCount++;
-        lastActiveId = p.id;
-      }
-    }
 
-    if (activeCount === 1) {
-      this._gameResult.status = GameState.Win;
-      this._gameResult.winnerId = lastActiveId;
-    }
+      this.activePlayerIds = this.players.filter(p => p.active).map(p => p.id);
+
+      if (this.activePlayerIds.length === 1) {
+          this._gameResult.status = GameState.Win;
+          this._gameResult.winnerId = this.activePlayerIds[0];
+      }
   }
 
-  private advanceTurn() {
-    if (this._gameResult.status !== GameState.Playing) return;
+  private advanceTurn(): void {
+      if (this._gameResult.status !== GameState.Playing) return;
 
-    let attempts = 0;
-    do {
-      this.currentPlayerIndex++;
+      const currentId = this.players[this.currentPlayerIndex].id;
+      const activeIdx = this.activePlayerIds.indexOf(currentId);
 
-      if (this.currentPlayerIndex >= this.players.length) {
-        this.currentPlayerIndex = 0;
-        this.roundNumber++;
+      const nextActiveIdx = (activeIdx + 1) % this.activePlayerIds.length;
+      const nextPlayerId = this.activePlayerIds[nextActiveIdx];
+
+      if (nextPlayerId < currentId) {
+          this.roundNumber++;
       }
-      attempts++;
-    } while (
-      !this.players[this.currentPlayerIndex].active &&
-      attempts < this.players.length * 2
-    );
+
+      this.currentPlayerIndex = this.players.findIndex(p => p.id === nextPlayerId);
   }
 
 
   private isDraw(key: bigint): boolean {
     const count = this.repetitionTable.get(key) || 0;
-    if(count >= 3)
+    if(count >= this.MAX_REPETITIONS)
       return true
+    if(this.turnsWithoutTakes >= 50)
+      return true;
     return false
   }
 
