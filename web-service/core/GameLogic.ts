@@ -178,7 +178,7 @@ export class GameEngine {
     if (!this.repetitionTable.has(key)) {
       this.repetitionTable.set(key, 1);
     } else {
-      occurrences: int = this.repetitionTable.get(key);
+      let occurrences = this.repetitionTable.get(key)!;
       this.repetitionTable.set(key, occurrences++);
     }
   }
@@ -279,8 +279,6 @@ export class GameEngine {
   }
 
   private *addOrb(idx: number, player: number): Generator<CellData[]> {
-    let iscellTaken: boolean = false;
-
     const cell = this.board[idx];
 
     this.updateCellHash(idx, cell.points, cell.player);
@@ -372,16 +370,17 @@ export class GameEngine {
   private checkEliminations(): void {
     for (const p of this.players) {
       if (
-        p.active && this.roundNumber > 2 &&
+        p.active &&
+        this.roundNumber > 2 &&
         (this.cellsByPlayer.get(p.id) || 0) === 0
       ) {
         p.active = false;
       }
     }
 
-    this.activePlayerIds = this.players.filter((p) => p.active).map((p) =>
-      p.id
-    );
+    this.activePlayerIds = this.players
+      .filter((p) => p.active)
+      .map((p) => p.id);
 
     if (this.activePlayerIds.length === 1) {
       this._gameResult.status = GameState.Win;
@@ -402,8 +401,8 @@ export class GameEngine {
       this.roundNumber++;
     }
 
-    this.currentPlayerIndex = this.players.findIndex((p) =>
-      p.id === nextPlayerId
+    this.currentPlayerIndex = this.players.findIndex(
+      (p) => p.id === nextPlayerId,
     );
   }
 
