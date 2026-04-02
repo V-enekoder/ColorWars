@@ -115,8 +115,8 @@ export class GameEngine {
   }
   private initZobristTable(): bigint[][][] {
     const numStates = this.critical_points + 1;
-    const numPlayers = this.players.length + 1; //Add empty player
-    let zobristTable = [];
+    const numPlayers = this.getNumPlayers() + 1; //Add empty player
+    const zobristTable: bigint[][][] = [];
     for (let i = 0; i < this.totalCells; i++) {
       zobristTable[i] = [];
 
@@ -130,6 +130,10 @@ export class GameEngine {
     return zobristTable;
   }
 
+  getNumPlayers(): number {
+    return this.players.length;
+  }
+
   private getRandom64(): bigint {
     const buffer = new BigUint64Array(1);
     crypto.getRandomValues(buffer);
@@ -137,7 +141,7 @@ export class GameEngine {
   }
 
   private initTurnHash(): bigint[] {
-    const numTurnPlayers = this.players.length + 1;
+    const numTurnPlayers = this.getNumPlayers() + 1;
     let turnRandoms = [];
     for (let j = 0; j < numTurnPlayers; j++) {
       turnRandoms[j] = this.getRandom64();
@@ -185,10 +189,6 @@ export class GameEngine {
 
   getIndex(r: number, c: number): number {
     return r * this.cols + c;
-  }
-
-  getNumPlayers(): number {
-    return this.players.length;
   }
 
   get gameResult(): GameResult {
