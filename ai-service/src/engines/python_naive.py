@@ -1,9 +1,9 @@
 from collections import deque
-from typing import Final, List
+from typing import Final, override
 
 from src.core.enums import RuleOptions
-from src.core.interfaces import IGameEngine, Move
-from src.core.types import CellData, GameConfig, GameState, Player
+from src.core.interfaces import IGameEngine
+from src.core.types import CellData, GameConfig, GameState, Move, Player
 
 type Direction = tuple[int, int]
 type DirectionList = tuple[Direction, ...]
@@ -28,7 +28,7 @@ ALL_DIRECTIONS: Final[DirectionList] = CARDINALS + DIAGONALS
 class PythonNaive(IGameEngine):
     def __init__(self, config: GameConfig):
         super().__init__(config)
-        self._legal_moves = None
+        self._legal_moves: list[Move] = []
         self._rows: int = config.rows
         self._cols: int = config.cols
         self._num_cells: int = config.rows * config.cols
@@ -39,8 +39,8 @@ class PythonNaive(IGameEngine):
         self._round_number: int = 1
         self._winner: int = 0
 
-        self._board: List[CellData] = [CellData(points=0, player=0) for _ in range(self._num_cells)]
-        self._players: List[Player] = [Player(id=i + 1, active=True) for i in range(config.num_players)]
+        self._board: list[CellData] = [CellData(points=0, player=0) for _ in range(self._num_cells)]
+        self._players: list[Player] = [Player(id=i + 1, active=True) for i in range(config.num_players)]
         self._cells_by_player: dict[int, int] = {p.id: 0 for p in self._players}
 
         self._neighbors: list[list[int]] = self._calculate_neighbors(CARDINALS)
@@ -93,10 +93,12 @@ class PythonNaive(IGameEngine):
         return neighbors
 
     @property
+    @override
     def rows(self) -> int:
         return self._rows
 
     @property
+    @override
     def cols(self) -> int:
         return self._cols
 
@@ -111,6 +113,7 @@ class PythonNaive(IGameEngine):
         col: int = index % self._cols
         return Move(row=row, col=col)
 
+    @override
     def set_state(self, state: GameState) -> None:
         self._board = [cell.model_copy() for cell in state.board]
         self._current_player_index = state.player_id
@@ -126,9 +129,11 @@ class PythonNaive(IGameEngine):
         idx: int = self._current_player_index
         return self._players[idx].id
 
-    def get_legal_moves(self, player: int) -> List[Move]:
+    @override
+    def get_legal_moves(self, player: int) -> list[Move]:
         return self._legal_moves
 
+    @override
     def apply_move(self, index: int) -> None:
         if self._winner != 0:
             return
@@ -272,12 +277,15 @@ class PythonNaive(IGameEngine):
             if self._players[self._current_player_index].active or attempts >= len(self._players) * 2:
                 break
 
+    @override
     def get_winner(self) -> int:
         return self._winner
 
+    @override
     def get_current_player_id(self) -> int:
         return self._players[self._current_player_index - 1].id
 
+    @override
     def get_board(self) -> list[CellData]:
         return self._board
 
@@ -290,35 +298,3 @@ class PythonNaive(IGameEngine):
         self._board = self._saved_board
         self._current_player_index = self._saved_player_index
         self._legal_moves = self._saved_legal_moves
-
-
-"""
-consideraciones:
-    B. Escala de Rendimiento (Minimax)
-    Si tu Minimax va a simular millones de turnos, el bucle while
-    buscando jugadores activos puede ser costoso si hay muchos jugadores eliminados.
-
-        Alternativa: Mantener una lista separada de "jugadores vivos"
-        o una cola de prioridad. Así, pasar al siguiente turno es siempre una operación
-        O(1)O(1)
-        (directa) en lugar de o(n)
-
-    C. Gestión de Rondas
-    Ten en cuenta que tu lógica actual define "ronda" basándose en el índice 0.
-
-        Problema potencial: Si el Jugador 1 es eliminado, la ronda seguirá
-        incrementándose cuando el índice pase por su posición (aunque esté inactivo).
-
-        Si para tu IA la "Ronda" es un factor importante en la función de evaluación
-        (heurística), asegúrate de que esta definición de ronda sea la que realmente necesitas.
-
-    D. El límite de intentos (attempts)
-    En la versión de Python, si el límite de intentos se alcanza, el
-    currentPlayerIndex quedará apuntando a un jugador inactivo.
-
-        Sugerencia: Deberías considerar qué debe pasar en ese caso extremo.
-        Si ocurre, probablemente es porque el juego debería haber terminado
-        por falta de jugadores, y lanzar una excepción o declarar un empate
-        sería más seguro que dejar que el flujo continúe.
-
-"""
