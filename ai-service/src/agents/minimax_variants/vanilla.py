@@ -24,6 +24,7 @@ class Minimax(ISearcher):
         if stats:
             stats.start_time = time.time()
         while time.time() - inicio < deadline:
+            print(f"Se exploró la profundidad {max_depth}")
             try:
                 score, move = self.minimax(
                     engine=engine,
@@ -37,13 +38,13 @@ class Minimax(ISearcher):
             except TimeExpired:
                 if stats:
                     stats.end_time = time.time()
-                return best_move
+                return best_move if best_move is not None else Move(row=0, col=0)
             if score > best_score:
                 best_score, best_move = score, move
             max_depth += 1
         if stats:
             stats.end_time = time.time()
-        return best_move
+        return best_move if best_move is not None else Move(row=0, col=0)
 
     def minimax(
         self,
@@ -54,14 +55,14 @@ class Minimax(ISearcher):
         maximizing_player_id: int,
         deadline: float,
         stats: SearchStats | None = None,
-    ) -> (float, Move | None):
+    ) -> tuple[float, Move | None]:
         if stats:
             stats.increment_nodes()
 
         if engine.get_winner() != 0:
             return (1000.0 if maximizing_player_id == 1 else -1000.0), None
 
-        if depth == max_depth or depth == 100:
+        if depth == max_depth:  # or depth == 100:
             return engine.evaluate_position(maximizing_player_id), None
 
         if time.time() > deadline:
