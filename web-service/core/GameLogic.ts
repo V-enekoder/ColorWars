@@ -142,7 +142,7 @@ export class GameEngine {
 
   private initTurnHash(): bigint[] {
     const numTurnPlayers = this.getNumPlayers() + 1;
-    let turnRandoms = [];
+    const turnRandoms = [];
     for (let j = 0; j < numTurnPlayers; j++) {
       turnRandoms[j] = this.getRandom64();
     }
