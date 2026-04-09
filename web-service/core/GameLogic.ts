@@ -1,9 +1,10 @@
-import { GameResult, GameState, RulesOptions } from "../utils/types.ts";
-
-export interface CellData {
-  points: number;
-  player: number;
-}
+import {
+  GameResult,
+  GameState,
+  RulesOptions,
+  CellData,
+  DirectionList,
+} from "../utils/types.ts";
 
 interface Player {
   id: number;
@@ -14,11 +15,6 @@ export interface Move {
   row: number;
   col: number;
 }
-
-type Direction = readonly [number, number];
-
-type DirectionList = readonly Direction[];
-
 const CARDINALS: DirectionList = [
   [1, 0],
   [-1, 0],

@@ -76,7 +76,7 @@ export interface Turn {
   activePlayers: number[];
   cellChanges: Map<number, CellData>;
   gameResult: GameResult;
-  roundNumber: numberM;
+  roundNumber: number;
 }
 
 export enum GameMode {
@@ -97,3 +97,7 @@ export interface SectionOption {
   link: string;
   color: CardColor;
 }
+
+type Direction = readonly [number, number];
+
+type DirectionList = readonly Direction[];
