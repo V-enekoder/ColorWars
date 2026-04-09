@@ -14,7 +14,8 @@ export enum EngineType {
   RUST_BITBOARD = "rust_bitboard",
 }
 
-export interface BotConfig { //Un bot viene definido tanto por su estrategia como por su engine. agregar engine
+export interface BotConfig {
+  //Un bot viene definido tanto por su estrategia como por su engine. agregar engine
   engine: EngineType;
   depth?: number;
   temperature?: number;
@@ -49,6 +50,11 @@ export interface Player {
   strategy: AgentStrategy;
 }
 
+export interface CellData {
+  points: number;
+  player: number;
+}
+
 export enum AgentType {
   HUMAN = "human",
   BOT = "bot",
@@ -57,12 +63,20 @@ export enum AgentType {
 export enum GameState {
   Playing = "playing",
   Draw = "draw",
-  Win = "win"
+  Win = "win",
 }
 
-export interface GameResult{
-  status: GameState
+export interface GameResult {
+  status: GameState;
   winnerId: number | null;
+}
+
+export interface Turn {
+  initialPlayerIdx: number;
+  activePlayers: number[];
+  cellChanges: Map<number, CellData>;
+  gameResult: GameResult;
+  roundNumber: numberM;
 }
 
 export enum GameMode {
