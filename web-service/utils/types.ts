@@ -72,7 +72,7 @@ export interface GameResult {
 }
 
 export interface Turn {
-  initialPlayerIdx: number;
+  initialPlayerId: number;
   activePlayers: number[];
   cellChanges: Map<number, CellData>;
   gameResult: GameResult;
@@ -100,4 +100,4 @@ export interface SectionOption {
 
 type Direction = readonly [number, number];
 
-type DirectionList = readonly Direction[];
+export type DirectionList = readonly Direction[];
