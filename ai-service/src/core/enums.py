@@ -28,3 +28,9 @@ class RuleOptions(str, Enum):
 
 class EvaluationRules(str, Enum):
     GREEDY = "greddy"
+
+
+class GameState(str, Enum):
+    PLAYING = "playing"
+    DRAW = "draw"
+    WIN = "win"
