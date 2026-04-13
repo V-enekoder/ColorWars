@@ -185,6 +185,18 @@ export class GameEngine {
     this.repetitionTable.set(key, count + 1);
   }
 
+  private unregisterPosition(key: bigint): void {
+    const count = this.repetitionTable.get(key);
+
+    if (!count) return;
+
+    if (count === 1) {
+      this.repetitionTable.delete(key);
+    } else {
+      this.repetitionTable.set(key, count - 1);
+    }
+  }
+
   private getIndex(r: number, c: number): number {
     return r * this.cols + c;
   }
@@ -213,6 +225,8 @@ export class GameEngine {
       this.setCellOwner(cell, data.player);
       cell.points = data.points;
     }
+
+    this.unregisterPosition(this.currentHash);
   }
 
   private initCurrentTurn(): Turn {
@@ -282,7 +296,6 @@ export class GameEngine {
     }
     this.history.push(this.currentTurn);
     this.currentTurn = null;
-    this.printRepetitionTable();
     yield this.getBoard();
   }
 
