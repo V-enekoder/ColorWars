@@ -2,10 +2,16 @@ import { Signal, signal, useComputed, useSignal } from "@preact/signals";
 import { useCallback, useEffect, useMemo, useRef } from "preact/hooks";
 import { Cell } from "../components/Cell.tsx";
 import { PlayerScoreboard } from "../components/PlayerScoreboard.tsx";
-import { CellData, GameEngine } from "../core/GameLogic.ts";
-import { PLAYER_COLOR_MAP } from "../utils/constans.ts";
-import { GameConfig, GameState, IGameAgent, Player } from "../utils/types.ts";
 import { AgentFactory } from "../core/agents/AgentFactory.ts";
+import { GameEngine } from "../core/GameLogic.ts";
+import { PLAYER_COLOR_MAP } from "../utils/constans.ts";
+import {
+  CellData,
+  GameConfig,
+  GameState,
+  IGameAgent,
+  Player,
+} from "../utils/types.ts";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -86,6 +92,25 @@ export default function GameBoard({ config }: { config: GameConfig }) {
     [engine, updateUI],
   );
 
+  const handleUndoClick = useCallback(() => {
+    if (isAnimating.value) {
+      return;
+    }
+
+    engine.undoLastMove();
+
+    const restoredBoard = engine.getBoard();
+
+    updateUI(restoredBoard);
+
+    currentPlayerId.value = engine.currentPlayerId;
+    gameResult.value = engine.gameResult;
+
+    isAnimating.value = false;
+
+    console.log("Deshacer completado");
+  }, [engine, updateUI, currentPlayerId, gameResult, isAnimating]);
+
   useEffect(() => {
     isMounted.current = true;
     return () => {
@@ -140,10 +165,13 @@ export default function GameBoard({ config }: { config: GameConfig }) {
   });
 
   const playerMap = useMemo(() => {
-    return players.reduce((acc, p) => {
-      acc[p.id] = p;
-      return acc;
-    }, {} as Record<number, Player>);
+    return players.reduce(
+      (acc, p) => {
+        acc[p.id] = p;
+        return acc;
+      },
+      {} as Record<number, Player>,
+    );
   }, [players]);
 
   const sortedScores = useComputed(() => {
@@ -157,7 +185,6 @@ export default function GameBoard({ config }: { config: GameConfig }) {
       <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">
         {message}
       </h2>
-
       <div class="flex flex-wrap justify-center gap-6 mb-8">
         {sortedScores.value.map(([playerId, count]) => (
           <PlayerScoreboard
@@ -170,7 +197,6 @@ export default function GameBoard({ config }: { config: GameConfig }) {
           />
         ))}
       </div>
-
       <div
         style={{
           display: "grid",
@@ -195,7 +221,6 @@ export default function GameBoard({ config }: { config: GameConfig }) {
             />
           );
         })}
-      </div>
     </div>
   );
 }

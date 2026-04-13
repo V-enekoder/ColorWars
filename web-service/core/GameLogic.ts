@@ -1,10 +1,13 @@
 import {
+  CellData,
+  DirectionList,
   GameResult,
   GameState,
   RulesOptions,
-  CellData,
-  DirectionList,
+  Turn,
 } from "../utils/types.ts";
+
+import { Stack } from "../utils/stack.ts";
 
 interface Player {
   id: number;
@@ -50,7 +53,8 @@ export class GameEngine {
   private readonly MAX_REPETITIONS = 3;
   private readonly MAX_TURNS_WITHOUT_CAPTURES;
   private activePlayerIds: number[] = [];
-
+  private history: Stack<Turn>;
+  private currentTurn: Turn | null;
   constructor(
     public readonly rows: number,
     public readonly cols: number,
@@ -85,6 +89,8 @@ export class GameEngine {
     this.turnRandoms = this.initTurnHash();
     this.currentHash = this.initZobristhHash();
     this._gameResult = { status: GameState.Playing, winnerId: null };
+    this.history = new Stack<Turn>();
+    this.currentTurn = null;
   }
 
   private calculateNeighbors(list: DirectionList): number[][] {
@@ -195,6 +201,42 @@ export class GameEngine {
     this._gameResult = result;
   }
 
+  undoLastMove(): void {
+    const lastTurn: Turn | undefined = this.history.pop();
+    if (lastTurn === null) {
+      return;
+    }
+
+    this.currentPlayerIndex = lastTurn!.initialPlayerId;
+    this.activePlayerIds = [...lastTurn!.activePlayers];
+    this.gameResult = { ...lastTurn!.gameResult };
+    this.roundNumber = lastTurn!.roundNumber;
+
+    for (const [idx, data] of lastTurn!.cellChanges) {
+      const cell: CellData = this.board[idx];
+      this.setCellOwner(cell, data.player);
+      cell.points = data.points;
+    }
+  }
+
+  private initCurrentTurn(): Turn {
+    return {
+      initialPlayerId: this.currentPlayerIndex,
+      activePlayers: [...this.activePlayerIds],
+      cellChanges: new Map<number, CellData>(),
+      gameResult: { ...this._gameResult },
+      roundNumber: this.roundNumber,
+    };
+  }
+
+  private addCellChange(idx: number, player: number, points: number) {
+    if (!this.currentTurn!.cellChanges.has(idx)) {
+      this.currentTurn!.cellChanges.set(idx, {
+        player: player,
+        points: points,
+      });
+    }
+  }
   *playGenerator(index: number): Generator<CellData[]> {
     if (this._gameResult.status !== GameState.Playing) {
       return;
@@ -205,6 +247,8 @@ export class GameEngine {
     if (!this.isLegalMove(index, currentPlayer)) return;
 
     this.currentHash ^= this.turnRandoms[this.currentPlayerId];
+
+    this.currentTurn = this.initCurrentTurn();
 
     const prev = this.turnsWithoutCaptures;
     yield* this.addOrb(index, currentPlayer);
@@ -224,7 +268,8 @@ export class GameEngine {
     if (this.isDraw(this.currentHash)) {
       this._gameResult = { status: GameState.Draw, winnerId: null };
     }
-
+    this.history.push(this.currentTurn);
+    this.currentTurn = null;
     yield this.getBoard();
   }
 
@@ -279,6 +324,8 @@ export class GameEngine {
 
     this.updateCellHash(idx, cell.points, cell.player);
 
+    this.addCellChange(idx, cell.player, cell.points);
+
     this.setCellOwner(cell, player);
     cell.points += this.getPointsToAdd();
 
@@ -306,6 +353,8 @@ export class GameEngine {
         const neighbor = this.board[nIdx];
 
         this.updateCellHash(nIdx, neighbor.points, neighbor.player);
+
+        this.addCellChange(nIdx, neighbor.player, neighbor.points);
 
         if (neighbor.player !== player) {
           this.setCellOwner(neighbor, player);
