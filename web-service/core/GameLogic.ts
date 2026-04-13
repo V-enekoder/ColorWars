@@ -226,7 +226,15 @@ export class GameEngine {
       cell.points = data.points;
     }
 
-    this.unregisterPosition(this.currentHash);
+    this.unregisterPosition(lastTurn!.turnHash);
+
+    const actualTurn: Turn | undefined = this.history.peek();
+
+    if (!actualTurn) {
+      return;
+    }
+
+    this.currentHash = actualTurn.turnHash;
   }
 
   private initCurrentTurn(): Turn {
@@ -236,6 +244,7 @@ export class GameEngine {
       cellChanges: new Map<number, CellData>(),
       gameResult: { ...this._gameResult },
       roundNumber: this.roundNumber,
+      turnHash: 0n,
     };
   }
 
@@ -261,6 +270,11 @@ export class GameEngine {
       console.log(`${hexHash} => Count: ${count}`);
     });
     console.log("-------------------------");
+  }
+
+  private printHexHash(hash: bigint): void {
+    const hex = `0x${hash.toString(16).padStart(16, "0")}`;
+    console.log(hex);
   }
 
   *playGenerator(index: number): Generator<CellData[]> {
@@ -290,12 +304,15 @@ export class GameEngine {
     this.currentHash ^= this.turnRandoms[this.currentPlayerId];
 
     this.registerPosition(this.currentHash);
+    this.currentTurn.turnHash = this.currentHash;
 
     if (this.isDraw(this.currentHash)) {
       this._gameResult = { status: GameState.Draw, winnerId: null };
     }
+
     this.history.push(this.currentTurn);
     this.currentTurn = null;
+    //this.printRepetitionTable();
     yield this.getBoard();
   }
 

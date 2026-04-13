@@ -77,6 +77,7 @@ export interface Turn {
   cellChanges: Map<number, CellData>;
   gameResult: GameResult;
   roundNumber: number;
+  turnHash: bigint;
 }
 
 export enum GameMode {
