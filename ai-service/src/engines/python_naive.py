@@ -31,7 +31,7 @@ class PythonNaive(IGameEngine):
         self._legal_moves: list[Move] = []
         self._rows: int = config.rows
         self._cols: int = config.cols
-        self._num_cells: int = config.rows * config.cols
+        self._total_cells: int = config.rows * config.cols
         self._critical_points: int = config.critical_points
         self._play_rule: RuleOptions = config.rules
 
@@ -39,7 +39,7 @@ class PythonNaive(IGameEngine):
         self._round_number: int = 1
         self._winner: int = 0
 
-        self._board: list[CellData] = [CellData(points=0, player=0) for _ in range(self._num_cells)]
+        self._board: list[CellData] = [CellData(points=0, player=0) for _ in range(self._total_cells)]
         self._players: list[Player] = [Player(id=i + 1, active=True) for i in range(config.num_players)]
         self._cells_by_player: dict[int, int] = {p.id: 0 for p in self._players}
 
