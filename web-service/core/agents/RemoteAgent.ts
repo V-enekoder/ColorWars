@@ -23,7 +23,7 @@ export class RemoteAgent implements IGameAgent {
           rows: engine.rows,
           cols: engine.cols,
           critical_points: engine.critical_points,
-          num_players: engine.getNumPlayers(),
+          num_players: engine.numPlayers,
           play_rule: engine.playRule,
           engine_type: this.config.engine,
         }),
@@ -60,7 +60,7 @@ export class RemoteAgent implements IGameAgent {
             rows: engine.rows,
             cols: engine.cols,
             critical_points: engine.critical_points,
-            num_players: engine.getNumPlayers(),
+            num_players: engine.numPlayers,
             rules: engine.playRule,
           },
 
