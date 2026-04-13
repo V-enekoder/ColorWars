@@ -181,15 +181,11 @@ export class GameEngine {
   }
 
   private registerPosition(key: bigint): void {
-    if (!this.repetitionTable.has(key)) {
-      this.repetitionTable.set(key, 1);
-    } else {
-      let occurrences = this.repetitionTable.get(key)!;
-      this.repetitionTable.set(key, occurrences++);
-    }
+    const count = this.repetitionTable.get(key) ?? 0;
+    this.repetitionTable.set(key, count + 1);
   }
 
-  getIndex(r: number, c: number): number {
+  private getIndex(r: number, c: number): number {
     return r * this.cols + c;
   }
 
@@ -237,6 +233,22 @@ export class GameEngine {
       });
     }
   }
+
+  private printRepetitionTable(): void {
+    console.log("--- Repetition Table ---");
+    if (this.repetitionTable.size === 0) {
+      console.log("Table is empty.");
+      return;
+    }
+
+    this.repetitionTable.forEach((count, hash) => {
+      // Convertimos el bigint a hexadecimal para que sea más legible
+      const hexHash = `0x${hash.toString(16).padStart(16, "0")}`;
+      console.log(`${hexHash} => Count: ${count}`);
+    });
+    console.log("-------------------------");
+  }
+
   *playGenerator(index: number): Generator<CellData[]> {
     if (this._gameResult.status !== GameState.Playing) {
       return;
@@ -270,6 +282,7 @@ export class GameEngine {
     }
     this.history.push(this.currentTurn);
     this.currentTurn = null;
+    this.printRepetitionTable();
     yield this.getBoard();
   }
 
