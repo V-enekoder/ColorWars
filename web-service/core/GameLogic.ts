@@ -161,21 +161,6 @@ export class GameEngine {
     return initialHash;
   }
 
-  private getZobristHash(): bigint {
-    let hash = 0n;
-    for (let i = 0; i < this.totalCells; i++) {
-      hash ^= this.getHashForCell(
-        i,
-        this.board[i].points,
-        this.board[i].player,
-      );
-    }
-
-    hash ^= this.turnRandoms[this.currentPlayerId];
-    this.registerPosition(hash);
-    return hash;
-  }
-
   private getHashForCell(idx: number, points: number, player: number): bigint {
     return this.zobristTable[idx][points][player];
   }
@@ -254,26 +239,6 @@ export class GameEngine {
     }
   }
 
-  private printRepetitionTable(): void {
-    console.log("--- Repetition Table ---");
-    if (this.repetitionTable.size === 0) {
-      console.log("Table is empty.");
-      return;
-    }
-
-    this.repetitionTable.forEach((count, hash) => {
-      // Convertimos el bigint a hexadecimal para que sea más legible
-      const hexHash = `0x${hash.toString(16).padStart(16, "0")}`;
-      console.log(`${hexHash} => Count: ${count}`);
-    });
-    console.log("-------------------------");
-  }
-
-  private printHexHash(hash: bigint): void {
-    const hex = `0x${hash.toString(16).padStart(16, "0")}`;
-    console.log(hex);
-  }
-
   *playGenerator(index: number): Generator<CellData[]> {
     if (this._gameResult.status !== GameState.Playing) {
       return;
@@ -309,7 +274,6 @@ export class GameEngine {
 
     this.history.push(this.currentTurn);
     this.currentTurn = null;
-    //this.printRepetitionTable();
     yield this.getBoard();
   }
 
@@ -533,5 +497,36 @@ export class GameEngine {
       row: Math.floor(index / this.cols),
       col: index % this.cols,
     };
+  }
+
+  //DEBUG FUNCTIONS
+  private getZobristHash(): bigint {
+    let hash = 0n;
+    for (let i = 0; i < this.totalCells; i++) {
+      hash ^= this.getHashForCell(
+        i,
+        this.board[i].points,
+        this.board[i].player,
+      );
+    }
+
+    hash ^= this.turnRandoms[this.currentPlayerId];
+    this.registerPosition(hash);
+    return hash;
+  }
+
+  private printRepetitionTable(): void {
+    console.log("--- Repetition Table ---");
+    if (this.repetitionTable.size === 0) {
+      console.log("Table is empty.");
+      return;
+    }
+
+    this.repetitionTable.forEach((count, hash) => {
+      // Convertimos el bigint a hexadecimal para que sea más legible
+      const hexHash = `0x${hash.toString(16).padStart(16, "0")}`;
+      console.log(`${hexHash} => Count: ${count}`);
+    });
+    console.log("-------------------------");
   }
 }
