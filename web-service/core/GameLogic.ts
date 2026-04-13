@@ -433,19 +433,28 @@ export class GameEngine {
   private advanceTurn(): void {
     if (this._gameResult.status !== GameState.Playing) return;
 
-    const currentId = this.players[this.currentPlayerIndex].id;
-    const activeIdx = this.activePlayerIds.indexOf(currentId);
+    const nextId = this.nextPlayerId;
 
-    const nextActiveIdx = (activeIdx + 1) % this.activePlayerIds.length;
-    const nextPlayerId = this.activePlayerIds[nextActiveIdx];
-
-    if (nextPlayerId < currentId) {
+    if (this.isNewRound(nextId)) {
       this.roundNumber++;
     }
 
-    this.currentPlayerIndex = this.players.findIndex(
-      (p) => p.id === nextPlayerId,
-    );
+    this.setCurrentPlayerById(nextId);
+  }
+
+  private get nextPlayerId(): number {
+    const currentId = this.currentPlayerId;
+    const activeIdx = this.activePlayerIds.indexOf(currentId);
+    const nextActiveIdx = (activeIdx + 1) % this.activePlayerIds.length;
+    return this.activePlayerIds[nextActiveIdx];
+  }
+
+  private isNewRound(nextId: number): boolean {
+    return nextId < this.currentPlayerId;
+  }
+
+  private setCurrentPlayerById(id: number): void {
+    this.currentPlayerIndex = this.players.findIndex((p) => p.id === id);
   }
 
   private checkGameStatus(): GameResult {
