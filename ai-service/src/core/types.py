@@ -36,3 +36,8 @@ class GameState(BaseModel):
     player_id: int
     round_number: int
     legal_moves: list[Move]
+
+
+class GameResult(BaseModel):
+    status: GameState
+    winnerId: int | None = None
