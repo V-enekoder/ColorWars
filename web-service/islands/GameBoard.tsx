@@ -181,10 +181,11 @@ export default function GameBoard({ config }: { config: GameConfig }) {
   });
 
   return (
-    <div class="flex flex-col items-center gap-4 p-4 min-h-screen bg-white">
+    <div class="flex flex-col items-center gap-4 ">
       <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">
         {message}
       </h2>
+
       <div class="flex flex-wrap justify-center gap-6 mb-8">
         {sortedScores.value.map(([playerId, count]) => (
           <PlayerScoreboard
@@ -196,6 +197,32 @@ export default function GameBoard({ config }: { config: GameConfig }) {
             color={PLAYER_COLOR_MAP[playerId] || "#cbd5e1"}
           />
         ))}
+      </div>
+      <div class="flex justify-center mb-8">
+        <button
+          onClick={handleUndoClick}
+          disabled={isAnimating.value}
+          class={`
+            group flex items-center gap-3 px-8 py-3 rounded-2xl font-extrabold
+            transition-all duration-300 ease-out border-2
+            ${
+            isAnimating.value
+              ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed shadow-none"
+              : "bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 hover:shadow-xl hover:-translate-y-1 active:translate-y-0 shadow-lg shadow-slate-200/50"
+          }
+          `}
+        >
+          <span
+            class={`text-xl transition-transform duration-300 ${
+              !isAnimating.value && "group-hover:-translate-x-1"
+            }`}
+          >
+            ⬅️
+          </span>
+          <span class="text-xs uppercase tracking-[0.2em]">
+            Deshacer movimiento
+          </span>
+        </button>
       </div>
       <div
         style={{
@@ -221,6 +248,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
             />
           );
         })}
+      </div>
     </div>
   );
 }
