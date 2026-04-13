@@ -80,8 +80,8 @@ export default define.page(function Game(ctx) {
           </div>
         </header>
 
-        <main class="grow flex items-center justify-center">
-          <div class="bg-white border border-slate-200 p-8 rounded-4xl shadow-xl shadow-slate-200/60 transition-transform">
+        <main class="grow flex items-center justify-center py-8">
+          <div class="bg-white border border-slate-200 p-8 rounded-4xl shadow-xl shadow-slate-200/60">
             <GameBoard config={config} />
           </div>
         </main>
