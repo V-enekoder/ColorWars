@@ -182,7 +182,7 @@ export class GameEngine {
     }
   }
 
-  private getIndex(r: number, c: number): number {
+  getIndex(r: number, c: number): number {
     return r * this.cols + c;
   }
 
