@@ -211,30 +211,27 @@ export class GameEngine {
 
   undoLastMove(): void {
     const lastTurn: Turn | undefined = this.history.pop();
-    if (lastTurn === null) {
+    if (!lastTurn) {
       return;
     }
 
-    this.currentPlayerIndex = lastTurn!.initialPlayerId;
-    this.activePlayerIds = [...lastTurn!.activePlayers];
-    this.gameResult = { ...lastTurn!.gameResult };
-    this.roundNumber = lastTurn!.roundNumber;
+    this.currentPlayerIndex = lastTurn.initialPlayerId;
+    this.activePlayerIds = [...lastTurn.activePlayers];
+    this.gameResult = { ...lastTurn.gameResult };
+    this.roundNumber = lastTurn.roundNumber;
 
-    for (const [idx, data] of lastTurn!.cellChanges) {
-      const cell: CellData = this.board[idx];
-      this.setCellOwner(cell, data.player);
-      cell.points = data.points;
+    for (const [idx, data] of lastTurn.cellChanges) {
+      const cell = this.board[idx];
+      if (cell) {
+        this.setCellOwner(cell, data.player);
+        cell.points = data.points;
+      }
     }
 
-    this.unregisterPosition(lastTurn!.turnHash);
+    this.unregisterPosition(lastTurn.turnHash);
 
-    const actualTurn: Turn | undefined = this.history.peek();
-
-    if (!actualTurn) {
-      return;
-    }
-
-    this.currentHash = actualTurn.turnHash;
+    const previousTurn: Turn | undefined = this.history.peek();
+    this.currentHash = previousTurn ? previousTurn.turnHash : 0n;
   }
 
   private initCurrentTurn(): Turn {
