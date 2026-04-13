@@ -268,9 +268,7 @@ export class GameEngine {
     this.registerPosition(this.currentHash);
     this.currentTurn.turnHash = this.currentHash;
 
-    if (this.isDraw(this.currentHash)) {
-      this._gameResult = { status: GameState.Draw, winnerId: null };
-    }
+    this._gameResult = this.checkGameStatus();
 
     this.history.push(this.currentTurn);
     this.currentTurn = null;
@@ -430,11 +428,6 @@ export class GameEngine {
     this.activePlayerIds = this.players
       .filter((p) => p.active)
       .map((p) => p.id);
-
-    if (this.activePlayerIds.length === 1) {
-      this._gameResult.status = GameState.Win;
-      this._gameResult.winnerId = this.activePlayerIds[0];
-    }
   }
 
   private advanceTurn(): void {
@@ -453,6 +446,18 @@ export class GameEngine {
     this.currentPlayerIndex = this.players.findIndex(
       (p) => p.id === nextPlayerId,
     );
+  }
+
+  private checkGameStatus(): GameResult {
+    if (this.isDraw(this.currentHash)) {
+      return { status: GameState.Draw, winnerId: null };
+    }
+
+    if (this.activePlayerIds.length === 1) {
+      return { status: GameState.Win, winnerId: this.activePlayerIds[0] };
+    }
+
+    return { status: GameState.Playing, winnerId: null };
   }
 
   private isDraw(key: bigint): boolean {
