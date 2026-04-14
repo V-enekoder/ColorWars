@@ -65,16 +65,12 @@ export class GameEngine {
   // ==========================================
 
   constructor(
-    public readonly rows: number,
-    public readonly cols: number,
-    public readonly critical_points: number,
+    private readonly rows: number,
+    private readonly cols: number,
+    private readonly critical_points: number,
     numPlayers: number,
-    public readonly playRule: RulesOptions,
+    private readonly playRule: RulesOptions,
   ) {
-    this.rows = rows;
-    this.cols = cols;
-    this.critical_points = critical_points;
-    this.playRule = playRule;
     this.turnsWithoutCaptures = 0;
     this.players = Array.from({ length: numPlayers }, (_, i) => ({
       id: i + 1,
