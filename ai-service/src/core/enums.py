@@ -14,9 +14,7 @@ class AgentStrategy(str, Enum):
 class EngineType(str, Enum):
     MOCK = "mock"
     PYTHON_NAIVE = "python_naive"
-    PYTHON_OPTIMIZED = "python_optimized"
-    PYTHON_RUST = "python_rust"
-    RUST_PYTHON = "rust_python"
+    PYTHON_OPTIMIZED = "python_optimized"  # nUmpy + numba
     RUST_NAIVE = "rust_naive"
     RUST_BITBOARD = "rust_bitboard"
 
@@ -30,7 +28,7 @@ class EvaluationRules(str, Enum):
     GREEDY = "greddy"
 
 
-class GameState(str, Enum):
+class GameStatus(str, Enum):
     PLAYING = "playing"
     DRAW = "draw"
     WIN = "win"

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from src.core.enums import RuleOptions
+from src.core.enums import GameStatus, RuleOptions
 
 
 class Player(BaseModel):
@@ -39,5 +39,5 @@ class GameState(BaseModel):
 
 
 class GameResult(BaseModel):
-    status: GameState
+    status: GameStatus
     winnerId: int | None = None
