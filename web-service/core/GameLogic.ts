@@ -42,7 +42,7 @@ export class GameEngine {
   board: CellData[];
   players: Player[];
   currentPlayerIndex: number = 0;
-  roundNumber: number = 1;
+  _roundNumber: number = 1;
   cellsByPlayer: Map<number, number> = new Map<number, number>();
   private totalCells: number;
   private neighbors: number[][];
@@ -151,6 +151,7 @@ export class GameEngine {
   // 3. PUBLIC INTERFACE (API)
   // ==========================================
   // --- Getters ---
+
   get numPlayers(): number {
     return this.players.length;
   }
@@ -166,6 +167,11 @@ export class GameEngine {
   get currentPlayerId(): number {
     return this.players[this.currentPlayerIndex].id;
   }
+
+  get roundNumber(): number {
+    return this._roundNumber;
+  }
+
   // --- Game Actions ---
   public undoLastMove(): void {
     const lastTurn: Turn | undefined = this.history.pop();
@@ -176,7 +182,7 @@ export class GameEngine {
     this.currentPlayerIndex = lastTurn.initialPlayerId;
     this.activePlayerIds = [...lastTurn.activePlayers];
     this.gameResult = { ...lastTurn.gameResult };
-    this.roundNumber = lastTurn.roundNumber;
+    this._roundNumber = lastTurn.roundNumber;
 
     for (const [idx, data] of lastTurn.cellChanges) {
       const cell = this.board[idx];
@@ -225,8 +231,9 @@ export class GameEngine {
 
     this.history.push(this.currentTurn);
     this.currentTurn = null;
-    yield this.getBoard();
+    yield this.board;
   }
+
   // --- Data Queries ---
   public getBoard(): CellData[] {
     return [...this.board];
@@ -236,10 +243,6 @@ export class GameEngine {
     return [...this.cellsByPlayer]
       .filter(([id]) => id !== 0)
       .sort((a, b) => a[0] - b[0]);
-  }
-
-  public getRoundNumber(): number {
-    return this.roundNumber;
   }
 
   public getLegalMoves(playerId: number): Move[] {
@@ -264,6 +267,7 @@ export class GameEngine {
       col: index % this.cols,
     };
   }
+
   // ==========================================
   // 4. CORE GAME LOGIC (Add Orb & Chain Reaction)
   // ==========================================
@@ -292,7 +296,7 @@ export class GameEngine {
       q.push(idx);
     }
 
-    yield this.getBoard();
+    yield this.board;
 
     while (q.length > 0) {
       const currIdx = q.shift()!;
@@ -321,7 +325,7 @@ export class GameEngine {
       this.checkEliminations();
       if (this._gameResult.status !== GameState.Playing) break;
 
-      yield this.getBoard();
+      yield this.board;
     }
   }
 
@@ -382,7 +386,7 @@ export class GameEngine {
     const nextId = this.nextPlayerId;
 
     if (this.isNewRound(nextId)) {
-      this.roundNumber++;
+      this._roundNumber++;
     }
 
     this.setCurrentPlayerById(nextId);

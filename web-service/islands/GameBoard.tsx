@@ -23,7 +23,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
   }, [rows, cols, criticalPoints, players.length]);
 
   const boardSignals: Signal<CellData>[] = useMemo(() => {
-    const initialBoard = engine.getBoard();
+    const initialBoard = engine.board;
     return initialBoard.map((cellData) => signal(cellData));
   }, [engine]);
 
