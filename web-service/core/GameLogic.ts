@@ -155,10 +155,6 @@ export class GameEngine {
     return this.players.length;
   }
 
-  getIndex(r: number, c: number): number {
-    return r * this.cols + c;
-  }
-
   get gameResult(): GameResult {
     return this._gameResult;
   }
@@ -171,7 +167,7 @@ export class GameEngine {
     return this.players[this.currentPlayerIndex].id;
   }
   // --- Game Actions ---
-  undoLastMove(): void {
+  public undoLastMove(): void {
     const lastTurn: Turn | undefined = this.history.pop();
     if (!lastTurn) {
       return;
@@ -196,7 +192,7 @@ export class GameEngine {
     this.currentHash = previousTurn ? previousTurn.turnHash : 0n;
   }
 
-  *playGenerator(index: number): Generator<CellData[]> {
+  public *playGenerator(index: number): Generator<CellData[]> {
     if (this._gameResult.status !== GameState.Playing) {
       return;
     }
@@ -232,21 +228,21 @@ export class GameEngine {
     yield this.getBoard();
   }
   // --- Data Queries ---
-  getBoard(): CellData[] {
+  public getBoard(): CellData[] {
     return [...this.board];
   }
 
-  getCellsByPlayer() {
+  public getCellsByPlayer() {
     return [...this.cellsByPlayer]
       .filter(([id]) => id !== 0)
       .sort((a, b) => a[0] - b[0]);
   }
 
-  getRoundNumber(): number {
+  public getRoundNumber(): number {
     return this.roundNumber;
   }
 
-  getLegalMoves(playerId: number): Move[] {
+  public getLegalMoves(playerId: number): Move[] {
     const moves: Move[] = [];
 
     for (let i = 0; i < this.board.length; i++) {
@@ -258,7 +254,11 @@ export class GameEngine {
     return moves;
   }
 
-  getCoordinates(index: number): Move {
+  public getIndex(r: number, c: number): number {
+    return r * this.cols + c;
+  }
+
+  public getCoordinates(index: number): Move {
     return {
       row: Math.floor(index / this.cols),
       col: index % this.cols,
