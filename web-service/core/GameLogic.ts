@@ -39,11 +39,11 @@ export class GameEngine {
   // 1. STATE & PROPERTIES
   // ==========================================
 
-  board: CellData[];
-  players: Player[];
-  currentPlayerIndex: number = 0;
-  _roundNumber: number = 1;
-  cellsByPlayer: Map<number, number> = new Map<number, number>();
+  private board: CellData[];
+  private players: Player[];
+  private currentPlayerIndex: number = 0;
+  private _roundNumber: number = 1;
+  private cellsByPlayer: Map<number, number> = new Map<number, number>();
   private totalCells: number;
   private neighbors: number[][];
   private fullAdjacencies: number[][];
