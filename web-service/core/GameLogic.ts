@@ -35,6 +35,10 @@ const DIAGONALS: DirectionList = [
 const ALL_DIRECTIONS: DirectionList = [...CARDINALS, ...DIAGONALS];
 
 export class GameEngine {
+  // ==========================================
+  // 1. STATE & PROPERTIES
+  // ==========================================
+
   board: CellData[];
   players: Player[];
   currentPlayerIndex: number = 0;
@@ -55,6 +59,11 @@ export class GameEngine {
   private activePlayerIds: number[] = [];
   private history: Stack<Turn>;
   private currentTurn: Turn | null;
+
+  // ==========================================
+  // 2. CONSTRUCTOR & INITIALIZATION
+  // ==========================================
+
   constructor(
     public readonly rows: number,
     public readonly cols: number,
@@ -92,29 +101,6 @@ export class GameEngine {
     this.history = new Stack<Turn>();
     this.currentTurn = null;
   }
-
-  private calculateNeighbors(list: DirectionList): number[][] {
-    const neighbors: number[][] = new Array(this.rows * this.cols);
-
-    for (let i = 0; i < this.rows * this.cols; i++) {
-      const row = Math.floor(i / this.cols);
-      const col = i % this.cols;
-      const valid: number[] = [];
-      for (const [dx, dy] of list) {
-        const nx = row + dx;
-        const ny = col + dy;
-        if (this.isValidCoord(nx, ny)) {
-          valid.push(this.getIndex(nx, ny));
-        }
-      }
-      neighbors[i] = valid;
-    }
-    return neighbors;
-  }
-
-  private isValidCoord(r: number, c: number): boolean {
-    return r >= 0 && r < this.rows && c >= 0 && c < this.cols;
-  }
   private initZobristTable(): bigint[][][] {
     const numStates = this.critical_points + 1;
     const numPlayers = this.numPlayers + 1; //Add empty player
@@ -130,16 +116,6 @@ export class GameEngine {
       }
     }
     return zobristTable;
-  }
-
-  get numPlayers(): number {
-    return this.players.length;
-  }
-
-  private getRandom64(): bigint {
-    const buffer = new BigUint64Array(1);
-    crypto.getRandomValues(buffer);
-    return buffer[0];
   }
 
   private initTurnHash(): bigint[] {
@@ -161,25 +137,22 @@ export class GameEngine {
     return initialHash;
   }
 
-  private getHashForCell(idx: number, points: number, player: number): bigint {
-    return this.zobristTable[idx][points][player];
+  private initCurrentTurn(): Turn {
+    return {
+      initialPlayerId: this.currentPlayerIndex,
+      activePlayers: [...this.activePlayerIds],
+      cellChanges: new Map<number, CellData>(),
+      gameResult: { ...this._gameResult },
+      roundNumber: this.roundNumber,
+      turnHash: 0n,
+    };
   }
-
-  private registerPosition(key: bigint): void {
-    const count = this.repetitionTable.get(key) ?? 0;
-    this.repetitionTable.set(key, count + 1);
-  }
-
-  private unregisterPosition(key: bigint): void {
-    const count = this.repetitionTable.get(key);
-
-    if (!count) return;
-
-    if (count === 1) {
-      this.repetitionTable.delete(key);
-    } else {
-      this.repetitionTable.set(key, count - 1);
-    }
+  // ==========================================
+  // 3. PUBLIC INTERFACE (API)
+  // ==========================================
+  // --- Getters ---
+  get numPlayers(): number {
+    return this.players.length;
   }
 
   getIndex(r: number, c: number): number {
@@ -194,6 +167,10 @@ export class GameEngine {
     this._gameResult = result;
   }
 
+  get currentPlayerId(): number {
+    return this.players[this.currentPlayerIndex].id;
+  }
+  // --- Game Actions ---
   undoLastMove(): void {
     const lastTurn: Turn | undefined = this.history.pop();
     if (!lastTurn) {
@@ -217,26 +194,6 @@ export class GameEngine {
 
     const previousTurn: Turn | undefined = this.history.peek();
     this.currentHash = previousTurn ? previousTurn.turnHash : 0n;
-  }
-
-  private initCurrentTurn(): Turn {
-    return {
-      initialPlayerId: this.currentPlayerIndex,
-      activePlayers: [...this.activePlayerIds],
-      cellChanges: new Map<number, CellData>(),
-      gameResult: { ...this._gameResult },
-      roundNumber: this.roundNumber,
-      turnHash: 0n,
-    };
-  }
-
-  private addCellChange(idx: number, player: number, points: number) {
-    if (!this.currentTurn!.cellChanges.has(idx)) {
-      this.currentTurn!.cellChanges.set(idx, {
-        player: player,
-        points: points,
-      });
-    }
   }
 
   *playGenerator(index: number): Generator<CellData[]> {
@@ -274,52 +231,42 @@ export class GameEngine {
     this.currentTurn = null;
     yield this.getBoard();
   }
-
-  get currentPlayerId(): number {
-    return this.players[this.currentPlayerIndex].id;
+  // --- Data Queries ---
+  getBoard(): CellData[] {
+    return [...this.board];
   }
 
-  private isLegalMove(idx: number, currentPlayerId: number): boolean {
-    const cell = this.board[idx];
+  getCellsByPlayer() {
+    return [...this.cellsByPlayer]
+      .filter(([id]) => id !== 0)
+      .sort((a, b) => a[0] - b[0]);
+  }
 
-    if (cell.player !== 0 && cell.player !== currentPlayerId) {
-      return false;
-    }
+  getRoundNumber(): number {
+    return this.roundNumber;
+  }
 
-    let canPlayOnEmpty = false;
-    const canPlayOnOwned = true;
+  getLegalMoves(playerId: number): Move[] {
+    const moves: Move[] = [];
 
-    switch (this.playRule) {
-      case RulesOptions.OnlyOwnOrbs:
-        if (this.roundNumber === 1) canPlayOnEmpty = true;
-        break;
-      case RulesOptions.EmptyAndOwnOrbs:
-        canPlayOnEmpty = true;
-        break;
-      default:
-        return false;
-    }
-
-    const isEmpty = cell.player === 0;
-    const isOwned = cell.player === currentPlayerId;
-
-    if ((isEmpty && !canPlayOnEmpty) || (isOwned && !canPlayOnOwned)) {
-      return false;
-    }
-
-    if (this.roundNumber === 1 && isEmpty) {
-      const neighborIndices = this.fullAdjacencies[idx];
-
-      for (const nIdx of neighborIndices) {
-        const neighbor = this.board[nIdx];
-        if (neighbor.player !== 0 && neighbor.player !== currentPlayerId) {
-          return false;
-        }
+    for (let i = 0; i < this.board.length; i++) {
+      if (this.isLegalMove(i, playerId)) {
+        moves.push(this.getCoordinates(i));
       }
     }
 
-    return true;
+    return moves;
   }
+
+  getCoordinates(index: number): Move {
+    return {
+      row: Math.floor(index / this.cols),
+      col: index % this.cols,
+    };
+  }
+  // ==========================================
+  // 4. CORE GAME LOGIC (Add Orb & Chain Reaction)
+  // ==========================================
 
   private *addOrb(idx: number, player: number): Generator<CellData[]> {
     const cell = this.board[idx];
@@ -378,10 +325,6 @@ export class GameEngine {
     }
   }
 
-  private updateCellHash(idx: number, points: number, player: number): void {
-    this.currentHash ^= this.getHashForCell(idx, points, player);
-  }
-
   private getPointsToAdd(): number {
     const isFirstRound = this.roundNumber === 1;
 
@@ -429,6 +372,9 @@ export class GameEngine {
       .filter((p) => p.active)
       .map((p) => p.id);
   }
+  // ==========================================
+  // 5. TURN & GAME STATUS LOGIC
+  // ==========================================
 
   private advanceTurn(): void {
     if (this._gameResult.status !== GameState.Playing) return;
@@ -480,40 +426,121 @@ export class GameEngine {
     return false;
   }
 
-  getBoard(): CellData[] {
-    return [...this.board];
-  }
+  // ==========================================
+  // 6. VALIDATION HELPERS
+  // ==========================================
 
-  getCellsByPlayer() {
-    return [...this.cellsByPlayer]
-      .filter(([id]) => id !== 0)
-      .sort((a, b) => a[0] - b[0]);
-  }
+  private isLegalMove(idx: number, currentPlayerId: number): boolean {
+    const cell = this.board[idx];
 
-  getRoundNumber(): number {
-    return this.roundNumber;
-  }
+    if (cell.player !== 0 && cell.player !== currentPlayerId) {
+      return false;
+    }
 
-  getLegalMoves(playerId: number): Move[] {
-    const moves: Move[] = [];
+    let canPlayOnEmpty = false;
+    const canPlayOnOwned = true;
 
-    for (let i = 0; i < this.board.length; i++) {
-      if (this.isLegalMove(i, playerId)) {
-        moves.push(this.getCoordinates(i));
+    switch (this.playRule) {
+      case RulesOptions.OnlyOwnOrbs:
+        if (this.roundNumber === 1) canPlayOnEmpty = true;
+        break;
+      case RulesOptions.EmptyAndOwnOrbs:
+        canPlayOnEmpty = true;
+        break;
+      default:
+        return false;
+    }
+
+    const isEmpty = cell.player === 0;
+    const isOwned = cell.player === currentPlayerId;
+
+    if ((isEmpty && !canPlayOnEmpty) || (isOwned && !canPlayOnOwned)) {
+      return false;
+    }
+
+    if (this.roundNumber === 1 && isEmpty) {
+      const neighborIndices = this.fullAdjacencies[idx];
+
+      for (const nIdx of neighborIndices) {
+        const neighbor = this.board[nIdx];
+        if (neighbor.player !== 0 && neighbor.player !== currentPlayerId) {
+          return false;
+        }
       }
     }
 
-    return moves;
+    return true;
   }
 
-  getCoordinates(index: number): Move {
-    return {
-      row: Math.floor(index / this.cols),
-      col: index % this.cols,
-    };
+  private calculateNeighbors(list: DirectionList): number[][] {
+    const neighbors: number[][] = new Array(this.rows * this.cols);
+
+    for (let i = 0; i < this.rows * this.cols; i++) {
+      const row = Math.floor(i / this.cols);
+      const col = i % this.cols;
+      const valid: number[] = [];
+      for (const [dx, dy] of list) {
+        const nx = row + dx;
+        const ny = col + dy;
+        if (this.isValidCoord(nx, ny)) {
+          valid.push(this.getIndex(nx, ny));
+        }
+      }
+      neighbors[i] = valid;
+    }
+    return neighbors;
   }
 
-  //DEBUG FUNCTIONS
+  private isValidCoord(r: number, c: number): boolean {
+    return r >= 0 && r < this.rows && c >= 0 && c < this.cols;
+  }
+
+  // ==========================================
+  // 7. HASHING & REPETITION SYSTEM (Zobrist)
+  // ==========================================
+  private getRandom64(): bigint {
+    const buffer = new BigUint64Array(1);
+    crypto.getRandomValues(buffer);
+    return buffer[0];
+  }
+
+  private getHashForCell(idx: number, points: number, player: number): bigint {
+    return this.zobristTable[idx][points][player];
+  }
+
+  private registerPosition(key: bigint): void {
+    const count = this.repetitionTable.get(key) ?? 0;
+    this.repetitionTable.set(key, count + 1);
+  }
+
+  private unregisterPosition(key: bigint): void {
+    const count = this.repetitionTable.get(key);
+
+    if (!count) return;
+
+    if (count === 1) {
+      this.repetitionTable.delete(key);
+    } else {
+      this.repetitionTable.set(key, count - 1);
+    }
+  }
+
+  private addCellChange(idx: number, player: number, points: number) {
+    if (!this.currentTurn!.cellChanges.has(idx)) {
+      this.currentTurn!.cellChanges.set(idx, {
+        player: player,
+        points: points,
+      });
+    }
+  }
+
+  private updateCellHash(idx: number, points: number, player: number): void {
+    this.currentHash ^= this.getHashForCell(idx, points, player);
+  }
+  // ==========================================
+  // 8. DEBUG & UTILS
+  // ==========================================
+
   private getZobristHash(): bigint {
     let hash = 0n;
     for (let i = 0; i < this.totalCells; i++) {
