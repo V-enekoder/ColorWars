@@ -2,7 +2,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import Any, Protocol
 
-from src.core.types import CellData, GameConfig, GameState, Move
+from src.core.types import CellData, GameConfig, GameResult, GameState, Move
 from test.benchmarks.SearchStats import SearchStats
 
 
@@ -20,10 +20,11 @@ class IGameEngine(ABC):
     def apply_move(self, index: int) -> None: ...
 
     @abstractmethod
-    def get_winner(self) -> int: ...
-
-    @abstractmethod
     def get_board(self) -> list[CellData]: ...
+
+    @property
+    @abstractmethod
+    def get_game_result(self) -> GameResult: ...
 
     @property
     @abstractmethod
