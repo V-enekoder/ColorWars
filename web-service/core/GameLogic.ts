@@ -43,7 +43,7 @@ export class GameEngine {
   private fullAdjacencies: number[][];
   private zobristTable: bigint[][][]; // [cell][points][player]
   private turnRandoms: bigint[]; // [actual_player]
-  private currentHash: bigint;
+  private _currentHash: bigint;
   private _gameResult: GameResult;
   private repetitionTable: Map<bigint, number>;
   private turnsWithoutCaptures: number;
@@ -90,7 +90,7 @@ export class GameEngine {
 
     this.zobristTable = this.initZobristTable();
     this.turnRandoms = this.initTurnHash();
-    this.currentHash = this.initZobristhHash();
+    this._currentHash = this.initZobristhHash();
     this._gameResult = { status: GameState.Playing, winnerId: null };
     this.history = new Stack<Turn>();
     this.currentTurn = null;
@@ -166,6 +166,10 @@ export class GameEngine {
     return this._roundNumber;
   }
 
+  get currentHash(): bigint {
+    return this._currentHash;
+  }
+
   // --- Game Actions ---
   public undoLastMove(): void {
     const lastTurn: Turn | undefined = this.history.pop();
@@ -180,16 +184,21 @@ export class GameEngine {
 
     for (const [idx, data] of lastTurn.cellChanges) {
       const cell = this.board[idx];
-      if (cell) {
-        this.setCellOwner(cell, data.player);
-        cell.points = data.points;
-      }
+
+      this.updateCellHash(idx, cell.points, cell.player);
+
+      this.setCellOwner(cell, data.player);
+      cell.points = data.points;
+
+      this.updateCellHash(idx, cell.points, cell.player);
     }
 
     this.unregisterPosition(lastTurn.turnHash);
 
     const previousTurn: Turn | undefined = this.history.peek();
-    this.currentHash = previousTurn ? previousTurn.turnHash : 0n;
+    this._currentHash = previousTurn
+      ? previousTurn.turnHash
+      : this.initZobristhHash();
   }
 
   public *playGenerator(index: number): Generator<CellData[]> {
@@ -201,7 +210,7 @@ export class GameEngine {
 
     if (!this.isLegalMove(index, currentPlayer)) return;
 
-    this.currentHash ^= this.turnRandoms[this.currentPlayerId];
+    this._currentHash ^= this.turnRandoms[this.currentPlayerId];
 
     this.currentTurn = this.initCurrentTurn();
 
@@ -216,10 +225,10 @@ export class GameEngine {
     }
 
     this.advanceTurn();
-    this.currentHash ^= this.turnRandoms[this.currentPlayerId];
+    this._currentHash ^= this.turnRandoms[this.currentPlayerId];
 
-    this.registerPosition(this.currentHash);
-    this.currentTurn.turnHash = this.currentHash;
+    this.registerPosition(this._currentHash);
+    this.currentTurn.turnHash = this._currentHash;
 
     this._gameResult = this.checkGameStatus();
 
@@ -292,10 +301,12 @@ export class GameEngine {
 
     yield this.board;
 
+    const explodedInThisChain = new Set<number>();
     while (q.length > 0) {
       const currIdx = q.shift()!;
-
+      explodedInThisChain.add(currIdx);
       for (const nIdx of this.neighbors[currIdx]) {
+        if (explodedInThisChain.has(nIdx)) continue;
         const didExplode = this.processNeighborCell(nIdx, player);
         if (didExplode) {
           q.push(nIdx);
@@ -529,7 +540,7 @@ export class GameEngine {
   }
 
   private updateCellHash(idx: number, points: number, player: number): void {
-    this.currentHash ^= this.getHashForCell(idx, points, player);
+    this._currentHash ^= this.getHashForCell(idx, points, player);
   }
   // ==========================================
   // 8. DEBUG & UTILS
@@ -563,5 +574,19 @@ export class GameEngine {
       console.log(`${hexHash} => Count: ${count}`);
     });
     console.log("-------------------------");
+  }
+
+  private debugPrintBoard(): void {
+    console.log(`\n--- TABLERO (Estado: ${this._gameResult.status}) ---`);
+    for (let r = 0; r < this.rows; r++) {
+      const rowStr = [];
+      for (let c = 0; c < this.cols; c++) {
+        const idx = this.getIndex(r, c);
+        const cell = this.board[idx];
+        rowStr.push(`[${cell.player}:${cell.points}]`);
+      }
+      console.log(rowStr.join(" "));
+    }
+    console.log("------------------------------------------\n");
   }
 }
