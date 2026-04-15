@@ -41,3 +41,12 @@ class GameState(BaseModel):
 class GameResult(BaseModel):
     status: GameStatus
     winnerId: int | None = None
+
+
+class Turn(BaseModel):
+    initial_player_id: int
+    active_players: list[int]
+    cell_changes: dict[int, int]
+    game_result: GameResult
+    round_number: int
+    turn_hash: int
