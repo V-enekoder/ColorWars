@@ -10,12 +10,12 @@ from src.engines.python_naive import PythonNaive
 
 class TestMinimax5x5:
     @pytest.fixture
-    def config_5x5(self):
+    def config_5x5(self) -> GameConfig:
         """Define la configuración para un tablero de 5x5."""
         return GameConfig(rows=5, cols=5, critical_points=4, num_players=2, rules=RuleOptions.ONLY_OWN_ORB)
 
     @pytest.fixture
-    def engine(self, config_5x5):
+    def engine(self, config_5x5: GameConfig):
         """Instancia el motor PythonNaive con la config de 5x5."""
         return PythonNaive(config=config_5x5)
 
