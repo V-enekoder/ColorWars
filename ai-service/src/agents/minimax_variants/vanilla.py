@@ -74,7 +74,7 @@ class Minimax(ISearcher):
         if engine.game_result.status == GameStatus.DRAW:
             return 0, None
 
-        if depth == max_depth #or depth == 10:
+        if depth == max_depth:  # or depth == 10:
             return engine.evaluate_position(maximizing_player_id), None
 
         if time.time() > deadline:
@@ -88,7 +88,7 @@ class Minimax(ISearcher):
         best_move: Move | None = None
         for move in legal_moves:
             index: int = move.row * engine.cols + move.col
-            engine.save_state()
+            # engine.save_state()
             engine.apply_move(index)
 
             score, _ = self.minimax(
@@ -100,7 +100,8 @@ class Minimax(ISearcher):
                 deadline=deadline,
                 stats=stats,
             )
-            engine.restore_state()
+            engine.undo_last_move()
+            # engine.restore_state()
 
             if is_maximizing:
                 if score > best_score:
