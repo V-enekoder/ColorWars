@@ -151,6 +151,22 @@ class PythonNaive(IGameEngine):
         my_cells = self._cells_by_player.get(player_id, 0)
         return float(2 * my_cells - total_cells)
 
+    @override
+    def apply_move(self, index: int) -> None:
+        if self._winner != 0:
+            return
+        current_player: int = self._current_player_index
+
+        if not self._is_legal_move(index, current_player):
+            return
+
+        self._add_orb(index, current_player)
+
+        if self._round_number > 1:
+            self._check_eliminations()
+
+        self._advance_turn()
+
     # --- Data Queries ---
     def _get_index(self, row: int, col: int) -> int:
         return row * self._cols + col
