@@ -294,33 +294,42 @@ export class GameEngine {
 
     while (q.length > 0) {
       const currIdx = q.shift()!;
-      const currentNeighbors = this.neighbors[currIdx];
 
-      for (const nIdx of currentNeighbors) {
-        const neighbor = this.board[nIdx];
-
-        this.updateCellHash(nIdx, neighbor.points, neighbor.player);
-
-        this.addCellChange(nIdx, neighbor.player, neighbor.points);
-
-        if (neighbor.player !== player) {
-          this.setCellOwner(neighbor, player);
-        }
-        neighbor.points += 1;
-
-        if (neighbor.points >= this.critical_points) {
-          neighbor.points = 0;
-          this.setCellOwner(neighbor, this.EMPTY_PLAYER);
+      for (const nIdx of this.neighbors[currIdx]) {
+        const didExplode = this.processNeighborCell(nIdx, player);
+        if (didExplode) {
           q.push(nIdx);
         }
-
-        this.updateCellHash(nIdx, neighbor.points, neighbor.player);
       }
+
       this.checkEliminations();
       if (this._gameResult.status !== GameState.Playing) break;
 
       yield this.board;
     }
+  }
+
+  private processNeighborCell(nIdx: number, explodingPlayer: number): boolean {
+    const neighbor = this.board[nIdx];
+
+    this.updateCellHash(nIdx, neighbor.points, neighbor.player);
+    this.addCellChange(nIdx, neighbor.player, neighbor.points);
+
+    if (neighbor.player !== explodingPlayer) {
+      this.setCellOwner(neighbor, explodingPlayer);
+    }
+
+    neighbor.points += 1;
+
+    let exploded = false;
+    if (neighbor.points >= this.critical_points) {
+      neighbor.points = 0;
+      this.setCellOwner(neighbor, this.EMPTY_PLAYER);
+      exploded = true;
+    }
+
+    this.updateCellHash(nIdx, neighbor.points, neighbor.player);
+    return exploded;
   }
 
   private getPointsToAdd(): number {
