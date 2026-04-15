@@ -40,7 +40,7 @@ class GameState(BaseModel):
 
 class GameResult(BaseModel):
     status: GameStatus
-    winnerId: int | None = None
+    winner_id: int | None = None
 
 
 class Turn(BaseModel):
