@@ -139,14 +139,38 @@ class PythonNaive(IGameEngine):
     # --- Game Actions ---
 
     def save_state(self) -> None:
-        self._saved_board = self._board[:]
-        self._saved_player_index = self._current_player_id
-        self._saved_legal_moves = self._legal_moves
+        if not hasattr(self, "_state_stack"):
+            self._state_stack = []
+
+        snapshot = {
+            "board": [cell.model_copy() for cell in self._board],
+            "active_players_ids": self._active_players_ids.copy(),
+            "current_player_id": self._current_player_id,
+            "round_number": self._round_number,
+            "turns_without_captures": self._turns_without_captures,
+            "cells_by_player": self._cells_by_player.copy(),
+            "game_status": self._game_result.status,
+            "winner_id": getattr(self._game_result, "winner_id", None),
+            "legal_moves": self._legal_moves.copy(),
+        }
+
+        self._state_stack.append(snapshot)
 
     def restore_state(self) -> None:
-        self._board = self._saved_board
-        self._current_player_id = self._saved_player_index
-        self._legal_moves = self._saved_legal_moves
+        snapshot = self._state_stack.pop()
+
+        self._board = snapshot["board"]
+        self._active_players_ids = snapshot["active_players_ids"]
+        self._current_player_id = snapshot["current_player_id"]
+        self._round_number = snapshot["round_number"]
+        self._turns_without_captures = snapshot["turns_without_captures"]
+        self._cells_by_player = snapshot["cells_by_player"]
+
+        self._game_result.status = snapshot["game_status"]
+        if hasattr(self._game_result, "winner_id"):
+            self._game_result.winner_id = snapshot["winner_id"]
+
+        self._legal_moves = snapshot["legal_moves"]
 
     @override
     def set_state(self, state: GameState) -> None:
@@ -264,17 +288,15 @@ class PythonNaive(IGameEngine):
         self._set_cell_owner(cell, player_index)
         cell.points += self._get_points_to_add()
 
-        self._update_cell_hash(cell_index, cell.points, cell.player)
-
         explosion_queue: deque[int] = deque()
 
         if cell.points >= self._critical_points:
-            self._update_cell_hash(cell_index, cell.points, cell.player)
             cell.points = 0
             self._set_cell_owner(cell, self._EMPTY_PLAYER)
             self._update_cell_hash(cell_index, cell.points, cell.player)
             explosion_queue.append(cell_index)
-
+        else:
+            self._update_cell_hash(cell_index, cell.points, cell.player)
         exploded_in_this_chain: set[int] = set()
 
         while explosion_queue:
