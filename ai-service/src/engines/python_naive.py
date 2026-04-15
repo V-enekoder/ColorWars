@@ -1,9 +1,10 @@
+import secrets
 from collections import deque
 from typing import Final, override
 
-from src.core.enums import RuleOptions
+from src.core.enums import GameStatus, RuleOptions
 from src.core.interfaces import IGameEngine
-from src.core.types import CellData, GameConfig, GameState, Move, Player
+from src.core.types import CellData, GameConfig, GameResult, GameState, Move, Player, Turn
 
 type Direction = tuple[int, int]
 type DirectionList = tuple[Direction, ...]
@@ -26,55 +27,63 @@ ALL_DIRECTIONS: Final[DirectionList] = CARDINALS + DIAGONALS
 
 
 class PythonNaive(IGameEngine):
+    """
+    // ==========================================
+    // 1. STATE & PROPERTIES
+    // ==========================================
+    """
+
+    _MAX_REPETITIONS: Final[int] = 3
+
     def __init__(self, config: GameConfig):
         super().__init__(config)
-        self._legal_moves: list[Move] = []
         self._rows: int = config.rows
         self._cols: int = config.cols
-        self._total_cells: int = config.rows * config.cols
         self._critical_points: int = config.critical_points
         self._play_rule: RuleOptions = config.rules
 
-        self._current_player_index: int = 0
-        self._round_number: int = 1
-        self._winner: int = 0
-
         self._board: list[CellData] = [CellData(points=0, player=0) for _ in range(self._total_cells)]
         self._players: list[Player] = [Player(id=i + 1, active=True) for i in range(config.num_players)]
+        self._current_player_index: int = 0
+        self._round_number: int = 1
         self._cells_by_player: dict[int, int] = {p.id: 0 for p in self._players}
 
+        self._total_cells: int = self._rows * self._cols
         self._neighbors: list[list[int]] = self._calculate_neighbors(CARDINALS)
         self._full_adjacency: list[list[int]] = self._calculate_neighbors(ALL_DIRECTIONS)
+        self._zobrist_table: list[list[list[int]]] = self._init_zobrist_table()
+        self._turn_randoms: list[int] = self._init_turn_hash()
+        self._current_hash: int = self._init_zobrist_hash()
+        self._game_result: GameResult = GameResult(status=GameStatus.PLAYING)
+        self._repetition_table: dict[int, int] = {}
+        self._turns_without_captures: int = 0
+        self._MAX_TURNS_WITHOUT_CAPTURES: Final[int] = 25 * len(self._players)
+        self._active_players_ids: list[int] = [p.id for p in self._players]
+        self._history: list[Turn] = []
+        self._current_turn: Turn | None = None
 
-    def debug_state(self) -> None:
-        """Imprime el estado interno del motor para debugging."""
-        print("\n" + "=" * 40)
-        print("DEBUG: ESTADO DEL MOTOR PYTHON_NAIVE")
-        print("=" * 40)
+        self._legal_moves: list[Move] = []
 
-        # 1. Datos básicos
-        print(f"Jugador Actual: {self._current_player_index}")
-        print(f"Ronda: {self._round_number}")
-        print(f"Jugadores Activos: {[p.id for p in self._players]}")
-        print(f"Conteo celdas por jugador: {self._cells_by_player}")
+    def _init_zobrist_table(self) -> list[list[list[int]]]:
+        num_states: int = self._critical_points + 1
+        num_players: int = len(self._players) + 1
 
-        # 2. Renderizado ASCII del tablero
-        print("\nTABLERO (ASCII):")
-        for r in range(self._rows):
-            row_str = ""
-            for c in range(self._cols):
-                idx = r * self._cols + c
-                cell = self._board[idx]
-                # Representamos el jugador y sus puntos
-                row_str += f"[{cell.player if cell.player else '.'}:{cell.points:02d}] "
-            print(row_str)
+        return [
+            [[secrets.randbits(64) for _ in range(num_players)] for _ in range(num_states)]
+            for _ in range(self._total_cells)
+        ]
 
-        # 3. Info técnica adicional
-        if self._legal_moves:
-            print(f"\nJugadas legales disponibles: {len(self._legal_moves)}")
-        else:
-            print("\nNo hay jugadas legales cargadas.")
-        print("=" * 40 + "\n")
+    def _init_turn_hash(self) -> list[int]:
+        return [secrets.randbits(64) for _ in range(len(self._players) + 1)]
+
+    def _init_zobrist_hash(self) -> int:
+        initial_hash = 0
+
+        for i in range(self._total_cells):
+            initial_hash ^= self._zobrist_table[i][0][0]
+        initial_hash ^= self._turn_randoms[self._current_player_index]
+
+        return initial_hash
 
     def _calculate_neighbors(self, directions: DirectionList) -> list[list[int]]:
         neighbors: list[list[int]] = []
@@ -298,3 +307,37 @@ class PythonNaive(IGameEngine):
         self._board = self._saved_board
         self._current_player_index = self._saved_player_index
         self._legal_moves = self._saved_legal_moves
+
+    # ==========================================
+    # 8. DEBUG & UTILS
+    # ==========================================
+
+    def debug_state(self) -> None:
+        """Imprime el estado interno del motor para debugging."""
+        print("\n" + "=" * 40)
+        print("DEBUG: ESTADO DEL MOTOR PYTHON_NAIVE")
+        print("=" * 40)
+
+        # 1. Datos básicos
+        print(f"Jugador Actual: {self._current_player_index}")
+        print(f"Ronda: {self._round_number}")
+        print(f"Jugadores Activos: {[p.id for p in self._players]}")
+        print(f"Conteo celdas por jugador: {self._cells_by_player}")
+
+        # 2. Renderizado ASCII del tablero
+        print("\nTABLERO (ASCII):")
+        for r in range(self._rows):
+            row_str = ""
+            for c in range(self._cols):
+                idx = r * self._cols + c
+                cell = self._board[idx]
+                # Representamos el jugador y sus puntos
+                row_str += f"[{cell.player if cell.player else '.'}:{cell.points:02d}] "
+            print(row_str)
+
+        # 3. Info técnica adicional
+        if self._legal_moves:
+            print(f"\nJugadas legales disponibles: {len(self._legal_moves)}")
+        else:
+            print("\nNo hay jugadas legales cargadas.")
+        print("=" * 40 + "\n")
