@@ -90,7 +90,7 @@ export class GameEngine {
 
     this.zobristTable = this.initZobristTable();
     this.turnRandoms = this.initTurnHash();
-    this._currentHash = this.initZobristhHash();
+    this._currentHash = this.initZobristHash();
     this._gameResult = { status: GameState.Playing, winnerId: null };
     this.history = new Stack<Turn>();
     this.currentTurn = null;
@@ -114,14 +114,14 @@ export class GameEngine {
 
   private initTurnHash(): bigint[] {
     const numTurnPlayers = this.numPlayers + 1;
-    const turnRandoms = [];
+    const turnRandoms: bigint[] = [];
     for (let j = 0; j < numTurnPlayers; j++) {
       turnRandoms[j] = this.getRandom64();
     }
     return turnRandoms;
   }
 
-  private initZobristhHash(): bigint {
+  private initZobristHash(): bigint {
     let initialHash = 0n;
     for (let i = 0; i < this.totalCells; i++) {
       initialHash ^= this.zobristTable[i][0][0];
@@ -198,7 +198,7 @@ export class GameEngine {
     const previousTurn: Turn | undefined = this.history.peek();
     this._currentHash = previousTurn
       ? previousTurn.turnHash
-      : this.initZobristhHash();
+      : this.initZobristHash();
   }
 
   public *playGenerator(index: number): Generator<CellData[]> {
@@ -223,14 +223,15 @@ export class GameEngine {
     if (this.roundNumber > 2) {
       this.checkEliminations();
     }
+    this._gameResult = this.checkGameStatus();
 
-    this.advanceTurn();
-    this._currentHash ^= this.turnRandoms[this.currentPlayerId];
+    if (this._gameResult.status === GameState.Playing) {
+      this.advanceTurn();
+      this._currentHash ^= this.turnRandoms[this.currentPlayerId];
+    }
 
     this.registerPosition(this._currentHash);
     this.currentTurn.turnHash = this._currentHash;
-
-    this._gameResult = this.checkGameStatus();
 
     this.history.push(this.currentTurn);
     this.currentTurn = null;

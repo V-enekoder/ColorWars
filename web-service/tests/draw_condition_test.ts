@@ -17,14 +17,12 @@ Deno.test("Draw condition: detects draw when capture limit is reached", () => {
   const expectedLimit = 50; // 25 * 2
   let movesCount = 0;
 
-  // Jugamos hasta que el motor detecte el empate
   while (engine.gameResult.status === GameState.Playing) {
     const currentPlayer = engine.currentPlayerId;
     const legalMoves = engine.getLegalMoves(currentPlayer);
 
     if (legalMoves.length === 0) break;
 
-    // Elegimos el primer movimiento legal
     const move = legalMoves[0];
     const index = engine.getIndex(move.row, move.col);
 
@@ -33,11 +31,9 @@ Deno.test("Draw condition: detects draw when capture limit is reached", () => {
 
     movesCount++;
 
-    // Seguridad: si llegamos a 100 y no hay empate, algo va mal
     if (movesCount > 100) break;
   }
 
-  // Accedemos a la propiedad privada para verificar el contador final
   // @ts-ignore
   const finalCounter = engine.turnsWithoutCaptures;
 
@@ -63,7 +59,6 @@ Deno.test("Draw condition: repetition table logic check", () => {
   const engine = new GameEngine(3, 3, 3, 2, RulesOptions.EmptyAndOwnOrbs);
   const currentHash = engine.currentHash;
 
-  // Registramos la misma posición 3 veces manualmente
   for (let i = 0; i < 3; i++) {
     // @ts-ignore
     engine.registerPosition(currentHash);
