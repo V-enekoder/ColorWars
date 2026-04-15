@@ -4,7 +4,7 @@ from typing import Final, override
 
 from src.core.enums import GameStatus, RuleOptions
 from src.core.interfaces import IGameEngine
-from src.core.types import CellData, GameConfig, GameResult, GameState, Move, Player, Turn
+from src.core.types import CellData, GameConfig, GameResult, GameState, Move, Turn
 
 type Direction = tuple[int, int]
 type DirectionList = tuple[Direction, ...]
@@ -34,39 +34,49 @@ class PythonNaive(IGameEngine):
     """
 
     _MAX_REPETITIONS: Final[int] = 3
+    _EMPTY_PLAYER: Final[int] = 0
 
     def __init__(self, config: GameConfig):
         super().__init__(config)
         self._rows: int = config.rows
         self._cols: int = config.cols
+        self._total_cells: int = config.rows * config.cols
         self._critical_points: int = config.critical_points
         self._play_rule: RuleOptions = config.rules
+        self._total_players: int = config.num_players
+        self._MAX_TURNS_WITHOUT_CAPTURES: Final[int] = 25 * config.num_players
 
         self._board: list[CellData] = [CellData(points=0, player=0) for _ in range(self._total_cells)]
-        self._players: list[Player] = [Player(id=i + 1, active=True) for i in range(config.num_players)]
+        self._active_players_ids: list[int] = [i + 1 for i in range(self._total_players)]
         self._current_player_index: int = 0
         self._round_number: int = 1
-        self._cells_by_player: dict[int, int] = {p.id: 0 for p in self._players}
+        self._turns_without_captures: int = 0
 
-        self._total_cells: int = self._rows * self._cols
+        self._cells_by_player: dict[int, int] = {i + 1: 0 for i in range(self._total_players)}
+        self._repetition_table: dict[int, int] = {}
+
         self._neighbors: list[list[int]] = self._calculate_neighbors(CARDINALS)
-        self._full_adjacency: list[list[int]] = self._calculate_neighbors(ALL_DIRECTIONS)
+        self._full_adjacencies: list[list[int]] = self._calculate_neighbors(ALL_DIRECTIONS)
+
         self._zobrist_table: list[list[list[int]]] = self._init_zobrist_table()
         self._turn_randoms: list[int] = self._init_turn_hash()
         self._current_hash: int = self._init_zobrist_hash()
+
         self._game_result: GameResult = GameResult(status=GameStatus.PLAYING)
-        self._repetition_table: dict[int, int] = {}
-        self._turns_without_captures: int = 0
-        self._MAX_TURNS_WITHOUT_CAPTURES: Final[int] = 25 * len(self._players)
-        self._active_players_ids: list[int] = [p.id for p in self._players]
         self._history: list[Turn] = []
         self._current_turn: Turn | None = None
 
         self._legal_moves: list[Move] = []
 
+    """
+    // ==========================================
+    // 2. INITIALIZATION
+    // ==========================================
+    """
+
     def _init_zobrist_table(self) -> list[list[list[int]]]:
         num_states: int = self._critical_points + 1
-        num_players: int = len(self._players) + 1
+        num_players: int = self._total_players + 1
 
         return [
             [[secrets.randbits(64) for _ in range(num_players)] for _ in range(num_states)]
@@ -74,7 +84,7 @@ class PythonNaive(IGameEngine):
         ]
 
     def _init_turn_hash(self) -> list[int]:
-        return [secrets.randbits(64) for _ in range(len(self._players) + 1)]
+        return [secrets.randbits(64) for _ in range(self._total_players + 1)]
 
     def _init_zobrist_hash(self) -> int:
         initial_hash = 0
@@ -85,22 +95,23 @@ class PythonNaive(IGameEngine):
 
         return initial_hash
 
-    def _calculate_neighbors(self, directions: DirectionList) -> list[list[int]]:
-        neighbors: list[list[int]] = []
-        for i in range(0, self._rows * self._cols):
-            row: int = i // self._cols
-            col: int = i % self._cols
-            valid: list[int] = []
+    def _init_current_turn(self) -> Turn:
+        return Turn(
+            initial_player_id=self.current_player_id,
+            active_players=self._active_players_ids.copy(),
+            cell_changes={},
+            game_result=self._game_result.model_copy(),
+            round_number=self._round_number,
+            turn_hash=0,
+        )
 
-            for dx, dy in directions:
-                nx: int = row + dx
-                ny: int = col + dy
-                if self._is_valid_coord(nx, ny):
-                    valid.append(self._get_index(nx, ny))
-            neighbors.append(valid)
+    """
+    // ==========================================
+    // 3. PUBLIC INTERFACE (API)
+    // ==========================================
+    """
 
-        return neighbors
-
+    # --- Getters ---
     @property
     @override
     def rows(self) -> int:
@@ -111,9 +122,36 @@ class PythonNaive(IGameEngine):
     def cols(self) -> int:
         return self._cols
 
-    def _is_valid_coord(self, row: int, col: int) -> bool:
-        return 0 <= row < self._rows and 0 <= col < self._cols
+    @property
+    @override
+    def current_player_id(self) -> int:
+        return self._active_players_ids[self._current_player_index]
 
+    # --- Game Actions ---
+
+    def save_state(self) -> None:
+        self._saved_board = self._board[:]
+        self._saved_player_index = self._current_player_index
+        self._saved_legal_moves = self._legal_moves
+
+    def restore_state(self) -> None:
+        self._board = self._saved_board
+        self._current_player_index = self._saved_player_index
+        self._legal_moves = self._saved_legal_moves
+
+    @override
+    def set_state(self, state: GameState) -> None:
+        self._board = [cell.model_copy() for cell in state.board]
+        self._current_player_index = state.player_id
+        self._legal_moves = list(state.legal_moves)
+
+    def evaluate_position(self, player_id: int) -> float:
+        total_cells = sum(self._cells_by_player.values())
+
+        my_cells = self._cells_by_player.get(player_id, 0)
+        return float(2 * my_cells - total_cells)
+
+    # --- Data Queries ---
     def _get_index(self, row: int, col: int) -> int:
         return row * self._cols + col
 
@@ -123,71 +161,16 @@ class PythonNaive(IGameEngine):
         return Move(row=row, col=col)
 
     @override
-    def set_state(self, state: GameState) -> None:
-        self._board = [cell.model_copy() for cell in state.board]
-        self._current_player_index = state.player_id
-        self._legal_moves = list(state.legal_moves)
-
-    def evaluate_position(self, player: int) -> float:
-        if player == 1:
-            return self._cells_by_player[player] - self._cells_by_player[2]
-        else:
-            return self._cells_by_player[player] - self._cells_by_player[1]
-
-    def _get_current_player_id(self) -> int:
-        idx: int = self._current_player_index
-        return self._players[idx].id
-
-    @override
     def get_legal_moves(self, player: int) -> list[Move]:
         return self._legal_moves
 
     @override
-    def apply_move(self, index: int) -> None:
-        if self._winner != 0:
-            return
-        current_player: int = self._current_player_index
+    def get_board(self) -> list[CellData]:
+        return self._board
 
-        if not self._is_legal_move(index, current_player):
-            return
-
-        self._add_orb(index, current_player)
-
-        if self._round_number > 1:
-            self._check_eliminations()
-
-        self._advance_turn()
-
-    def _is_legal_move(self, index: int, current_player_idx: int) -> bool:
-        cell: CellData = self._board[index]
-
-        if cell.player != 0 and cell.player != current_player_idx:
-            return False
-
-        can_play_on_empty: bool = False
-        can_play_on_own: bool = True
-
-        match self._play_rule:
-            case RuleOptions.ONLY_OWN_ORB:
-                if self._round_number == 1:
-                    can_play_on_empty = True
-
-            case RuleOptions.EMPTY_AND_OWN_ORBS:
-                can_play_on_empty = True
-
-        is_empty = cell.player == 0
-        is_owned = cell.player == current_player_idx
-
-        if (is_empty and not can_play_on_empty) or (is_owned and not can_play_on_own):
-            return False
-
-        if self._round_number == 1 and is_empty:
-            neighbors_indexes = self._full_adjacency[index]
-            for n_idx in neighbors_indexes:
-                neighbor = self._board[n_idx]
-                if neighbor.player != 0 and neighbor.player != current_player_idx:
-                    return False
-        return True
+    # ==========================================
+    # 4. CORE GAME LOGIC (Add Orb & Chain Reaction)
+    # ==========================================
 
     def _add_orb(self, cell_index: int, player_index: int) -> None:
         board: list[CellData] = self._board
@@ -270,6 +253,9 @@ class PythonNaive(IGameEngine):
         if active_count == 1:
             self._winner = last_active_id
 
+    # ==========================================
+    # 5. TURN & GAME STATUS LOGIC
+    # ==========================================
     def _advance_turn(self):
         if self._winner != 0:
             return
@@ -286,27 +272,58 @@ class PythonNaive(IGameEngine):
             if self._players[self._current_player_index].active or attempts >= len(self._players) * 2:
                 break
 
-    @override
-    def get_winner(self) -> int:
-        return self._winner
+    # ==========================================
+    # 6. VALIDATION HELPERS
+    # ==========================================
+    def _is_legal_move(self, index: int, current_player_idx: int) -> bool:
+        cell: CellData = self._board[index]
 
-    @override
-    def get_current_player_id(self) -> int:
-        return self._players[self._current_player_index - 1].id
+        if cell.player != 0 and cell.player != current_player_idx:
+            return False
 
-    @override
-    def get_board(self) -> list[CellData]:
-        return self._board
+        can_play_on_empty: bool = False
+        can_play_on_own: bool = True
 
-    def save_state(self) -> None:
-        self._saved_board = self._board[:]
-        self._saved_player_index = self._current_player_index
-        self._saved_legal_moves = self._legal_moves
+        match self._play_rule:
+            case RuleOptions.ONLY_OWN_ORB:
+                if self._round_number == 1:
+                    can_play_on_empty = True
 
-    def restore_state(self) -> None:
-        self._board = self._saved_board
-        self._current_player_index = self._saved_player_index
-        self._legal_moves = self._saved_legal_moves
+            case RuleOptions.EMPTY_AND_OWN_ORBS:
+                can_play_on_empty = True
+
+        is_empty = cell.player == 0
+        is_owned = cell.player == current_player_idx
+
+        if (is_empty and not can_play_on_empty) or (is_owned and not can_play_on_own):
+            return False
+
+        if self._round_number == 1 and is_empty:
+            neighbors_indexes = self._full_adjacency[index]
+            for n_idx in neighbors_indexes:
+                neighbor = self._board[n_idx]
+                if neighbor.player != 0 and neighbor.player != current_player_idx:
+                    return False
+        return True
+
+    def _calculate_neighbors(self, directions: DirectionList) -> list[list[int]]:
+        neighbors: list[list[int]] = []
+        for i in range(0, self._rows * self._cols):
+            row: int = i // self._cols
+            col: int = i % self._cols
+            valid: list[int] = []
+
+            for dx, dy in directions:
+                nx: int = row + dx
+                ny: int = col + dy
+                if self._is_valid_coord(nx, ny):
+                    valid.append(self._get_index(nx, ny))
+            neighbors.append(valid)
+
+        return neighbors
+
+    def _is_valid_coord(self, row: int, col: int) -> bool:
+        return 0 <= row < self._rows and 0 <= col < self._cols
 
     # ==========================================
     # 8. DEBUG & UTILS
