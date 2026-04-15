@@ -48,7 +48,7 @@ class PythonNaive(IGameEngine):
 
         self._board: list[CellData] = [CellData(points=0, player=0) for _ in range(self._total_cells)]
         self._active_players_ids: list[int] = [i + 1 for i in range(self._total_players)]
-        self._current_player_index: int = 0
+        self._current_player_id: int = 1
         self._round_number: int = 1
         self._turns_without_captures: int = 0
 
@@ -91,7 +91,7 @@ class PythonNaive(IGameEngine):
 
         for i in range(self._total_cells):
             initial_hash ^= self._zobrist_table[i][0][0]
-        initial_hash ^= self._turn_randoms[self._current_player_index]
+        initial_hash ^= self._turn_randoms[self._current_player_id]
 
         return initial_hash
 
@@ -125,24 +125,33 @@ class PythonNaive(IGameEngine):
     @property
     @override
     def current_player_id(self) -> int:
-        return self._active_players_ids[self._current_player_index]
+        return self._current_player_id
+
+    @property
+    def current_hash(self) -> int:
+        return self._current_hash
+
+    @property
+    @override
+    def game_result(self) -> GameResult:
+        return self._game_result
 
     # --- Game Actions ---
 
     def save_state(self) -> None:
         self._saved_board = self._board[:]
-        self._saved_player_index = self._current_player_index
+        self._saved_player_index = self._current_player_id
         self._saved_legal_moves = self._legal_moves
 
     def restore_state(self) -> None:
         self._board = self._saved_board
-        self._current_player_index = self._saved_player_index
+        self._current_player_id = self._saved_player_index
         self._legal_moves = self._saved_legal_moves
 
     @override
     def set_state(self, state: GameState) -> None:
         self._board = [cell.model_copy() for cell in state.board]
-        self._current_player_index = state.player_id
+        self._current_player_id = state.player_id
         self._legal_moves = list(state.legal_moves)
 
     def evaluate_position(self, player_id: int) -> float:
@@ -151,21 +160,70 @@ class PythonNaive(IGameEngine):
         my_cells = self._cells_by_player.get(player_id, 0)
         return float(2 * my_cells - total_cells)
 
+    def undo_last_move(self) -> None:
+        if not self._history:
+            return
+
+        last_turn = self._history.pop()
+        if not last_turn:
+            return
+
+        self._current_player_id = last_turn.initial_player_id
+        self._active_players_ids = list(last_turn.active_players)
+        self._game_result = last_turn.game_result.model_copy()
+        self._round_number = last_turn.round_number
+
+        for idx, data in last_turn.cell_changes.items():
+            cell = self._board[idx]
+
+            self._update_cell_hash(idx, cell.points, cell.player)
+
+            self._set_cell_owner(cell, data.player)
+            cell.points = data.points
+
+            self._update_cell_hash(idx, cell.points, cell.player)
+
+        self._unregister_position(last_turn.turn_hash)
+
+        if self._history:
+            self._current_hash = self._history[-1].turn_hash
+        else:
+            self._current_hash = self._init_zobrist_hash()
+
     @override
     def apply_move(self, index: int) -> None:
-        if self._winner != 0:
-            return
-        current_player: int = self._current_player_index
-
-        if not self._is_legal_move(index, current_player):
+        if self._game_result.status != GameStatus.PLAYING:
             return
 
-        self._add_orb(index, current_player)
+        current_player_id = self.current_player_id
+        if not self._is_legal_move(index, current_player_id):
+            return
 
-        if self._round_number > 1:
+        self._current_hash ^= self._turn_randoms[current_player_id]
+
+        self._current_turn = self._init_current_turn()
+
+        prev_captures = self._turns_without_captures
+        self._add_orb(index, current_player_id)
+
+        if self._turns_without_captures == prev_captures:
+            self._turns_without_captures += 1
+
+        if self._round_number > 2:
             self._check_eliminations()
 
-        self._advance_turn()
+        self._game_result = self._check_game_status()
+
+        if self._game_result.status == GameStatus.PLAYING:
+            self._advance_turn()
+            self._current_hash ^= self._turn_randoms[self.current_player_id]
+
+        self._register_position(self._current_hash)
+
+        self._current_turn.turn_hash = self._current_hash
+
+        self._history.append(self._current_turn)
+        self._current_turn = None
 
     # --- Data Queries ---
     def _get_index(self, row: int, col: int) -> int:
@@ -177,116 +235,161 @@ class PythonNaive(IGameEngine):
         return Move(row=row, col=col)
 
     @override
-    def get_legal_moves(self, player: int) -> list[Move]:
-        return self._legal_moves
+    def get_legal_moves(self, player_id: int) -> list[Move]:
+        moves: list[Move] = []
+
+        for i in range(self._total_cells):
+            if self._is_legal_move(i, player_id):
+                moves.append(self._get_coordinates(i))
+
+        return moves
 
     @override
     def get_board(self) -> list[CellData]:
-        return self._board
+        return self._board[:]
+
+    def get_cells_by_player(self) -> list[tuple[int, int]]:
+        return sorted([(pid, count) for pid, count in self._cells_by_player.items() if pid != 0], key=lambda x: x[0])
 
     # ==========================================
     # 4. CORE GAME LOGIC (Add Orb & Chain Reaction)
     # ==========================================
 
     def _add_orb(self, cell_index: int, player_index: int) -> None:
-        board: list[CellData] = self._board
-        neighbors: list[list[int]] = self._neighbors
-        points_to_add: int = self._get_points_to_add()
-        critical_points: int = self._critical_points
+        cell = self._board[cell_index]
 
-        cell: CellData = board[cell_index]
+        self._update_cell_hash(cell_index, cell.points, cell.player)
+        self._add_cell_change(cell_index, cell.player, cell.points)
 
         self._set_cell_owner(cell, player_index)
+        cell.points += self._get_points_to_add()
 
-        cell.points += points_to_add  ##Se pueden añadir __slots__
+        self._update_cell_hash(cell_index, cell.points, cell.player)
 
-        explosion_queue: deque[int] = deque([])
+        explosion_queue: deque[int] = deque()
 
-        if cell.points >= critical_points:
-            cell.points -= critical_points
-            if cell.points == 0:
-                self._set_cell_owner(cell, 0)
+        if cell.points >= self._critical_points:
+            self._update_cell_hash(cell_index, cell.points, cell.player)
+            cell.points = 0
+            self._set_cell_owner(cell, self._EMPTY_PLAYER)
+            self._update_cell_hash(cell_index, cell.points, cell.player)
             explosion_queue.append(cell_index)
 
-        while len(explosion_queue) > 0:
-            current_idx: int = explosion_queue.popleft()
-            current_neighbors: list[int] = neighbors[current_idx]
-            for n_idx in current_neighbors:
-                neighbor = board[n_idx]
-                if neighbor.player != player_index:
-                    self._set_cell_owner(
-                        neighbor, player_index
-                    )  # Se puede elimianr la llamada a la funcion en un futuro y poner directamente el codigo para el overhead
-                neighbor.points += 1
+        exploded_in_this_chain: set[int] = set()
 
-                if neighbor.points >= critical_points:
-                    neighbor.points -= critical_points
-                    if neighbor.points == 0:
-                        self._set_cell_owner(neighbor, 0)
+        while explosion_queue:
+            curr_idx = explosion_queue.popleft()
+
+            exploded_in_this_chain.add(curr_idx)
+
+            for n_idx in self._neighbors[curr_idx]:
+                if n_idx in exploded_in_this_chain:
+                    continue
+
+                did_explode = self._process_neighbor_cell(n_idx, player_index)
+                if did_explode:
                     explosion_queue.append(n_idx)
 
             self._check_eliminations()
-            if self._winner != 0:
+            if self._game_result.status != GameStatus.PLAYING:
                 break
 
-        return
+    def _process_neighbor_cell(self, n_idx: int, exploding_player: int) -> bool:
+        neighbor = self._board[n_idx]
 
-    def _get_points_to_add(self):
-        is_first_round = self._round_number == 1
+        self._update_cell_hash(n_idx, neighbor.points, neighbor.player)
+        self._add_cell_change(n_idx, neighbor.player, neighbor.points)
+
+        if neighbor.player != exploding_player:
+            self._set_cell_owner(neighbor, exploding_player)
+
+        neighbor.points += 1
+
+        exploded = False
+        if neighbor.points >= self._critical_points:
+            neighbor.points = 0
+            self._set_cell_owner(neighbor, self._EMPTY_PLAYER)
+            exploded = True
+
+        self._update_cell_hash(n_idx, neighbor.points, neighbor.player)
+        return exploded
+
+    def _set_cell_owner(self, cell: CellData, new_player: int) -> None:
+        old_player = cell.player
+        if old_player == new_player:
+            return
+
+        cell.player = new_player
+        if old_player != self._EMPTY_PLAYER:
+            self._update_cell_count(old_player, -1)
+            self._turns_without_captures = 0
+        if new_player != self._EMPTY_PLAYER:
+            self._update_cell_count(new_player, 1)
+
+    def _get_points_to_add(self) -> int:
+        is_first_round: bool = self._round_number == 1
+
         match self._play_rule:
             case RuleOptions.ONLY_OWN_ORB:
                 return self._critical_points - 1 if is_first_round else 1
             case _:
                 return 1
 
-    def _set_cell_owner(self, cell: CellData, new_player_index: int) -> None:
-        old_player_index: int = cell.player
-
-        if old_player_index == new_player_index:
-            return
-
-        cell.player = new_player_index
-
-        if old_player_index != 0:
-            self._update_cell_count(old_player_index, -1)
-        if new_player_index != 0:
-            self._update_cell_count(new_player_index, 1)
-
     def _update_cell_count(self, player_id: int, change: int) -> None:
-        self._cells_by_player[player_id] += change
+        current = self._cells_by_player.get(player_id, 0)
+        self._cells_by_player[player_id] = current + change
 
     def _check_eliminations(self) -> None:
-        active_count: int = 0
-        last_active_id: int = 0
+        if self._round_number <= 2:
+            return
 
-        for p in self._players:
-            cell_count: int = self._cells_by_player.get(p.id) or 0
-            if cell_count == 0 and p.active and self._round_number > 1:
-                p.active = False
-            if p.active:
-                active_count += 1
-                last_active_id = p.id
-        if active_count == 1:
-            self._winner = last_active_id
+        self._active_players_ids = [pid for pid in self._active_players_ids if self._cells_by_player.get(pid, 0) > 0]
 
     # ==========================================
     # 5. TURN & GAME STATUS LOGIC
     # ==========================================
-    def _advance_turn(self):
-        if self._winner != 0:
+    def _advance_turn(self) -> None:
+        if self._game_result.status != GameStatus.PLAYING:
             return
 
-        attempts = 0
-        while True:
-            self._current_player_index = (self._current_player_index + 1) % len(self._players)
+        next_id = self._next_player_id
 
-            if self._current_player_index == 0:
-                self._round_number += 1
+        if self._is_new_round(next_id):
+            self._round_number += 1
 
-            attempts += 1
+        self._current_player_id = next_id
 
-            if self._players[self._current_player_index].active or attempts >= len(self._players) * 2:
-                break
+    @property
+    def _next_player_id(self) -> int:
+        try:
+            active_idx = self._active_players_ids.index(self._current_player_id)
+        except ValueError:
+            active_idx = -1
+
+        next_active_idx = (active_idx + 1) % len(self._active_players_ids)
+        return self._active_players_ids[next_active_idx]
+
+    def _is_new_round(self, next_id: int) -> bool:
+        return next_id <= self._current_player_id
+
+    def _check_game_status(self) -> GameResult:
+        if self._is_draw(self._current_hash):
+            return GameResult(status=GameStatus.DRAW, winner_id=None)
+
+        if len(self._active_players_ids) == 1:
+            return GameResult(status=GameStatus.WIN, winner_id=self._active_players_ids[0])
+
+        return GameResult(status=GameStatus.PLAYING, winner_id=None)
+
+    def _is_draw(self, key: int) -> bool:
+        count = self._repetition_table.get(key, 0)
+
+        if count >= self._MAX_REPETITIONS:
+            return True
+        if self._turns_without_captures >= self._MAX_TURNS_WITHOUT_CAPTURES:
+            return True
+
+        return False
 
     # ==========================================
     # 6. VALIDATION HELPERS
@@ -315,7 +418,7 @@ class PythonNaive(IGameEngine):
             return False
 
         if self._round_number == 1 and is_empty:
-            neighbors_indexes = self._full_adjacency[index]
+            neighbors_indexes = self._full_adjacencies[index]
             for n_idx in neighbors_indexes:
                 neighbor = self._board[n_idx]
                 if neighbor.player != 0 and neighbor.player != current_player_idx:
@@ -342,35 +445,63 @@ class PythonNaive(IGameEngine):
         return 0 <= row < self._rows and 0 <= col < self._cols
 
     # ==========================================
+    # 7. HASHING & REPETITION SYSTEM (Zobrist)
+    # ==========================================
+    def _get_hash_for_cell(self, idx: int, points: int, player: int) -> int:
+        return self._zobrist_table[idx][points][player]
+
+    def _register_position(self, key: int) -> None:
+        self._repetition_table[key] = self._repetition_table.get(key, 0) + 1
+
+    def _unregister_position(self, key: int) -> None:
+        count = self._repetition_table.get(key)
+
+        if not count:
+            return
+
+        if count == 1:
+            del self._repetition_table[key]
+        else:
+            self._repetition_table[key] -= 1
+
+    def _add_cell_change(self, idx: int, player: int, points: int) -> None:
+        if self._current_turn and idx not in self._current_turn.cell_changes:
+            self._current_turn.cell_changes[idx] = CellData(points=points, player=player)
+
+    def _update_cell_hash(self, idx: int, points: int, player: int) -> None:
+        self._current_hash ^= self._get_hash_for_cell(idx, points, player)
+
+    # ==========================================
     # 8. DEBUG & UTILS
     # ==========================================
 
     def debug_state(self) -> None:
         """Imprime el estado interno del motor para debugging."""
-        print("\n" + "=" * 40)
-        print("DEBUG: ESTADO DEL MOTOR PYTHON_NAIVE")
-        print("=" * 40)
+        print("\n" + "=" * 50)
+        print("🚀 DEBUG: ESTADO DEL MOTOR PYTHON_NAIVE")
+        print("=" * 50)
 
         # 1. Datos básicos
-        print(f"Jugador Actual: {self._current_player_index}")
-        print(f"Ronda: {self._round_number}")
-        print(f"Jugadores Activos: {[p.id for p in self._players]}")
-        print(f"Conteo celdas por jugador: {self._cells_by_player}")
+        print(f"🔹 Jugador Actual (ID): {self._current_player_id}")
+        print(f"🔹 Ronda: {self._round_number}")
+        print(f"🔹 Jugadores Activos: {self._active_players_ids}")
+        print(f"🔹 Conteo celdas: {self._cells_by_player}")
+        print(f"🔹 Hash Actual: {hex(self._current_hash)}")
 
         # 2. Renderizado ASCII del tablero
-        print("\nTABLERO (ASCII):")
+        print("\nTABLERO (Formato [Jugador:Puntos]):")
+        # Imprimir números de columna
+        print("      " + "  ".join([f"{c:02d}" for c in range(self._cols)]))
+        print("    " + "---" * (self._cols * 2))
+
         for r in range(self._rows):
-            row_str = ""
+            row_str = f"{r:02d} | "
             for c in range(self._cols):
                 idx = r * self._cols + c
                 cell = self._board[idx]
-                # Representamos el jugador y sus puntos
-                row_str += f"[{cell.player if cell.player else '.'}:{cell.points:02d}] "
+                # Representamos el jugador y sus puntos (. para vacío)
+                p = str(cell.player) if cell.player != 0 else "."
+                row_str += f"[{p}:{cell.points}] "
             print(row_str)
 
-        # 3. Info técnica adicional
-        if self._legal_moves:
-            print(f"\nJugadas legales disponibles: {len(self._legal_moves)}")
-        else:
-            print("\nNo hay jugadas legales cargadas.")
-        print("=" * 40 + "\n")
+        print("=" * 50 + "\n")
