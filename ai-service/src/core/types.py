@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from src.core.enums import GameStatus, RuleOptions
 
@@ -22,13 +22,11 @@ class GameConfig(BaseModel):
 
 
 class Move(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     row: int
     col: int
     time_ms: float | None = None
     player: int | None = None
-
-    class Config:
-        frozen = True
 
 
 class GameState(BaseModel):
