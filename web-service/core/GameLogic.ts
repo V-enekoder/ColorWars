@@ -9,11 +9,6 @@ import {
 
 import { Stack } from "../utils/stack.ts";
 
-interface Player {
-  id: number;
-  active: boolean;
-}
-
 export interface Move {
   row: number;
   col: number;
@@ -40,8 +35,7 @@ export class GameEngine {
   // ==========================================
 
   private board: CellData[];
-  private players: Player[];
-  private currentPlayerIndex: number = 0;
+  private _currentPlayerId: number;
   private _roundNumber: number = 1;
   private cellsByPlayer: Map<number, number> = new Map<number, number>();
   private totalCells: number;
@@ -68,23 +62,26 @@ export class GameEngine {
     private readonly rows: number,
     private readonly cols: number,
     private readonly critical_points: number,
-    numPlayers: number,
+    private readonly totalPlayers: number,
     private readonly playRule: RulesOptions,
   ) {
     this.turnsWithoutCaptures = 0;
-    this.players = Array.from({ length: numPlayers }, (_, i) => ({
-      id: i + 1,
-      active: true,
-    }));
 
-    this.activePlayerIds = this.players.map((p) => p.id);
-    this.MAX_TURNS_WITHOUT_CAPTURES = 25 * numPlayers;
+    this.activePlayerIds = Array.from(
+      { length: totalPlayers },
+      (_, i) => i + 1,
+    );
+
+    this._currentPlayerId = 1;
+    this.MAX_TURNS_WITHOUT_CAPTURES = 25 * totalPlayers;
     this.board = Array.from({ length: rows * cols }, () => ({
       points: 0,
       player: 0,
     }));
     this.totalCells = this.rows * this.cols;
-    this.players.forEach((p) => this.cellsByPlayer.set(p.id, 0));
+    for (let i = 1; i <= totalPlayers; i++) {
+      this.cellsByPlayer.set(i, 0);
+    }
 
     this.neighbors = this.calculateNeighbors(CARDINALS);
     this.fullAdjacencies = this.calculateNeighbors(ALL_DIRECTIONS);
@@ -135,7 +132,7 @@ export class GameEngine {
 
   private initCurrentTurn(): Turn {
     return {
-      initialPlayerId: this.currentPlayerIndex,
+      initialPlayerId: this.currentPlayerId,
       activePlayers: [...this.activePlayerIds],
       cellChanges: new Map<number, CellData>(),
       gameResult: { ...this._gameResult },
@@ -149,7 +146,7 @@ export class GameEngine {
   // --- Getters ---
 
   get numPlayers(): number {
-    return this.players.length;
+    return this.totalPlayers;
   }
 
   get gameResult(): GameResult {
@@ -161,7 +158,7 @@ export class GameEngine {
   }
 
   get currentPlayerId(): number {
-    return this.players[this.currentPlayerIndex].id;
+    return this._currentPlayerId;
   }
 
   get roundNumber(): number {
@@ -175,7 +172,7 @@ export class GameEngine {
       return;
     }
 
-    this.currentPlayerIndex = lastTurn.initialPlayerId;
+    this._currentPlayerId = lastTurn.initialPlayerId;
     this.activePlayerIds = [...lastTurn.activePlayers];
     this.gameResult = { ...lastTurn.gameResult };
     this._roundNumber = lastTurn.roundNumber;
@@ -213,7 +210,7 @@ export class GameEngine {
       this.turnsWithoutCaptures += 1;
     }
 
-    if (this.roundNumber > 1) {
+    if (this.roundNumber > 2) {
       this.checkEliminations();
     }
 
@@ -358,19 +355,11 @@ export class GameEngine {
   }
 
   private checkEliminations(): void {
-    for (const p of this.players) {
-      if (
-        p.active &&
-        this.roundNumber > 2 &&
-        (this.cellsByPlayer.get(p.id) || 0) === 0
-      ) {
-        p.active = false;
-      }
-    }
+    if (this.roundNumber <= 2) return;
 
-    this.activePlayerIds = this.players
-      .filter((p) => p.active)
-      .map((p) => p.id);
+    this.activePlayerIds = this.activePlayerIds.filter(
+      (id) => (this.cellsByPlayer.get(id) || 0) > 0,
+    );
   }
   // ==========================================
   // 5. TURN & GAME STATUS LOGIC
@@ -385,22 +374,17 @@ export class GameEngine {
       this._roundNumber++;
     }
 
-    this.setCurrentPlayerById(nextId);
+    this._currentPlayerId = nextId;
   }
 
   private get nextPlayerId(): number {
-    const currentId = this.currentPlayerId;
-    const activeIdx = this.activePlayerIds.indexOf(currentId);
+    const activeIdx = this.activePlayerIds.indexOf(this._currentPlayerId);
     const nextActiveIdx = (activeIdx + 1) % this.activePlayerIds.length;
     return this.activePlayerIds[nextActiveIdx];
   }
 
   private isNewRound(nextId: number): boolean {
-    return nextId < this.currentPlayerId;
-  }
-
-  private setCurrentPlayerById(id: number): void {
-    this.currentPlayerIndex = this.players.findIndex((p) => p.id === id);
+    return nextId <= this._currentPlayerId;
   }
 
   private checkGameStatus(): GameResult {
