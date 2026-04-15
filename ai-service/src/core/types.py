@@ -46,7 +46,7 @@ class GameResult(BaseModel):
 class Turn(BaseModel):
     initial_player_id: int
     active_players: list[int]
-    cell_changes: dict[int, int]
+    cell_changes: dict[int, CellData]
     game_result: GameResult
     round_number: int
     turn_hash: int
