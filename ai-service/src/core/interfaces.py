@@ -25,8 +25,9 @@ class IGameEngine(ABC):
     @abstractmethod
     def get_board(self) -> list[CellData]: ...
 
+    @property
     @abstractmethod
-    def get_current_player_id(self) -> int: ...
+    def current_player_id(self) -> int: ...
 
     @property
     @abstractmethod
