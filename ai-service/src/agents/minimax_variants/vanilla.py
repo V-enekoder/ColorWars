@@ -1,6 +1,7 @@
 import math
 import time
 
+from src.core.enums import GameStatus
 from src.core.interfaces import EngineMinimax, ISearcher
 from src.core.types import Move
 from src.exceptions.TimeExpired import TimeExpired
@@ -9,22 +10,21 @@ from test.benchmarks.SearchStats import SearchStats
 
 class Minimax(ISearcher):
     def search(self, engine: EngineMinimax, time_limit: float, stats: SearchStats | None = None) -> Move:
-        best_score: float = -math.inf
-        best_move: Move | None = None
-        player_id = engine.get_current_player_id()
+        player_id = engine.current_player_id
         available_moves: list[Move] = engine.get_legal_moves(player_id)
 
         if not available_moves:
             return Move(row=0, col=0)
 
-        engine.save_state()
+        best_move: Move = available_moves[0]
+        best_score: float = -math.inf
+
         inicio = time.time()
         deadline: float = time.time() + time_limit
         max_depth: int = 1
         if stats:
-            stats.start_time = time.time()
-        while time.time() - inicio < deadline:
-            print(f"Se exploró la profundidad {max_depth}")
+            stats.start_time = inicio
+        while time.time() < deadline:
             try:
                 score, move = self.minimax(
                     engine=engine,
@@ -35,16 +35,22 @@ class Minimax(ISearcher):
                     deadline=deadline,
                     stats=stats,
                 )
+                best_score = score
+                if move is not None:
+                    best_move = move
+
+                print(f"Se exploró la profundidad {max_depth} completa. Mejor score: {best_score}")
+
+                if best_score >= 1000.0 or max_depth >= 100:
+                    break
+
+                max_depth += 1
+
             except TimeExpired:
-                if stats:
-                    stats.end_time = time.time()
-                return best_move if best_move is not None else Move(row=0, col=0)
-            if score > best_score:
-                best_score, best_move = score, move
-            max_depth += 1
+                break
         if stats:
             stats.end_time = time.time()
-        return best_move if best_move is not None else Move(row=0, col=0)
+        return best_move
 
     def minimax(
         self,
@@ -59,25 +65,27 @@ class Minimax(ISearcher):
         if stats:
             stats.increment_nodes()
 
-        if engine.get_winner() != 0:
-            return (1000.0 if maximizing_player_id == 1 else -1000.0), None
+        if engine.game_result.status == GameStatus.WIN:
+            return (1000.0 if engine.game_result.winner_id == maximizing_player_id else -1000.0), None
 
-        if depth == max_depth:  # or depth == 100:
+        if engine.game_result.status == GameStatus.DRAW:
+            return 0, None
+
+        if depth == max_depth or depth == 10:
             return engine.evaluate_position(maximizing_player_id), None
 
         if time.time() > deadline:
             raise TimeExpired()
 
-        legal_moves: list[Move] = engine.get_legal_moves(maximizing_player_id)
-        if legal_moves is None or len(legal_moves) == 0:
-            return 0.0, None
-
-        engine.save_state()
+        legal_moves: list[Move] = engine.get_legal_moves(engine.current_player_id)
+        if not legal_moves:
+            return engine.evaluate_position(maximizing_player_id), None
 
         best_score: float = -math.inf if is_maximizing else math.inf
         best_move: Move | None = None
         for move in legal_moves:
             index: int = move.row * engine.cols + move.col
+            engine.save_state()
             engine.apply_move(index)
 
             score, _ = self.minimax(
@@ -91,6 +99,12 @@ class Minimax(ISearcher):
             )
             engine.restore_state()
 
-            best_score = max(score, best_score) if is_maximizing else min(score, best_score)
-            best_move = move
+            if is_maximizing:
+                if score > best_score:
+                    best_score = score
+                    best_move = move
+            else:
+                if score < best_score:
+                    best_score = score
+                    best_move = move
         return best_score, best_move
