@@ -50,6 +50,7 @@ export class GameEngine {
 
   private readonly MAX_REPETITIONS = 3;
   private readonly MAX_TURNS_WITHOUT_CAPTURES;
+  private readonly EMPTY_PLAYER = 0;
   private activePlayerIds: number[] = [];
   private history: Stack<Turn>;
   private currentTurn: Turn | null;
@@ -283,7 +284,7 @@ export class GameEngine {
       this.updateCellHash(idx, cell.points, cell.player);
 
       cell.points = 0;
-      this.setCellOwner(cell, 0);
+      this.setCellOwner(cell, this.EMPTY_PLAYER);
 
       this.updateCellHash(idx, cell.points, cell.player);
       q.push(idx);
@@ -309,7 +310,7 @@ export class GameEngine {
 
         if (neighbor.points >= this.critical_points) {
           neighbor.points = 0;
-          this.setCellOwner(neighbor, 0);
+          this.setCellOwner(neighbor, this.EMPTY_PLAYER);
           q.push(nIdx);
         }
 
@@ -340,11 +341,11 @@ export class GameEngine {
 
     cell.player = newPlayer;
 
-    if (oldPlayer !== 0) {
+    if (oldPlayer !== this.EMPTY_PLAYER) {
       this.updateCellCount(oldPlayer, -1);
       this.turnsWithoutCaptures = 0;
     }
-    if (newPlayer !== 0) {
+    if (newPlayer !== this.EMPTY_PLAYER) {
       this.updateCellCount(newPlayer, 1);
     }
   }
