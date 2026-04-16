@@ -1,8 +1,8 @@
 from typing import List
 
 from src.core.dtos import PredictRequest
-from src.core.interfaces import IGameEngine, Move
-from src.core.types import GameConfig
+from src.core.interfaces import IGameEngine
+from src.core.types import GameConfig, Move
 
 
 class MockEngine(IGameEngine):

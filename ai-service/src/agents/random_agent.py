@@ -1,6 +1,7 @@
 import random
 
-from src.core.interfaces import Agent, IGameEngine, Move
+from core.types import Move
+from src.core.interfaces import Agent, IGameEngine
 
 
 class RandomAgent(Agent):
