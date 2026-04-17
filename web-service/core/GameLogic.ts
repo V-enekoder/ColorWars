@@ -60,11 +60,11 @@ export class GameEngine {
   // ==========================================
 
   constructor(
-    private readonly rows: number,
-    private readonly cols: number,
-    private readonly critical_points: number,
+    private readonly _rows: number,
+    private readonly _cols: number,
+    private readonly _critical_points: number,
     private readonly totalPlayers: number,
-    private readonly playRule: RulesOptions,
+    private readonly _playRule: RulesOptions,
   ) {
     this.turnsWithoutCaptures = 0;
 
@@ -75,7 +75,7 @@ export class GameEngine {
 
     this._currentPlayerId = 1;
     this.MAX_TURNS_WITHOUT_CAPTURES = 25 * totalPlayers;
-    this.board = Array.from({ length: rows * cols }, () => ({
+    this.board = Array.from({ length: _rows * _cols }, () => ({
       points: 0,
       player: 0,
     }));
@@ -170,6 +170,18 @@ export class GameEngine {
     return this._currentHash;
   }
 
+  get rows(): number {
+    return this._rows;
+  }
+  get cols(): number {
+    return this._cols;
+  }
+  get critical_points(): number {
+    return this._critical_points;
+  }
+  get play_rule(): RulesOptions {
+    return this._playRule;
+  }
   // --- Game Actions ---
   public undoLastMove(): void {
     const lastTurn: Turn | undefined = this.history.pop();
@@ -347,7 +359,7 @@ export class GameEngine {
   private getPointsToAdd(): number {
     const isFirstRound = this.roundNumber === 1;
 
-    switch (this.playRule) {
+    switch (this._playRule) {
       case RulesOptions.OnlyOwnOrbs:
         return isFirstRound ? this.critical_points - 1 : 1;
       default:
@@ -446,7 +458,7 @@ export class GameEngine {
     let canPlayOnEmpty = false;
     const canPlayOnOwned = true;
 
-    switch (this.playRule) {
+    switch (this._playRule) {
       case RulesOptions.OnlyOwnOrbs:
         if (this.roundNumber === 1) canPlayOnEmpty = true;
         break;
