@@ -1,8 +1,8 @@
 import { useSignal } from "@preact/signals";
 import { Stepper } from "../components/Stepper.tsx";
-import { RulesOptions } from "../utils/types.ts";
 import { PlayerCard } from "../components/PlayerCard.tsx";
 import { useGamePlayers } from "../hooks/useGamePlayers.ts";
+import { RulesOptions } from "@/utils/enums.ts";
 
 export default function GameSetup() {
   const rows = useSignal(8);
@@ -77,9 +77,9 @@ export default function GameSetup() {
                   max={10}
                   step={1}
                   value={criticalPoints.value}
-                  onInput={(
-                    e,
-                  ) => (criticalPoints.value = parseInt(e.currentTarget.value))}
+                  onInput={(e) =>
+                    (criticalPoints.value = parseInt(e.currentTarget.value))
+                  }
                   class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                 />
               </div>
@@ -90,9 +90,9 @@ export default function GameSetup() {
                 </label>
                 <select
                   value={rule.value}
-                  onChange={(
-                    e,
-                  ) => (rule.value = e.currentTarget.value as RulesOptions)}
+                  onChange={(e) =>
+                    (rule.value = e.currentTarget.value as RulesOptions)
+                  }
                   class="w-full p-3.5 border border-slate-200 rounded-2xl bg-white text-sm font-medium outline-none focus:ring-4 ring-indigo-500/10 transition-all appearance-none cursor-pointer"
                 >
                   <option value={RulesOptions.OnlyOwnOrbs}>

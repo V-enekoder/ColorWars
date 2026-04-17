@@ -1,4 +1,4 @@
-import { SectionOption } from "./types.ts";
+import { SectionOption } from "@/utils/types/ui.ts";
 
 export enum MainMenuOption {
   BattleArena = "battle_arena",

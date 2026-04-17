@@ -1,4 +1,4 @@
-import { AgentStrategy } from "./types.ts";
+import { AgentStrategy } from "@/utils/enums.ts";
 
 export enum PlayerColor {
   Red = "#ef4444", // Rojo vibrante
@@ -33,30 +33,26 @@ export const AGENT_DESCRIPTIONS: Record<AgentType, string> = {
     "Chaos factor. Moves unpredictably without a specific pattern.",
   [AgentStrategy.MINIMAX]:
     "Deep thinker. Analyzes multiple turns ahead to find the optimal move.",
-  [AgentStrategy.MINIMAX_ALPHA_BETA]:
-    "Optimized deep thinker. Uses pruning to search deeper and faster.",
   [AgentStrategy.MONTE_CARLO]:
     "Statistically driven. Simulates thousands of games to find the best path.",
   [AgentStrategy.PPO]:
     "Reinforcement learning. Trained through proximal policy optimization.",
-  [AgentStrategy.GENETIC]:
-    "Evolutionary approach. Evolves populations of moves over generations.",
   [AgentStrategy.HEURISTIC]:
     "Tactical scout. Prioritizes cell capture and rapid expansion.",
   [AgentStrategy.NEURAL_NETWORK]:
     "Adaptive learner. Utilizes trained patterns to dominate the board.",
+  [AgentStrategy.NONE]: "",
 };
 
 export const AGENT_LABELS: Record<AgentType, string> = {
-  human: "Human Player",
   [AgentStrategy.RANDOM]: "Random AI",
   [AgentStrategy.MINIMAX]: "Minimax AI",
-  [AgentStrategy.MINIMAX_ALPHA_BETA]: "Minimax (Alpha-Beta)",
   [AgentStrategy.MONTE_CARLO]: "MCTS Bot",
   [AgentStrategy.PPO]: "PPO Agent (RL)",
-  [AgentStrategy.GENETIC]: "Genetic Algorithm",
   [AgentStrategy.HEURISTIC]: "Heuristic AI",
   [AgentStrategy.NEURAL_NETWORK]: "Neural Network",
+  [AgentStrategy.NONE]: "",
+  human: "Human",
 };
 
 export const AGENT_TYPES_LIST: AgentType[] = [

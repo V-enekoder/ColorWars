@@ -1,4 +1,5 @@
-import { AgentType, GameConfig, RulesOptions } from "./types.ts";
+import { RulesOptions, AgentType } from "@/utils/enums.ts";
+import { GameConfig } from "@/utils/types/game.ts";
 
 export const parseGameConfig = (
   params: URLSearchParams,
@@ -11,7 +12,7 @@ export const parseGameConfig = (
     criticalPoints: Number(params.get("cp")) || 3,
     rule: (params.get("rule") as RulesOptions) || RulesOptions.OnlyOwnOrbs,
     players: [
-      { id: 1, name: "Victor", type: AgentType.Human },
+      { id: 1, name: "Victor", type: AgentType.HUMAN },
       { id: 2, name: "Random Bot", type: AgentType.RandomAI },
     ],
   };

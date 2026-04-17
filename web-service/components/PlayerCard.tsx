@@ -1,9 +1,6 @@
-import {
-  AGENT_DESCRIPTIONS,
-  AGENT_LABELS,
-  AgentType,
-} from "../utils/constans.ts";
 import { Player } from "@/utils/types/agent.ts";
+import { AGENT_LABELS, AGENT_DESCRIPTIONS } from "@/utils/constants.ts";
+import { AgentType } from "@/utils/enums.ts";
 
 const AGENT_OPTIONS_UI = (
   Object.entries(AGENT_LABELS) as [AgentType, string][]

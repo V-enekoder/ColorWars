@@ -12,7 +12,6 @@ export enum AgentStrategy {
   MINIMAX = "minimax",
   MONTE_CARLO = "mcts",
   PPO = "ppo",
-  GENETIC = "genetic",
   HEURISTIC = "heuristic",
   NEURAL_NETWORK = "neural_network",
 }
