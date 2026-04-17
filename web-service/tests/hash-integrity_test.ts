@@ -1,6 +1,6 @@
 import { assertEquals } from "https://deno.land/std/assert/mod.ts";
 import { GameEngine } from "../core/GameLogic.ts";
-import { RulesOptions } from "../utils/types.ts";
+import { RulesOptions } from "@/utils/enums.ts";
 
 Deno.test("Hash integrity: Reversibility passed 100 moves", () => {
   const engine = new GameEngine(5, 5, 3, 2, RulesOptions.EmptyAndOwnOrbs);

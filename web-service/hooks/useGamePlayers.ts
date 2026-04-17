@@ -1,5 +1,6 @@
+import { AgentStrategy } from "@/utils/enums.ts";
+import { Player } from "@/utils/types/agent.ts";
 import { useComputed, useSignal } from "@preact/signals";
-import { AgentStrategy, Player } from "../utils/types.ts";
 
 export function useGamePlayers() {
   const players = useSignal<Player[]>([
@@ -31,7 +32,7 @@ export function useGamePlayers() {
     value: string | AgentStrategy,
   ) => {
     players.value = players.value.map((p) =>
-      p.id === id ? { ...p, [field]: value } : p
+      p.id === id ? { ...p, [field]: value } : p,
     );
   };
 

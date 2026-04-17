@@ -1,13 +1,8 @@
-import {
-  CellData,
-  DirectionList,
-  GameResult,
-  GameState,
-  RulesOptions,
-  Turn,
-} from "../utils/types.ts";
-
+import { GameState } from "@/utils/enums.ts";
 import { Stack } from "../utils/stack.ts";
+import { RulesOptions } from "@/utils/types.ts";
+import { CellData, GameResult, Turn } from "@/utils/types/game.ts";
+import { DirectionList } from "@/utils/types/math.ts";
 
 export interface Move {
   row: number;

@@ -1,4 +1,5 @@
-import { AgentType, Player } from "../utils/types.ts";
+import { AgentType } from "@/utils/enums.ts";
+import { Player } from "@/utils/types/agent.ts";
 
 export interface PlayerScoreboardProps {
   playerId: number;

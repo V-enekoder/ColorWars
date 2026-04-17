@@ -20,6 +20,7 @@ export enum AgentStrategy {
 export enum AgentType {
   HUMAN = "human",
   BOT = "bot",
+  RandomAI = "RandomAI",
 }
 
 export enum GameState {

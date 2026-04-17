@@ -1,14 +1,17 @@
-import { AgentType, Player } from "../utils/types.ts";
-import { AGENT_DESCRIPTIONS, AGENT_LABELS } from "../utils/constans.ts";
+import {
+  AGENT_DESCRIPTIONS,
+  AGENT_LABELS,
+  AgentType,
+} from "../utils/constans.ts";
+import { Player } from "@/utils/types/agent.ts";
 
-const AGENT_OPTIONS_UI = (Object.entries(AGENT_LABELS) as [AgentType, string][])
-  .map(
-    ([type, label]) => (
-      <option key={type} value={type}>
-        {label}
-      </option>
-    ),
-  );
+const AGENT_OPTIONS_UI = (
+  Object.entries(AGENT_LABELS) as [AgentType, string][]
+).map(([type, label]) => (
+  <option key={type} value={type}>
+    {label}
+  </option>
+));
 export interface PlayerCardProps {
   player: Player;
   index: number;
@@ -43,7 +46,8 @@ export const PlayerCard = ({
             placeholder="Enter name..."
             value={player.name}
             onInput={(e) =>
-              updatePlayer(player.id, "name", e.currentTarget.value)}
+              updatePlayer(player.id, "name", e.currentTarget.value)
+            }
           />
 
           <select
@@ -54,7 +58,8 @@ export const PlayerCard = ({
                 player.id,
                 "type",
                 e.currentTarget.value as AgentType,
-              )}
+              )
+            }
           >
             {AGENT_OPTIONS_UI}
           </select>

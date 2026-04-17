@@ -3,7 +3,7 @@ import {
   assertNotEquals,
 } from "https://deno.land/std/assert/mod.ts";
 import { GameEngine } from "../core/GameLogic.ts";
-import { GameState, RulesOptions } from "../utils/types.ts";
+import { RulesOptions, GameState } from "@/utils/enums.ts";
 
 Deno.test("Undo after Win: restores game state and eliminated players", () => {
   console.log("\n   🧪 Testing Undo logic after a Victory state...");
@@ -15,7 +15,8 @@ Deno.test("Undo after Win: restores game state and eliminated players", () => {
   const maxMoves = 100;
 
   while (
-    engine.gameResult.status === GameState.Playing && movesCount < maxMoves
+    engine.gameResult.status === GameState.Playing &&
+    movesCount < maxMoves
   ) {
     const currentPlayer = engine.currentPlayerId;
     const legalMoves = engine.getLegalMoves(currentPlayer);

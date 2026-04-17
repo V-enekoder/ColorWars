@@ -1,6 +1,6 @@
 import { assertEquals } from "https://deno.land/std/assert/mod.ts";
 import { GameEngine } from "../core/GameLogic.ts";
-import { GameState, RulesOptions } from "../utils/types.ts";
+import { RulesOptions, GameState } from "@/utils/enums.ts";
 
 Deno.test("Draw condition: detects draw when capture limit is reached", () => {
   console.log("\n   🧪 Testing Draw Condition (Capture Limit)...");

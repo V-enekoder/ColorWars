@@ -1,6 +1,6 @@
 import { assertEquals } from "https://deno.land/std/assert/mod.ts";
 import { GameEngine } from "../core/GameLogic.ts";
-import { RulesOptions } from "../utils/types.ts";
+import { RulesOptions } from "@/utils/enums.ts";
 
 Deno.test("Rules: prevents playing on enemy cells", () => {
   const engine = new GameEngine(5, 5, 3, 2, RulesOptions.OnlyOwnOrbs);
@@ -14,8 +14,8 @@ Deno.test("Rules: prevents playing on enemy cells", () => {
 
   // Player 2 tries to play where Player 1 is
   const legalMovesP2 = engine.getLegalMoves(2);
-  const isP1CellInP2Moves = legalMovesP2.some((m) =>
-    engine.getIndex(m.row, m.col) === p1_move
+  const isP1CellInP2Moves = legalMovesP2.some(
+    (m) => engine.getIndex(m.row, m.col) === p1_move,
   );
 
   assertEquals(

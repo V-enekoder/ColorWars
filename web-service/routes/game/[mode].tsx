@@ -1,13 +1,9 @@
 import { Head } from "fresh/runtime";
 import GameBoard from "../../islands/GameBoard.tsx";
 import { define } from "../../utils.ts";
-import {
-  AgentType,
-  GameConfig,
-  Player,
-  RulesOptions,
-} from "../../utils/types.ts";
-
+import { AgentType, RulesOptions } from "@/utils/enums.ts";
+import { Player } from "@/utils/types/agent.ts";
+import { GameConfig } from "@/utils/types/game.ts";
 export default define.page(function Game(ctx) {
   const { mode } = ctx.params;
   const { searchParams } = ctx.url;
@@ -15,18 +11,20 @@ export default define.page(function Game(ctx) {
   const getConfig = (): GameConfig => {
     const playersRaw = searchParams.get("players");
 
-    const players: Player[] = playersRaw ? JSON.parse(playersRaw) : [
-      { id: 1, name: "Victor", type: AgentType.Human },
-      { id: 2, name: "AI", type: AgentType.RandomAI },
-    ];
+    const players: Player[] = playersRaw
+      ? JSON.parse(playersRaw)
+      : [
+          { id: 1, name: "Victor", type: AgentType.HUMAN },
+          { id: 2, name: "AI", type: AgentType.RandomAI },
+        ];
 
     return {
       mode: mode,
       rows: Number(searchParams.get("rows")) || 8,
       cols: Number(searchParams.get("cols")) || 8,
       criticalPoints: Number(searchParams.get("criticalPoints")) || 4,
-      rule: (searchParams.get("rule") as RulesOptions) ||
-        RulesOptions.OnlyOwnOrbs,
+      rule:
+        (searchParams.get("rule") as RulesOptions) || RulesOptions.OnlyOwnOrbs,
       players: players,
     };
   };
@@ -39,8 +37,7 @@ export default define.page(function Game(ctx) {
         <title>Color Wars | {config.mode}</title>
       </Head>
 
-      <div class="fixed inset-0 bg-linear-to-br from-blue-50/50 via-white to-indigo-50/50 pointer-events-none">
-      </div>
+      <div class="fixed inset-0 bg-linear-to-br from-blue-50/50 via-white to-indigo-50/50 pointer-events-none"></div>
 
       <div class="relative z-10 max-w-5xl mx-auto px-6 py-10 flex flex-col min-h-screen">
         <header class="flex justify-between items-center mb-12">

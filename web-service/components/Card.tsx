@@ -1,4 +1,4 @@
-import { CardColor } from "../utils/types.ts";
+import { CardColor } from "@/utils/types/ui.ts";
 
 export interface CardProps {
   name: string;
@@ -31,8 +31,7 @@ export const Card = function Card({
       href={linkTo}
       class={`group relative bg-white border p-8 rounded-4xl shadow-sm hover:shadow-xl transition-all duration-300 ease-out hover:-translate-y-2 flex flex-col items-center text-center ${colorClasses}`}
     >
-      <span class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300 ease-out">
-      </span>
+      <span class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300 ease-out"></span>
 
       <h2 class="text-xl font-bold text-slate-800 mb-2">{name}</h2>
       <p class="text-sm text-slate-400 mb-6">{description}</p>
