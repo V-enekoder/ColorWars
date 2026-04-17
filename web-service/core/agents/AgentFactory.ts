@@ -1,9 +1,5 @@
-import {
-  AgentStrategy,
-  BotConfig,
-  EngineType,
-  IGameAgent,
-} from "../../utils/types.ts";
+import { AgentStrategy, EngineType } from "../../utils/enums.ts";
+import { BotConfig, IGameAgent } from "../../utils/types/agent.ts";
 import { RemoteAgent } from "../agents/RemoteAgent.ts";
 
 export type AgentType = "human" | AgentStrategy;

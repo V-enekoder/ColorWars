@@ -1,5 +1,5 @@
 import { memo } from "preact/compat";
-import { PlayerColor } from "../utils/constans.ts";
+import { PlayerColor } from "../utils/constants.ts";
 
 export interface CellProps {
   index: number;

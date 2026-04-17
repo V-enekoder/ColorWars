@@ -1,4 +1,5 @@
-import { AgentStrategy, BotConfig, IGameAgent } from "../../utils/types.ts";
+import { AgentStrategy } from "../../utils/enums.ts";
+import { BotConfig, IGameAgent } from "../../utils/types/agent.ts";
 import { GameEngine, Move } from "../GameLogic.ts";
 
 export class RemoteAgent implements IGameAgent {

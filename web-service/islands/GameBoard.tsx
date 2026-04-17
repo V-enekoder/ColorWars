@@ -4,10 +4,10 @@ import { Cell } from "../components/Cell.tsx";
 import { PlayerScoreboard } from "../components/PlayerScoreboard.tsx";
 import { AgentFactory } from "../core/agents/AgentFactory.ts";
 import { GameEngine } from "../core/GameLogic.ts";
-import { PLAYER_COLOR_MAP } from "../utils/constans.ts";
 import { GameState } from "@/utils/enums.ts";
 import { IGameAgent, Player } from "@/utils/types/agent.ts";
 import { GameConfig, CellData } from "@/utils/types/game.ts";
+import { PLAYER_COLOR_MAP } from "@/utils/constants.ts";
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export default function GameBoard({ config }: { config: GameConfig }) {
