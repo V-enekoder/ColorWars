@@ -90,7 +90,7 @@ export class GameEngine {
     this.currentTurn = null;
   }
   private initZobristTable(): bigint[][][] {
-    const numStates = this.critical_points + 1;
+    const numStates = this._critical_points + 1;
     const numPlayers = this.numPlayers + 1; //Add empty player
     const zobristTable: bigint[][][] = [];
     for (let i = 0; i < this.totalCells; i++) {
@@ -170,10 +170,10 @@ export class GameEngine {
   get cols(): number {
     return this._cols;
   }
-  get critical_points(): number {
+  get criticalPoints(): number {
     return this._critical_points;
   }
-  get play_rule(): RulesOptions {
+  get playRule(): RulesOptions {
     return this._playRule;
   }
   // --- Game Actions ---
@@ -182,7 +182,6 @@ export class GameEngine {
     if (!lastTurn) {
       return;
     }
-
     this._currentPlayerId = lastTurn.initialPlayerId;
     this.activePlayerIds = [...lastTurn.activePlayers];
     this.gameResult = { ...lastTurn.gameResult };
@@ -296,7 +295,7 @@ export class GameEngine {
 
     const q: number[] = [];
 
-    if (cell.points >= this.critical_points) {
+    if (cell.points >= this._critical_points) {
       this.updateCellHash(idx, cell.points, cell.player);
 
       cell.points = 0;
@@ -340,7 +339,7 @@ export class GameEngine {
     neighbor.points += 1;
 
     let exploded = false;
-    if (neighbor.points >= this.critical_points) {
+    if (neighbor.points >= this._critical_points) {
       neighbor.points = 0;
       this.setCellOwner(neighbor, this.EMPTY_PLAYER);
       exploded = true;
@@ -355,7 +354,7 @@ export class GameEngine {
 
     switch (this._playRule) {
       case RulesOptions.OnlyOwnOrbs:
-        return isFirstRound ? this.critical_points - 1 : 1;
+        return isFirstRound ? this._critical_points - 1 : 1;
       default:
         return 1;
     }
