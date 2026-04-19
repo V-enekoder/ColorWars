@@ -136,12 +136,18 @@ class PythonNaive(IGameEngine):
     def game_result(self) -> GameResult:
         return self._game_result
 
+    @property
+    @override
+    def round_number(self) -> int:
+        return self._round_number
+
     # --- Game Actions ---
 
     @override
     def set_state(self, state: GameState) -> None:
         self._board = [cell.model_copy() for cell in state.board]
         self._current_player_id = state.player_id
+        self._round_number = state.round_number
         self._legal_moves = list(state.legal_moves)
 
     def evaluate_position(self, player_id: int) -> float:
@@ -187,6 +193,7 @@ class PythonNaive(IGameEngine):
 
         current_player_id = self.current_player_id
         if not self._is_legal_move(index, current_player_id):
+            print((f"Jugada ilegal en índice {index} para el jugador {current_player_id}"))
             return
 
         self._current_hash ^= self._turn_randoms[current_player_id]
