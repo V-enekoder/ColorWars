@@ -34,3 +34,7 @@ class IGameEngine(ABC):
     @property
     @abstractmethod
     def cols(self) -> int: ...
+
+    @property
+    @abstractmethod
+    def round_number(self) -> int: ...
