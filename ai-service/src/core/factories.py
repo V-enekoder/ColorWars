@@ -4,17 +4,13 @@ from src.core.dtos import AgentPolicy, PredictRequest
 from src.core.enums import AgentStrategy, EngineType
 from src.core.interfaces import Agent, IGameEngine
 from src.core.types import GameConfig
-from src.engines.mock_engine import MockEngine
 from src.engines.python_naive import PythonNaive
 
 
 class EngineFactory:
     _ENGINES: dict[EngineType, type[IGameEngine]] = {
-        EngineType.MOCK: MockEngine,
         EngineType.PYTHON_NAIVE: PythonNaive,
         # EngineType.PYTHON_OPTIMIZED: PythonOptimized,
-        # EngineType.PYTHON_RUST: PythonRust,
-        # EngineType.RUST_PYTHON: RustPython,
         # EngineType.RUST_NAIVE: RustNaive,
         # EngineType.RUST_BITBOARD: RustBitboard,
     }
