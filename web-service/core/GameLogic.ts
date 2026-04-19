@@ -325,10 +325,6 @@ export class GameEngine {
           q.push(nIdx);
         }
       }
-
-      this.checkEliminations();
-      if (this._gameResult.status !== GameState.Playing) break;
-
       yield this.board;
     }
   }
