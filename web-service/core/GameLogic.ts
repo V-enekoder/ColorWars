@@ -408,7 +408,12 @@ export class GameEngine {
   }
 
   private get nextPlayerId(): number {
+    if (this._activePlayerIds.length === 0) {
+      return this._currentPlayerId;
+    }
+
     const activeIdx = this._activePlayerIds.indexOf(this._currentPlayerId);
+
     const nextActiveIdx = (activeIdx + 1) % this._activePlayerIds.length;
     return this._activePlayerIds[nextActiveIdx];
   }
