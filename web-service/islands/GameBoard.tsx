@@ -6,7 +6,7 @@ import { AgentFactory } from "../core/agents/AgentFactory.ts";
 import { GameEngine } from "../core/GameLogic.ts";
 import { GameState } from "@/utils/enums.ts";
 import { IGameAgent, Player } from "@/utils/types/agent.ts";
-import { GameConfig, CellData } from "@/utils/types/game.ts";
+import { CellData, GameConfig } from "@/utils/types/game.ts";
 import { PLAYER_COLOR_MAP } from "@/utils/constants.ts";
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -124,6 +124,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
 
     return map;
   }, [players]);
+
   useEffect(() => {
     if (isAnimating.value || engine.gameResult.status !== GameState.Playing) {
       return;
@@ -199,10 +200,10 @@ export default function GameBoard({ config }: { config: GameConfig }) {
             group flex items-center gap-3 px-8 py-3 rounded-2xl font-extrabold
             transition-all duration-300 ease-out border-2
             ${
-              isAnimating.value
-                ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed shadow-none"
-                : "bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 hover:shadow-xl hover:-translate-y-1 active:translate-y-0 shadow-lg shadow-slate-200/50"
-            }
+            isAnimating.value
+              ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed shadow-none"
+              : "bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 hover:shadow-xl hover:-translate-y-1 active:translate-y-0 shadow-lg shadow-slate-200/50"
+          }
           `}
         >
           <span
@@ -226,7 +227,7 @@ export default function GameBoard({ config }: { config: GameConfig }) {
       >
         {boardSignals.map((cellSignal, index) => {
           const cellData = cellSignal.value;
-          const limit = engine.critical_points;
+          const limit = engine.criticalPoints;
           const isCritical = cellData.points === limit - 1;
 
           return (
