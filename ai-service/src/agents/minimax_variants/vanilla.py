@@ -44,7 +44,7 @@ class Minimax(ISearcher):
                 if stats:
                     stats.max_depth_reached = max_depth
 
-                if best_score >= 1000.0 or max_depth >= 100:
+                if best_score >= 1000.0:
                     break
 
                 max_depth += 1
