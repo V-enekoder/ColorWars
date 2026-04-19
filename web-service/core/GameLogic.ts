@@ -45,7 +45,7 @@ export class GameEngine {
   private readonly MAX_REPETITIONS = 3;
   private readonly MAX_TURNS_WITHOUT_CAPTURES;
   private readonly EMPTY_PLAYER = 0;
-  private activePlayerIds: number[] = [];
+  private _activePlayerIds: number[] = [];
   private history: Stack<Turn>;
   private currentTurn: Turn | null;
 
@@ -62,7 +62,7 @@ export class GameEngine {
   ) {
     this.turnsWithoutCaptures = 0;
 
-    this.activePlayerIds = Array.from(
+    this._activePlayerIds = Array.from(
       { length: totalPlayers },
       (_, i) => i + 1,
     );
@@ -128,7 +128,7 @@ export class GameEngine {
   private initCurrentTurn(): Turn {
     return {
       initialPlayerId: this.currentPlayerId,
-      activePlayers: [...this.activePlayerIds],
+      activePlayers: [...this._activePlayerIds],
       cellChanges: new Map<number, CellData>(),
       gameResult: { ...this._gameResult },
       roundNumber: this.roundNumber,
@@ -176,6 +176,11 @@ export class GameEngine {
   get playRule(): RulesOptions {
     return this._playRule;
   }
+
+  get activePlayerIds(): number[] {
+    return this._activePlayerIds;
+  }
+
   // --- Game Actions ---
   public undoLastMove(): void {
     const lastTurn: Turn | undefined = this.history.pop();
@@ -183,7 +188,7 @@ export class GameEngine {
       return;
     }
     this._currentPlayerId = lastTurn.initialPlayerId;
-    this.activePlayerIds = [...lastTurn.activePlayers];
+    this._activePlayerIds = [...lastTurn.activePlayers];
     this.gameResult = { ...lastTurn.gameResult };
     this._roundNumber = lastTurn.roundNumber;
 
@@ -213,7 +218,9 @@ export class GameEngine {
 
     const currentPlayer = this.currentPlayerId;
 
-    if (!this.isLegalMove(index, currentPlayer)) return;
+    if (!this.isLegalMove(index, currentPlayer)) {
+      return;
+    }
 
     this._currentHash ^= this.turnRandoms[this.currentPlayerId];
 
@@ -384,7 +391,7 @@ export class GameEngine {
   private checkEliminations(): void {
     if (this.roundNumber <= 2) return;
 
-    this.activePlayerIds = this.activePlayerIds.filter(
+    this._activePlayerIds = this._activePlayerIds.filter(
       (id) => (this.cellsByPlayer.get(id) || 0) > 0,
     );
   }
@@ -405,9 +412,9 @@ export class GameEngine {
   }
 
   private get nextPlayerId(): number {
-    const activeIdx = this.activePlayerIds.indexOf(this._currentPlayerId);
-    const nextActiveIdx = (activeIdx + 1) % this.activePlayerIds.length;
-    return this.activePlayerIds[nextActiveIdx];
+    const activeIdx = this._activePlayerIds.indexOf(this._currentPlayerId);
+    const nextActiveIdx = (activeIdx + 1) % this._activePlayerIds.length;
+    return this._activePlayerIds[nextActiveIdx];
   }
 
   private isNewRound(nextId: number): boolean {
@@ -419,8 +426,8 @@ export class GameEngine {
       return { status: GameState.Draw, winnerId: null };
     }
 
-    if (this.activePlayerIds.length === 1) {
-      return { status: GameState.Win, winnerId: this.activePlayerIds[0] };
+    if (this._activePlayerIds.length === 1) {
+      return { status: GameState.Win, winnerId: this._activePlayerIds[0] };
     }
 
     return { status: GameState.Playing, winnerId: null };
