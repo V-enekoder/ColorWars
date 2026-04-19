@@ -147,8 +147,10 @@ class PythonNaive(IGameEngine):
     def set_state(self, state: GameState) -> None:
         self._board = [cell.model_copy() for cell in state.board]
         self._current_player_id = state.player_id
+
         self._round_number = state.round_number
         self._legal_moves = list(state.legal_moves)
+        self._active_players_ids = state.active_player_ids
 
     def evaluate_position(self, player_id: int) -> float:
         total_cells = sum(self._cells_by_player.values())
@@ -193,7 +195,6 @@ class PythonNaive(IGameEngine):
 
         current_player_id = self.current_player_id
         if not self._is_legal_move(index, current_player_id):
-            print((f"Jugada ilegal en índice {index} para el jugador {current_player_id}"))
             return
 
         self._current_hash ^= self._turn_randoms[current_player_id]
@@ -285,9 +286,9 @@ class PythonNaive(IGameEngine):
                 if did_explode:
                     explosion_queue.append(n_idx)
 
-            self._check_eliminations()
-            if self._game_result.status != GameStatus.PLAYING:
-                break
+            # self._check_eliminations()
+            # if self._game_result.status != GameStatus.PLAYING:
+            #    break
 
     def _process_neighbor_cell(self, n_idx: int, exploding_player: int) -> bool:
         neighbor = self._board[n_idx]
@@ -346,7 +347,6 @@ class PythonNaive(IGameEngine):
     def _advance_turn(self) -> None:
         if self._game_result.status != GameStatus.PLAYING:
             return
-
         next_id = self._next_player_id
 
         if self._is_new_round(next_id):
@@ -356,6 +356,9 @@ class PythonNaive(IGameEngine):
 
     @property
     def _next_player_id(self) -> int:
+        if not self._active_players_ids:
+            return self._current_player_id
+
         try:
             active_idx = self._active_players_ids.index(self._current_player_id)
         except ValueError:
