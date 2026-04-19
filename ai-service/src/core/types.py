@@ -34,6 +34,7 @@ class GameState(BaseModel):
     player_id: int
     round_number: int
     legal_moves: list[Move]
+    active_player_ids: list[int]
 
 
 class GameResult(BaseModel):
