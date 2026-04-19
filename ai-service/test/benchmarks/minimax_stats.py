@@ -1,13 +1,8 @@
-import math
-import time
-from dataclasses import dataclass
-from typing import List
-
 from src.agents.minimax_variants.vanilla import Minimax
 from src.core.dtos import GameConfig
 from src.core.enums import GameStatus, RuleOptions
 from src.engines.python_naive import PythonNaive
-from test.benchmarks.SearchStats import SearchStats  # Asegúrate de que el path sea correcto
+from test.benchmarks.SearchStats import SearchStats
 
 
 def run_benchmark():
