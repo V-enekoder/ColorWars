@@ -1,8 +1,8 @@
-from core.types import Move
 from src.agents.minimax_variants.alpha_beta_prune import MinimaxAlphaBeta
 from src.agents.minimax_variants.vanilla import Minimax
 from src.core.dtos import MinimaxOptimizations
 from src.core.interfaces import Agent, EngineMinimax, ISearcher
+from src.core.types import Move
 
 # used strategy pattern
 

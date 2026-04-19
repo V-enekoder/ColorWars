@@ -1,7 +1,7 @@
 import random
 
-from core.types import Move
 from src.core.interfaces import Agent, IGameEngine
+from src.core.types import Move
 
 
 class RandomAgent(Agent):
@@ -12,8 +12,7 @@ class RandomAgent(Agent):
         super().__init__(player_id, name)
 
     def _calculate_move(self, engine: IGameEngine) -> Move:
-        moves = engine.get_legal_moves(player=0)
-
+        moves = engine.get_legal_moves(player_id=engine.current_player_id)
         if not moves:
             return Move(row=0, col=0)
 
